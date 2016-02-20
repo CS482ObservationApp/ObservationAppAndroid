@@ -1,12 +1,13 @@
 package ca.zhuoliupei.observationapp;
 
-import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.MotionEvent;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -15,27 +16,10 @@ import android.view.WindowManager;
  * status bar and navigation/system bar) with user interaction.
  */
 public class SplashActivity extends AppCompatActivity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = true;
 
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
-    private static final int UI_ANIMATION_DELAY = 300;
-
-    private View mContentView;
-    private View mControlsView;
-    private boolean mVisible;
+    private boolean currentUserExist = false;
+    private static final int FIRST_REQUEST_CODE = 100;
+    private String TAG ="SPLASHACTIVITY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +27,34 @@ public class SplashActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_splash);
 
+        hideStatusBarActionBar();
+
+        Thread initializerThread = new Thread() {
+            public void run() {
+                //TODO: initialize DB or other stuff
+
+                currentUserExist = getCurrentUserStatus();
+                Intent intent;
+                if (!currentUserExist) {
+                    intent = new Intent(SplashActivity.this, LoginActivity.class);
+                } else {
+                    intent = new Intent(SplashActivity.this, NewestObservationsActivity.class);
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    Log.e(TAG,e.getMessage());
+                }
+                startActivity(intent);
+            }
+        };
+        initializerThread.start();
+
+
+    }
+
+
+    private void hideStatusBarActionBar() {
         // If the Android version is lower than Jellybean, use this call to hide the status bar.
         if (Build.VERSION.SDK_INT < 16) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -59,9 +71,10 @@ public class SplashActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-
     }
 
-
-
+    private boolean getCurrentUserStatus() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        return sharedPreferences.getBoolean("currentUserExist", false);
+    }
 }

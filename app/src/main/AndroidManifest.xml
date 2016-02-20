@@ -2,17 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ca.zhuoliupei.observationapp" >
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
-        <!--Splash Screen Activity, Main Activity-->
+
+
+
+        <!-- Splash Screen Activity, Main Activity -->
+        <!-- Remember to set noHistory to true -->
         <activity
             android:name=".SplashActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_splash"
+            android:noHistory="true"
             android:theme="@style/FullscreenTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,12 +29,20 @@
             </intent-filter>
         </activity>
 
-        <!-- Newest Observations Activity-->
+        <!-- Newest Observations Activity -->
         <activity
             android:name=".NewestObservationsActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
 
+        <activity
+            android:name=".LoginActivity"
+            android:noHistory="true" >
+        </activity>
+
+        <activity android:name=".RegisterActivity"
+            android:noHistory="true">
         </activity>
 
     </application>

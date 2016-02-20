@@ -3,6 +3,28 @@
     <string name="action_settings">Settings</string>
 
     <string name="title_activity_splash">SplashActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://www.cleverfinger.com.au/user-guide/">Term of Use</a></string>
+
+    <!-- Drupal site services info-->
+    <string name="drupal_site_url">http://192.168.1.76/drupal7</string>
+    <string name="drupal_server_endpoint">rest</string>
+
+    <!-- Client side validation error message-->
+    <string name="field_empty_error">This field cannot be empty</string>
+    <string name="username_contains_illeagle_char">User name can only contains digits or letters</string>
+    <string name="email_format_error">The email format is not correct</string>
+
+    <!-- Server side validation error message-->
+    <string name="username_registered_err">The user name is already registered</string>
+    <string name="email_registered_err">The email is already registered</string>
+
+    <!-- Input field hint string-->
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_password_confirm">Confirm Password</string>
+    <string name="hint_username">User Name</string>
+
+    <!-- Register Activity-->
+    <string name="register_successful">Your registration request is sent, please wait for administrator\'s approval.\n An activation email with your initial password would be sent to your email after approval.</string>
+    <string name="network_error">Network error,try again later</string>
 </resources>

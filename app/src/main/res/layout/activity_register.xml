@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="ca.zhuoliupei.observationapp.RegisterActivity"
+    android:orientation="vertical">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:id="@+id/txtUserName_RegisterActivity"
+        android:hint="@string/hint_username"
+        android:layout_marginTop="120dp"
+        android:text="Kent"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:ems="10"
+        android:id="@+id/txtEmail_RegisterActivity"
+        android:hint="@string/hint_email"
+        android:text="hello3424@163.com"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/chkbxAgreeTerm_RegisterActivity"/>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtAgreeTerm_RegisterActivity"
+            android:text="@string/agree_term_of_use"
+            android:maxLines="3"
+            android:lines="3"
+            />
+    </LinearLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtMessage_RegisterActivity"
+        android:layout_gravity="center_horizontal"
+        android:maxLines="3"
+        android:lines="3"/>
+    <ImageButton
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imgBtnRegister_RegisterActivity"
+        android:background="@android:color/transparent"
+        android:src="@drawable/register_button_disabled"
+        android:adjustViewBounds="true"
+        android:padding="20dp"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="40dp"
+        android:clickable="false"
+        android:layout_gravity="center_horizontal"
+        />
+
+
+
+
+</LinearLayout>
