@@ -11,12 +11,13 @@
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
+            android:inputType="textPersonName"
             android:ems="10"
-            android:id="@+id/textEmail_LoginActivity"
+            android:id="@+id/txtUserName_LoginActivity"
             android:hint="@string/hint_email"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="120dp"
+            android:text="admin"
             />
 
         <EditText
@@ -24,10 +25,23 @@
             android:layout_height="wrap_content"
             android:inputType="textPassword"
             android:ems="10"
-            android:id="@+id/textPassword_LoginActivity"
+            android:id="@+id/txtPassword_LoginActivity"
             android:hint="@string/hint_password"
-            android:layout_gravity="center_horizontal"/>
-
+            android:layout_gravity="center_horizontal"
+            android:text="hello3424"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtMessage_LoginActivity"
+            android:maxLines="2"
+            android:lines="2"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:lines="1"
+            android:id="@+id/reset_link_LoginActivity"
+            />
 
         <ImageButton
             android:layout_width="300dp"

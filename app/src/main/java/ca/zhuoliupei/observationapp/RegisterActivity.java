@@ -13,16 +13,22 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-import DrupalForAndroidSDK.DrupalServicesRegistration;
-import ValidationHelpers.RegexValidator;
+import Const.DrupalServicesResponseConst;
+import Const.HTTPConst;
+import DrupalForAndroidSDK.DrupalAuthSession;
+import DrupalForAndroidSDK.DrupalServicesUser;
+import HelperClass.RegexValidator;
 
 public class RegisterActivity extends AppCompatActivity {
+
+    EditText userNameEditText,emailEditText;
+    String userNameStr,emailStr;
 
     private enum ClientSideValidationResult{
         VALIDATION_PASS,
@@ -35,10 +41,11 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+
         //Add link into EditText
-        TextView useTermEditText=(TextView)findViewById(R.id.txtAgreeTerm_RegisterActivity);
-        if (useTermEditText != null) {
-            useTermEditText.setMovementMethod(LinkMovementMethod.getInstance()); //"http://stackoverflow.com/questions/2734270/how-do-i-make-links-in-a-EditText-clickable"
+        TextView useTermTextView=(TextView)findViewById(R.id.txtAgreeTerm_RegisterActivity);
+        if (useTermTextView != null) {
+            useTermTextView.setMovementMethod(LinkMovementMethod.getInstance()); //"http://stackoverflow.com/questions/2734270/how-do-i-make-links-in-a-EditText-clickable"
         }
 
         //CheckBox onchecked
@@ -62,6 +69,11 @@ public class RegisterActivity extends AppCompatActivity {
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                userNameEditText = (EditText) findViewById(R.id.txtUserName_RegisterActivity);
+                emailEditText = (EditText) findViewById(R.id.txtEmail_RegisterActivity);
+                userNameStr=userNameEditText.getText().toString().trim();
+                emailStr=emailEditText.getText().toString().trim();
+
                 validateAndRegister();
             }
         });
@@ -78,10 +90,7 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
     private ArrayList<ClientSideValidationResult> validateFormOnClient(){
-        ArrayList<ClientSideValidationResult> results=new ArrayList<ClientSideValidationResult>();
-
-        String userNameStr=((EditText)findViewById(R.id.txtUserName_RegisterActivity)).getText().toString().trim();
-        String emailStr=((EditText)findViewById(R.id.txtEmail_RegisterActivity)).getText().toString().trim();
+        ArrayList<ClientSideValidationResult> results=new ArrayList<>();
 
         if (userNameStr.isEmpty()) {
             results.add(ClientSideValidationResult.USERNAME_EMPTY);
@@ -106,41 +115,42 @@ public class RegisterActivity extends AppCompatActivity {
         return  results;
     }
 
-    private class RegisterAccountTask extends AsyncTask<String,Void,String[]>{
-        protected String[] doInBackground(String... strings){
-            String usernameStr=strings[0];
+    private class RegisterAccountTask extends AsyncTask<String,Void,HashMap<String ,String>>{
+        protected HashMap<String ,String> doInBackground(String... strings){
+            String userNameStr=strings[0];
             String emailStr=strings[1];
 
             String baseUrl=getResources().getString(R.string.drupal_site_url);
             String endpoint=getResources().getString(R.string.drupal_server_endpoint);
 
-            DrupalServicesRegistration drupalServicesRegistration=new DrupalServicesRegistration(baseUrl,endpoint);
-            BasicNameValuePair[] params=new BasicNameValuePair[2];
-            params[0]=new BasicNameValuePair("name",usernameStr);
-            params[1]=new BasicNameValuePair("mail",emailStr);
-            return drupalServicesRegistration.httpPostRequest(params);
+            DrupalServicesUser drupalServicesUser=new DrupalServicesUser(baseUrl,endpoint);
+            drupalServicesUser.setAuth(new DrupalAuthSession());
+
+            try {
+                return drupalServicesUser.register(userNameStr, emailStr);
+            }catch (Exception e){
+                return new HashMap< >();
+            }
         }
 
-        protected void onPostExecute(String[] response){
-            handleHttpResponse(response);
+        @Override
+        protected void onPostExecute(HashMap<String, String> responseMap) {
+            handleRequestResponse(responseMap);
         }
     }
     private void postRegisterInfo(){
-        String username=((EditText)findViewById(R.id.txtUserName_RegisterActivity)).getText().toString().trim();
-        String email=((EditText)findViewById(R.id.txtEmail_RegisterActivity)).getText().toString().trim();
-
         RegisterAccountTask registerAccountTask=new RegisterAccountTask();
-        registerAccountTask.execute(username,email);
+        registerAccountTask.execute(userNameStr,emailStr);
     }
 
-    private void handleHttpResponse(String[] response){
-        int statusCode = Integer.parseInt(response[0]);
-        String responseStr=response[1];
+    private void handleRequestResponse(HashMap<String,String > response){
+        String statusCode =response.get(DrupalServicesResponseConst.STATUSCODE);
+        String responseStr=response.get(DrupalServicesResponseConst.RESPONSEBODY);
         try{
-            if(statusCode==200){
+            if(statusCode.equals(HTTPConst.HTTP_OK_200)){
                 TextView msgTextView = (TextView)findViewById(R.id.txtMessage_RegisterActivity);
                 msgTextView.setText(getResources().getString(R.string.register_successful));
-            }else if (statusCode==406){
+            }else if (statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
                 JSONObject responseJsonObject=new JSONObject(responseStr);
                 JSONObject errorJsonObject=responseJsonObject.getJSONObject("form_errors");
                 String userNameError=errorJsonObject.getString("name");
@@ -155,14 +165,13 @@ public class RegisterActivity extends AppCompatActivity {
                 throw new Exception("unknown response");
             }
         }catch (Exception e){
-            Toast.makeText(this,getResources().getString(R.string.network_error),Toast.LENGTH_LONG);
+            //if there's no response(statuscode and responsebody is null ) or response is not correct(Json parsing error) show Toast
+            Toast.makeText(this,getResources().getString(R.string.network_error),Toast.LENGTH_LONG).show();
         }
 
     }
 
     private void showValidationError(ClientSideValidationResult[] results){
-        EditText userNameEditText = (EditText) findViewById(R.id.txtUserName_RegisterActivity);
-        EditText emailEditText = (EditText) findViewById(R.id.txtEmail_RegisterActivity);
 
         StringBuilder userNameSB=new StringBuilder();
         StringBuilder emailSB=new StringBuilder();

@@ -3,6 +3,8 @@ package DrupalForAndroidSDK;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
+import java.util.HashMap;
+
 import DrupalForAndroidSDK.DrupalServicesBase;
 
 /**
@@ -20,27 +22,28 @@ public class DrupalServicesNode extends DrupalServicesBase implements DrupalServ
     }
 
     @Override
-    public String[] create(BasicNameValuePair[] params) {
+    public HashMap<String,String> create(BasicNameValuePair[] params)throws Exception {
         return this.httpPostRequest(this.getURI(), params);
     }
 
     @Override
-    public String[] retrieve(int id) {
+    public HashMap<String,String> retrieve(int id)throws Exception {
         return this.httpGetRequest(this.getURI() + "/" + id);
     }
 
     @Override
-    public String[] update(int id, BasicNameValuePair[] params) {
+    public HashMap<String,String> update(int id, BasicNameValuePair[] params)throws Exception {
         return this.httpPutRequest(this.getURI() + "/" + id, params);
     }
 
     @Override
-    public String[] delete(int id) {
+    public HashMap<String,String> delete(int id) throws Exception{
         return this.httpDeleteRequest(this.getURI() + "/" + id);
     }
 
     @Override
-    public String[] index() {
+    public HashMap<String,String> index()throws Exception {
         return this.httpGetRequest(this.getURI());
     }
+
 }

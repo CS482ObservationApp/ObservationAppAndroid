@@ -12,8 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
 
-
-
         <!-- Splash Screen Activity, Main Activity -->
         <!-- Remember to set noHistory to true -->
         <activity
@@ -28,23 +26,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Newest Observations Activity -->
         <activity
             android:name=".NewestObservationsActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" >
         </activity>
-
         <activity
             android:name=".LoginActivity"
             android:noHistory="true" >
         </activity>
-
-        <activity android:name=".RegisterActivity"
-            android:noHistory="true">
+        <activity
+            android:name=".RegisterActivity"
+            android:noHistory="true" >
         </activity>
+        <activity android:name=".ResetPasswordActivity" >
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
 
+                <action android:name="android.intent.action.VIEW" />
+
+                <data android:scheme="com.package.reset_password" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ObservationDetailActivity" >
+        </activity>
     </application>
 
 </manifest>

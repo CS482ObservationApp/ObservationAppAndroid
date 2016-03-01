@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,23 +26,13 @@ public class DrupalAuthSession implements DrupalAuth {
 
     private String baseURI = "";
     private String endpoint = "";
-    private String username = "";
-    private String password = "";
     private String mSession = null;
     private String mToken = null;
-
-    public DrupalAuthSession(String username, String password)
-    {
-        this.username = username;
-        this.password = password;
-    }
 
     public void initAuth(String baseURI, String endpoint)
     {
         this.baseURI = baseURI;
         this.endpoint = endpoint;
-        if (!(username.isEmpty()||password.isEmpty()))
-            userLogin();
     }
 
     public String getSession()
@@ -54,49 +45,28 @@ public class DrupalAuthSession implements DrupalAuth {
         mSession = _session;
     }
 
-    private void userLogin()
+
+    private String getToken() throws Exception
     {
-        HttpClient httpClient   =   new DefaultHttpClient();
-        HttpPost httpPost       =   new HttpPost(this.baseURI + "/" + this.endpoint + "/user/login");
-
-        try{
-            List<NameValuePair> nameValuePairs  =   new ArrayList<NameValuePair>();
-            nameValuePairs.add( new BasicNameValuePair("username", this.username) );
-            nameValuePairs.add( new BasicNameValuePair("password", this.password) );
-            httpPost.setEntity( new UrlEncodedFormEntity(nameValuePairs));
-
-            //Execute HTTP post request
-            HttpResponse response = httpClient.execute(httpPost);
-            setSession( response.toString() );
-
-            Log.i("printing session: ", getSession().toString());
-            Log.v("CODE", httpPost.getRequestLine().toString() + " - " + getSession());
-
-        }catch(Exception e){
-            Log.e("HTTP ERROR", e.toString());
+        if(mToken==null||mToken.isEmpty())
+        {
+            setToken();
         }
-    }
-
-    private String getToken()
-    {
         return mToken;
     }
 
-    private void setToken()
+    private void setToken() throws Exception
     {
         HttpClient httpClient  = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(this.baseURI + "/services/session/token");
 
-        try {
-            HttpResponse token = httpClient.execute(httpGet);
-            mToken = token.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        HttpResponse token = httpClient.execute(httpGet);
+        mToken =  EntityUtils.toString(token.getEntity());
+
     }
 
     @Override
-    public <T extends HttpRequestBase> T initRequest(T request)
+    public <T extends HttpRequestBase> T initRequest(T request) throws Exception
     {
         //Refresh X-XSRF-Token before request
         setToken();

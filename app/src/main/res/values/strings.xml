@@ -6,7 +6,7 @@
     <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://www.cleverfinger.com.au/user-guide/">Term of Use</a></string>
 
     <!-- Drupal site services info-->
-    <string name="drupal_site_url">http://192.168.1.76/drupal7</string>
+    <string name="drupal_site_url">http://192.168.1.75/drupal7</string>
     <string name="drupal_server_endpoint">rest</string>
 
     <!-- Client side validation error message-->
@@ -23,8 +23,19 @@
     <string name="hint_password">Password</string>
     <string name="hint_password_confirm">Confirm Password</string>
     <string name="hint_username">User Name</string>
+    <string name="hint_reset_password">User name or email</string>
 
+    <string name="reset_password_link_loginActivity">Try <a href="com.package.reset_password://">Reset Password</a></string>
     <!-- Register Activity-->
     <string name="register_successful">Your registration request is sent, please wait for administrator\'s approval.\n An activation email with your initial password would be sent to your email after approval.</string>
     <string name="network_error">Network error,try again later</string>
+
+    <!-- Reset Password Activity-->
+    <string name="reset_password_restActivity">Please enter your user name or email to reset password:</string>
+    <string name="non_valid_name_email">The input is not a valid user name or email</string>
+    <string name="reset_successful">An email is sent to your email.</string>
+
+    <!--Notification-->
+    <string name="sessionExpiredNotificationTitle">Session Expired</string>
+    <string name="sessionExpiredNotificationText">Click to login</string>
 </resources>

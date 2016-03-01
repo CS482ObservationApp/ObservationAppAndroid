@@ -25,6 +25,7 @@ public class DrupalAuthOAuth implements DrupalAuth {
         this.tokenSecret = tokenSecret;
     }
 
+
     @Override
     public void initAuth(String baseURI, String endpoint)
     {
