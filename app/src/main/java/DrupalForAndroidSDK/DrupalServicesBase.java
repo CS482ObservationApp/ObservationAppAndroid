@@ -144,8 +144,8 @@ public class DrupalServicesBase {
             if (resEntity != null) {
                 String responseBody = EntityUtils.toString(resEntity);
                 HashMap<String, String> responseMap = new HashMap<>();
-                responseMap.put(DrupalServicesResponseConst.STATUSCODE, String.valueOf(response.getStatusLine().getStatusCode()));
-                responseMap.put(DrupalServicesResponseConst.RESPONSEBODY, responseBody);
+                responseMap.put(DrupalServicesResponseConst.LOGIN_STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
+                responseMap.put(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY, responseBody);
 
 //                HttpGet httpGet = new HttpGet(this.baseURI + "/services/session/token");
 //                try {
@@ -165,7 +165,7 @@ public class DrupalServicesBase {
                 return responseMap;
             }
             HashMap<String, String> responseMap = new HashMap<>();
-            responseMap.put(DrupalServicesResponseConst.STATUSCODE, String.valueOf(response.getStatusLine().getStatusCode()));
+            responseMap.put(DrupalServicesResponseConst.LOGIN_STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
 
 
 

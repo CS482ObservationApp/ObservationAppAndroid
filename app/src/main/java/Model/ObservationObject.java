@@ -18,6 +18,7 @@ public class ObservationObject implements Parcelable{
     public String altitude="";
     public String address="";
     public String date="";
+    public String author="";
 
     public static final Parcelable.Creator<ObservationObject> CREATOR = new Creator<ObservationObject>() {
 
@@ -47,10 +48,11 @@ public class ObservationObject implements Parcelable{
         altitude = in.readString();
         address = in.readString();
         date=in.readString();
+        author=in.readString();
     }
 
     public ObservationObject(){}
-    public ObservationObject(String nid,String title,String body,String kingdom,String photoServerUri,String photoLocalUri,String audioUri,String lattitude,String altitude,String address,String date){
+    public ObservationObject(String nid,String title,String body,String kingdom,String photoServerUri,String photoLocalUri,String audioUri,String lattitude,String altitude,String address,String date,String author){
         this.nid=nid;
         this.title=title;
         this.body=body;
@@ -62,6 +64,7 @@ public class ObservationObject implements Parcelable{
         this.altitude=altitude;
         this.address=address;
         this.date=date;
+        this.author=author;
     }
 
     @Override
@@ -83,5 +86,6 @@ public class ObservationObject implements Parcelable{
         dest.writeString(altitude);
         dest.writeString(address);
         dest.writeString(date);
+        dest.writeString(author);
     }
 }

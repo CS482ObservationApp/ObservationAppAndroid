@@ -50,6 +50,12 @@
         </activity>
         <activity android:name=".ObservationDetailActivity" >
         </activity>
+        <activity android:name=".UploadActivity" >
+        </activity>
+        <activity android:name=".UserProfileActivity" >
+        </activity>
+        <activity android:name=".SearchObservationActivity" >
+        </activity>
     </application>
 
 </manifest>

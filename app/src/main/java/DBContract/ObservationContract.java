@@ -13,8 +13,8 @@ public final class ObservationContract {
         public static final String COLUMN_NAME_NODE_ID = "nid";
         public static final String COLUMN_NAME_TITLE = "title";
         public static final String COLUMN_NAME_PHOTO_SERVER_URI = "photoServerUri";
-        public static final String COLUMN_NAME_ADDRESS = "address";
         public static final String COLUMN_NAME_DATE= "date";
         public static final String COLUMN_NAME_PHOTO_LOCAL_URI= "photoLocalUri";
+        public static final String COLUMN_NAME_AUTHOR= "author";
     }
 }

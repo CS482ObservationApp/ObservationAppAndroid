@@ -13,6 +13,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
@@ -40,13 +41,18 @@ public class RegisterActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
-
+        addLinkToText();
+        setCheckBoxOnCheck();
+        setRegisterBtnOnClick();
+    }
+    private void addLinkToText(){
         //Add link into EditText
         TextView useTermTextView=(TextView)findViewById(R.id.txtAgreeTerm_RegisterActivity);
         if (useTermTextView != null) {
             useTermTextView.setMovementMethod(LinkMovementMethod.getInstance()); //"http://stackoverflow.com/questions/2734270/how-do-i-make-links-in-a-EditText-clickable"
         }
+    }
+    private void setCheckBoxOnCheck(){
 
         //CheckBox onchecked
         CheckBox agreeTermChkbox = (CheckBox) findViewById(R.id.chkbxAgreeTerm_RegisterActivity);
@@ -63,7 +69,8 @@ public class RegisterActivity extends AppCompatActivity {
                 }
             }
         });
-
+    }
+    private void setRegisterBtnOnClick(){
         //Register Button onclick
         ImageButton registerBtn=(ImageButton)findViewById(R.id.imgBtnRegister_RegisterActivity);
         registerBtn.setOnClickListener(new View.OnClickListener() {
@@ -79,6 +86,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+
     private void validateAndRegister(){
         ArrayList<ClientSideValidationResult> clientSideValidationResults= validateFormOnClient();
 
@@ -86,7 +94,7 @@ public class RegisterActivity extends AppCompatActivity {
         if (clientSideValidationResults.get(0)==ClientSideValidationResult.VALIDATION_PASS){
             postRegisterInfo();
         }else {
-            showValidationError(clientSideValidationResults.toArray(new ClientSideValidationResult[clientSideValidationResults.size()]));
+            showClientValidationError(clientSideValidationResults.toArray(new ClientSideValidationResult[clientSideValidationResults.size()]));
         }
     }
     private ArrayList<ClientSideValidationResult> validateFormOnClient(){
@@ -144,23 +152,14 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void handleRequestResponse(HashMap<String,String > response){
-        String statusCode =response.get(DrupalServicesResponseConst.STATUSCODE);
-        String responseStr=response.get(DrupalServicesResponseConst.RESPONSEBODY);
+        String statusCode =response.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE);
+        String responseStr=response.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY);
         try{
             if(statusCode.equals(HTTPConst.HTTP_OK_200)){
                 TextView msgTextView = (TextView)findViewById(R.id.txtMessage_RegisterActivity);
                 msgTextView.setText(getResources().getString(R.string.register_successful));
             }else if (statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
-                JSONObject responseJsonObject=new JSONObject(responseStr);
-                JSONObject errorJsonObject=responseJsonObject.getJSONObject("form_errors");
-                String userNameError=errorJsonObject.getString("name");
-                String emailError=errorJsonObject.getString("mail");
-                if (!userNameError.isEmpty()){
-                    ((EditText)findViewById(R.id.txtUserName_RegisterActivity)).setError(Jsoup.parse(userNameError).text());
-                }
-                if (!emailError.isEmpty()){
-                    ((EditText)findViewById(R.id.txtEmail_RegisterActivity)).setError(Jsoup.parse(emailError).text());
-                }
+                showServerValidationError(responseStr);
             }else{
                 throw new Exception("unknown response");
             }
@@ -171,7 +170,20 @@ public class RegisterActivity extends AppCompatActivity {
 
     }
 
-    private void showValidationError(ClientSideValidationResult[] results){
+    private void showServerValidationError(String responseStr) throws JSONException {
+        JSONObject responseJsonObject = new JSONObject(responseStr);
+        JSONObject errorJsonObject = responseJsonObject.getJSONObject("form_errors");
+        String userNameError = errorJsonObject.getString("name");
+        String emailError = errorJsonObject.getString("mail");
+        if (!userNameError.isEmpty()) {
+            ((EditText) findViewById(R.id.txtUserName_RegisterActivity)).setError(Jsoup.parse(userNameError).text());
+        }
+        if (!emailError.isEmpty()) {
+            ((EditText) findViewById(R.id.txtEmail_RegisterActivity)).setError(Jsoup.parse(emailError).text());
+        }
+    }
+
+    private void showClientValidationError(ClientSideValidationResult[] results){
 
         StringBuilder userNameSB=new StringBuilder();
         StringBuilder emailSB=new StringBuilder();

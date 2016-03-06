@@ -53,15 +53,15 @@ public class NewestObservationAdapter extends BaseAdapter {
         imageView.setMinimumHeight(350);
         imageView.setMinimumHeight(350);
         TextView titleTextView=(TextView)rowView.findViewById(R.id.newObsItemTitle);
-        TextView kingdomTextView=(TextView)rowView.findViewById(R.id.newObsItemAddress);
+        TextView authorTextView=(TextView)rowView.findViewById(R.id.newObsItemDateTime);
 
         File imgFile = new File(observationObjects.get(position).photoLocalUri);
         if (imgFile.exists())
-            imageView.setImageURI(Uri.parse( observationObjects.get(position).photoLocalUri));
+            imageView.setImageURI(Uri.parse(observationObjects.get(position).photoLocalUri));
         else imageView.setImageResource(R.color.white);
 
         titleTextView.setText( observationObjects.get(position).title);
-        kingdomTextView.setText( observationObjects.get(position).address);
+        authorTextView.setText( observationObjects.get(position).date);
         return rowView;
     }
 }

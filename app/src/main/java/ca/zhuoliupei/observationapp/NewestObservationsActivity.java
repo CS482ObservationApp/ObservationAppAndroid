@@ -6,17 +6,11 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
-import android.provider.ContactsContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
@@ -35,6 +29,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import org.apache.http.message.BasicNameValuePair;
@@ -42,32 +37,29 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.w3c.dom.ProcessingInstruction;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
 import Adapter.NewestObservationAdapter;
+import Adapter.SlidingMenuAdapter;
 import Const.AppConst;
 import Const.DrupalServicesResponseConst;
 import Const.HTTPConst;
 import Const.ObservationModelConst;
+import Const.SharedPreferencesConst;
 import DBContract.ObservationContract;
 import DBHelper.NewestObservationDBHelper;
 import DrupalForAndroidSDK.DrupalAuthSession;
-import DrupalForAndroidSDK.DrupalServicesNode;
 import DrupalForAndroidSDK.DrupalServicesUser;
 import DrupalForAndroidSDK.DrupalServicesView;
+import HelperClass.DownLoadUtil;
 import HelperClass.NewestObservationCacheManager;
+import HelperClass.PreferenceUtil;
 import Model.ObservationObject;
+import Model.SlidingMenuItem;
 
 public class NewestObservationsActivity extends AppCompatActivity {
 
@@ -85,32 +77,55 @@ public class NewestObservationsActivity extends AppCompatActivity {
     private boolean flag_loading=false;
     private DetectPictureExistTask detectPictureExistTask;
     private DownloadObsservationObjectTask downloadObsservationObjectTask;
+    private CacheObservationObjectTask cacheObservationObjectTask;
+    private RefreshGVDatasetTask refreshGVDatasetTask;
+    private ValidateSessionTask validateSessionTask;
+    private ImageView refreshImgView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initializeViewAndVariables();
         setFloatingButtonOnClick();
-        setContentGVOnClick();
-        validateSession();
-        //Init view
-        Intent intent = getIntent();
-        Parcelable[] parcelables = intent.getParcelableArrayExtra("OBSERVATION_OBJECTS");
-        InitView(parcelables);
-        //Begin to download and refresh
-        HashMap<String, String> sessionInfoMap = new HashMap<>();
-        sessionInfoMap.put(DrupalServicesResponseConst.COOKIE, cookie);
-        sessionInfoMap.put("Action",Action.REFRESH.toString());
-        downloadObsservationObjectTask=new DownloadObsservationObjectTask(this);
-        detectPictureExistTask =new DetectPictureExistTask(this);
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
-            downloadObsservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
-            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,sessionInfoMap);
-        }else {
-            downloadObsservationObjectTask.execute(sessionInfoMap);
-            detectPictureExistTask.execute(sessionInfoMap);
-        }
+        setContentGVOnScroll();
+        initializeContentView();
+        initializeSlidingMenu();
+
+        beginValidateSessionTask();
+        beginDownloadObservationAsynctask();
+        beginDetectPictureAsyncTask();
     }
 
+    private void initializeSlidingMenu(){
+        //TODO:
+        ListView slidingMenuList=(ListView)findViewById(R.id.sliding_menu);
+        ArrayList<SlidingMenuItem> items=new ArrayList<>();
+
+        if (PreferenceUtil.getCurrentUserStatus(this)) {
+            SlidingMenuItem accountItem = new SlidingMenuItem(SlidingMenuItem.ItemType.USER_ACCOUNT_ITEM);
+            accountItem.username = PreferenceUtil.getCurrentUser(this);
+            accountItem.location = PreferenceUtil.getCurrentUserLocation1(this);
+            accountItem.imgFileLocation=PreferenceUtil.getCurrentUserPictureLocalUri(this);
+            items.add(accountItem);
+        }else {
+            SlidingMenuItem loginItem = new SlidingMenuItem(SlidingMenuItem.ItemType.LOGIN_ITEM);
+            items.add(loginItem);
+        }
+        SlidingMenuItem uploadItem=new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
+        uploadItem.text="Upload";
+        SlidingMenuItem searchItem=new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
+        searchItem.text="Search";
+        SlidingMenuItem userGuideItem=new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
+        userGuideItem.text="User Guide";
+
+        items.add(uploadItem);
+        items.add(searchItem);
+        items.add(userGuideItem);
+
+        SlidingMenuAdapter adapter=new SlidingMenuAdapter(items,this);
+
+        slidingMenuList.setAdapter(adapter);
+    }
     private void initializeViewAndVariables(){
         setContentView(R.layout.activity_newest_observations);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -128,7 +143,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
             }
         });
     }
-    private void setContentGVOnClick(){
+    private void setContentGVOnScroll(){
         // Load data and append to Gridview when scroll to bottom
         final GridView contentGV=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
 
@@ -146,7 +161,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
                     if (!flag_loading) {
                         flag_loading = true;
                         HashMap<String, String> sessionInfoMap = new HashMap<>();
-                        sessionInfoMap.put(DrupalServicesResponseConst.COOKIE, cookie);
+                        sessionInfoMap.put(DrupalServicesResponseConst.LOGIN_COOKIE, cookie);
                         sessionInfoMap.put("Action", Action.APPEND.toString());
                         NewestObservationAdapter adapter = (NewestObservationAdapter) view.getAdapter();
                         ObservationObject lastobject = (ObservationObject) adapter.getItem(adapter.getCount() - 1);
@@ -157,45 +172,45 @@ public class NewestObservationsActivity extends AppCompatActivity {
             }
         });
     }
-    private void validateSession(){
+    private void beginValidateSessionTask(){
         //Start validating if the session is expired or not
-        cookie = PreferenceManager.getDefaultSharedPreferences(this).getString(DrupalServicesResponseConst.COOKIE, "");
+        cookie = PreferenceUtil.getCookie(this);
         if (!cookie.isEmpty()) {
             HashMap<String, String> sessionInfoMap = new HashMap<>();
-            sessionInfoMap.put(DrupalServicesResponseConst.COOKIE, cookie);
-            new ValidateSessionTask(this).execute(sessionInfoMap);
+            sessionInfoMap.put(DrupalServicesResponseConst.LOGIN_COOKIE, cookie);
+            validateSessionTask=new ValidateSessionTask(this);
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                validateSessionTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,sessionInfoMap);
+            }else {
+                validateSessionTask.execute(sessionInfoMap);
+            }
         }
     }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private void beginDownloadObservationAsynctask(){
+        HashMap<String, String> sessionInfoMap = new HashMap<>();
+        sessionInfoMap.put(DrupalServicesResponseConst.LOGIN_COOKIE, cookie);
+        sessionInfoMap.put("Action",Action.REFRESH.toString());
+        downloadObsservationObjectTask=new DownloadObsservationObjectTask(this);
+        detectPictureExistTask =new DetectPictureExistTask(this);
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+            downloadObsservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+        }else {
+            downloadObsservationObjectTask.execute(sessionInfoMap);
         }
-
-        return super.onOptionsItemSelected(item);
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_newest_observations, menu);
-        return true;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        downloadObsservationObjectTask.cancel(true);
-        detectPictureExistTask.cancel(true);
-    }
-
-    private void InitView(Parcelable[] parcelables){
+    private void beginDetectPictureAsyncTask(){
+        HashMap<String, String> sessionInfoMap = new HashMap<>();
+        sessionInfoMap.put(DrupalServicesResponseConst.LOGIN_COOKIE, cookie);
+        sessionInfoMap.put("Action", Action.REFRESH.toString());
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+        }else {
+            detectPictureExistTask.execute(sessionInfoMap);
+        }}
+    private void initializeContentView(){
+        //Init view
+        Intent intent = getIntent();
+        Parcelable[] parcelables = intent.getParcelableArrayExtra("OBSERVATION_OBJECTS");
         if (parcelables!=null&&parcelables.length>0) {
             //Fill gridview content
             for (int i = 0; i < parcelables.length; i++) {
@@ -221,11 +236,11 @@ public class NewestObservationsActivity extends AppCompatActivity {
             gridview.setVisibility(View.INVISIBLE);
 
             //Show refreshing icon
-            ImageView refreshImgView=new ImageView(this);
+            refreshImgView=new ImageView(this);
             refreshImgView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             refreshImgView.setImageResource(R.drawable.refresh_icon);
-            refreshImgView.setId(refreshIconID);
-            ((LinearLayout)findViewById(R.id.root_LV_NewestObservationActivity)).addView(refreshImgView);
+            //refreshImgView.setId(refreshIconID);
+            ((LinearLayout) findViewById(R.id.root_LV_NewestObservationActivity)).addView(refreshImgView);
             RotateAnimation rotateAnimation = new RotateAnimation(0, 359, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             rotateAnimation.setRepeatCount(Animation.INFINITE);
             rotateAnimation.setRepeatMode(Animation.RESTART);
@@ -234,30 +249,64 @@ public class NewestObservationsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-    private ObservationObject[] FetchInfoFromResponse(HashMap<String, String> responseMap) {
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_newest_observations, menu);
+        return true;
+    }
+
+    /*CacheObservationObjectTask is not canceled because it could complete in a short time
+    * The same as RefreshGVDatasetTask*/
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        downloadObsservationObjectTask.cancel(true);
+        detectPictureExistTask.cancel(true);
+        validateSessionTask.cancel(true);
+    }
+
+
+    private ObservationObject[] getObservationObjectsFromResponse(HashMap<String, String> responseMap) {
         // Fetch info from json response, store the image url and other info into each observation objects
-        if (responseMap.get(DrupalServicesResponseConst.STATUSCODE).equals(HTTPConst.HTTP_OK_200)) {
+        if (responseMap.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
             try{
-                JSONArray responseJsonArray=new JSONArray(responseMap.get(DrupalServicesResponseConst.RESPONSEBODY));
+                JSONArray responseJsonArray=new JSONArray(responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
                 ObservationObject[] observationObjects=new ObservationObject[responseJsonArray.length()];
                 for (int i=0;i<responseJsonArray.length();i++){
                     JSONObject observationJsonObject=responseJsonArray.getJSONObject(i);
-                    JSONObject addressJsonObject=observationJsonObject.getJSONObject(ObservationModelConst.ADDRESS);
 
+                    String photoUri="";
+                    try{
+                        Document photoHtml=Jsoup.parseBodyFragment(observationJsonObject.getString(ObservationModelConst.PHOTO));
+                        photoUri=photoHtml.body().getElementsByTag("img").attr("src") ;
+                    }catch (Exception e){}
                     String title=observationJsonObject.getString(ObservationModelConst.TITLE);
-                    String address=addressJsonObject.getString(ObservationModelConst.COUNTRY)+","+addressJsonObject.getString(ObservationModelConst.ADMINISTRATIVE_AREA);
-                    Document photoHtml=Jsoup.parseBodyFragment(observationJsonObject.getString(ObservationModelConst.PHOTO));
-                    String photoUri=photoHtml.body().getElementsByTag("img").attr("src") ;
                     String date=observationJsonObject.getString(ObservationModelConst.OBSERVATION_DATE);
                     String nid=observationJsonObject.getString(ObservationModelConst.NID);
+                    String author=observationJsonObject.getString(ObservationModelConst.AUTHOR_NAME);
 
                     ObservationObject object=new ObservationObject();
                     object.title=title;
-                    object.address=address;
                     object.photoServerUri =photoUri;
                     object.date=date;
                     object.nid=nid;
+                    object.author=author;
                     observationObjects[i]=object;
                 }
                 return observationObjects;
@@ -288,7 +337,11 @@ public class NewestObservationsActivity extends AppCompatActivity {
         return new BasicNameValuePair[0];
     }
 
+/*****************************        AsyncTasks         *************************************************/
 
+    /* This task validate if the session expired
+    *  If yes, show notification in notification bar
+    *  and change the SessionExpired in Shared Preferences to true*/
     private class ValidateSessionTask extends AsyncTask<HashMap<String, String>, Void, HashMap<String, String>> {
         Activity context;
         public ValidateSessionTask(Activity context){
@@ -300,7 +353,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
             DrupalServicesUser serviceUser = new DrupalServicesUser(getText(R.string.drupal_site_url).toString(), getText(R.string.drupal_server_endpoint).toString());
 
             //If the user login before,his/her info would be in Shared Preferences, otherwise return false
-            String cookie = maps[0].get(DrupalServicesResponseConst.COOKIE);
+            String cookie = maps[0].get(DrupalServicesResponseConst.LOGIN_COOKIE);
             authSession.setSession(cookie);
             serviceUser.setAuth(authSession);
             try {
@@ -314,11 +367,11 @@ public class NewestObservationsActivity extends AppCompatActivity {
         protected void onPostExecute(HashMap<String, String> sessionInfoMap) {
             if (!sessionInfoMap.isEmpty()) {
                 String rolesStr = "";
-                if (sessionInfoMap.get(DrupalServicesResponseConst.STATUSCODE).equals(HTTPConst.HTTP_OK_200)) {
+                if (sessionInfoMap.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
                     try {
-                        JSONObject responseJsonObject = new JSONObject(sessionInfoMap.get(DrupalServicesResponseConst.RESPONSEBODY));
-                        JSONObject userJsonObject = responseJsonObject.getJSONObject(DrupalServicesResponseConst.USER);
-                        JSONObject rolesJsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.ROLES);
+                        JSONObject responseJsonObject = new JSONObject(sessionInfoMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
+                        JSONObject userJsonObject = responseJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_USER);
+                        JSONObject rolesJsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_ROLES);
 
                         Iterator<String> keys = rolesJsonObject.keys();
 
@@ -331,8 +384,8 @@ public class NewestObservationsActivity extends AppCompatActivity {
                     }
 
                     //if it's anonymous, session expired
-                    if (!rolesStr.isEmpty() && rolesStr.contains(DrupalServicesResponseConst.ROLE_ANONYMOUS)) {
-                        PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(AppConst.SESSION_EXPIRED, true);
+                    if (!rolesStr.isEmpty() && rolesStr.contains(DrupalServicesResponseConst.LOGIN_ROLE_ANONYMOUS)) {
+                        PreferenceUtil.saveBoolean(context, SharedPreferencesConst.K_SESSION_EXPIRED, true);
                         //TODO:Show message in notification bar
                         NotificationCompat.Builder mBuilder=
                                         new NotificationCompat.Builder(context) .
@@ -354,7 +407,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
                         NotificationManager notificationManager=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
                         notificationManager.notify(AppConst.SESSION_EXPIRED_NOTIFICATION_ID,mBuilder.build());
                     } else {
-                        PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(AppConst.SESSION_EXPIRED, false);
+                       PreferenceUtil.saveBoolean(context, SharedPreferencesConst.K_SESSION_EXPIRED, false);
                     }
                 } else {
                     Toast.makeText(context, getText(R.string.network_error).toString(), Toast.LENGTH_LONG).show();
@@ -365,6 +418,13 @@ public class NewestObservationsActivity extends AppCompatActivity {
         }
     }
 
+
+    /* These 3 classes are called in a consecutive way:
+    * DonwloadObservationObjectTask--->CacheObservationObjectTask--->RefreshGVDatasetTask
+    * First fetch observations in Json and construct an array of Observation Objects
+    * Then pass it to Cache Manager to cache them to database
+    * Lastly fetch from database to refresh the gridview (text only without picture)
+    */
     private class DownloadObsservationObjectTask extends AsyncTask<HashMap<String, String>, Void,  ObservationObject[]> {
         Activity context;
         String action;
@@ -379,7 +439,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
             action=params[0].get("Action");
 
             //Get cookie
-            String cookie = params[0].get(DrupalServicesResponseConst.COOKIE);
+            String cookie = params[0].get(DrupalServicesResponseConst.LOGIN_COOKIE);
             authSession.setSession(cookie);
             newestObservationView.setAuth(authSession);
             //Get date parameter
@@ -390,7 +450,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
             try {
                 HashMap<String, String> responseMap = newestObservationView.retrive(DrupalServicesView.View.NEWEST_OBSERVATION, pairs);
-                return FetchInfoFromResponse(responseMap);
+                return getObservationObjectsFromResponse(responseMap);
             } catch (Exception e) {
                 return new ObservationObject[0];
             }
@@ -398,14 +458,14 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ObservationObject[] observationObjects) {
-            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
-                new CacheObservationObjectTask(context, action).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,observationObjects);
+            cacheObservationObjectTask=new CacheObservationObjectTask(context, action);
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                cacheObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,observationObjects);
             }else {
-                new CacheObservationObjectTask(context, action).execute(observationObjects);
+                cacheObservationObjectTask.execute(observationObjects);
             }
         }
     }
-
     private class CacheObservationObjectTask extends AsyncTask<ObservationObject[],Void,Void>{
         Activity context;
         String action;
@@ -426,14 +486,14 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
-                new RefreshGVDatasetTask(context,action).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            refreshGVDatasetTask=new RefreshGVDatasetTask(context,action);
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                refreshGVDatasetTask .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }else {
-                new RefreshGVDatasetTask(context,action).execute();
+                refreshGVDatasetTask.execute();
             }
         }
     }
-
     private class RefreshGVDatasetTask extends AsyncTask<Void,Void,ArrayList<ObservationObject>>{
         Activity context;
         String action;
@@ -460,6 +520,9 @@ public class NewestObservationsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(ArrayList<ObservationObject> gvDataset) {
             GridView contentGV = (GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity);
+            if (contentGV==null)
+                return;
+
             NewestObservationAdapter adapter = (NewestObservationAdapter) contentGV.getAdapter();
             if (adapter == null) {
                 adapter = new NewestObservationAdapter(gvDataset, context);
@@ -469,18 +532,18 @@ public class NewestObservationsActivity extends AppCompatActivity {
             if (itemAmountChanged)
                 adapter.notifyDataSetChanged();
             flag_loading = false;
-            LinearLayout rootLL=(LinearLayout)findViewById(R.id.root_LV_NewestObservationActivity);
-            ImageView refreshIV=(ImageView)findViewById(refreshIconID);
-            if (refreshIV!=null){
-                if (refreshIV.getAnimation()!=null)
-                    refreshIV.getAnimation().cancel();
-
-                refreshIV.setVisibility(View.INVISIBLE);
+            if (refreshImgView!=null){
+                if (refreshImgView.getAnimation()!=null)
+                    refreshImgView.clearAnimation();
+                refreshImgView.setVisibility(View.GONE);
             }
         }
     }
 
 
+    /* This task runs in the back ground until the activity destroyed
+    *  It scans through the visible items in GridView to see if the local picture file exits
+    *  If not, download the file, and update the location in the database,refresh Gridview adapter*/
     private class DetectPictureExistTask extends AsyncTask<HashMap<String ,String>,Void,Void>{
         Activity context;
         ArrayList<ObservationObject> visibleObjects;
@@ -504,7 +567,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         protected Void doInBackground(HashMap<String ,String>... params) {
             while (!this.isCancelled()) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (Exception e) {
                     Log.e("DETECT_LACK_PICTURE","Detect Picture Task Sleep interrupted");
                 }
@@ -522,19 +585,14 @@ public class NewestObservationsActivity extends AppCompatActivity {
                 for (ObservationObject object:visibleObjects) {
                     if (object.photoLocalUri==null||object.photoLocalUri.isEmpty()||!new File(object.photoLocalUri).exists()){
                         String serverUri=object.photoServerUri;
+                        if (serverUri==null||serverUri.isEmpty())
+                            continue;
                         String nid=object.nid;
                         String filename=new File(context.getFilesDir(), System.currentTimeMillis()+nid).getPath();
+
                         //DOWNLOAD IMAGE TO LOCAL
-                        boolean downloadSucceed=false;
-                        try {
-                            URL url = new URL(serverUri);
-                            Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                            FileOutputStream out = new FileOutputStream(filename);
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                            downloadSucceed=true;
-                        }catch (Exception e){
-                            Log.e("IMAGE_DOWNLOAD","Cannot download image");
-                        }
+                        boolean downloadSucceed= DownLoadUtil.downloadImage(serverUri,filename);
+
                         if (downloadSucceed) {
                             //UPDATE DATABASE
                             ContentValues contentValues = new ContentValues();
@@ -556,90 +614,4 @@ public class NewestObservationsActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
         }
     }
-
-    private class ScanChangeTask extends AsyncTask<Void,Void,Void>{
-        Activity context;
-        String action;
-        public ScanChangeTask(Activity context,String action){
-            this.context=context;
-            this.action=action;
-        }
-        @Override
-        protected Void doInBackground(Void... params) {
-            NewestObservationDBHelper helper=new NewestObservationDBHelper(context);
-            SQLiteDatabase readableDatabase=helper.getReadableDatabase();
-            SQLiteDatabase writableDatabase=helper.getWritableDatabase();
-
-            String sortOrder = ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE + " DESC";
-
-            //Get exist item count
-            Cursor cursor= readableDatabase.query(
-                    ObservationContract.NewestObservationEntry.TABLE_NAME,  // The table to query
-                    null,                                     // The columns to return
-                    null,                                     // The columns for the WHERE clause
-                    null,                                     // The values for the WHERE clause
-                    null,                                     // don't group the rows
-                    null,                                     // don't filter by row groups
-                    sortOrder                                 // The sort order
-            );
-            //If a node is deleted in sever,delete it in local DB too
-            cursor.moveToFirst();
-            DrupalServicesNode drupalServicesNode=new DrupalServicesNode(context.getText(R.string.drupal_site_url).toString(),context.getText(R.string.drupal_server_endpoint).toString());
-            drupalServicesNode.setAuth(new DrupalAuthSession());
-            while (!cursor.isAfterLast()){
-                String statusCode;
-                int nid=Integer.parseInt(cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID)));
-                try {
-                    //retrieve the node info using the cursor's node id
-                    statusCode=drupalServicesNode.retrieve(nid).get(DrupalServicesResponseConst.STATUSCODE);
-                }catch (Exception e){
-                    cursor.moveToNext();
-                    continue;
-                }
-                if (!statusCode.equals("200")){
-                    String whereCause= ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID+"="+nid;
-                    writableDatabase.delete(ObservationContract.NewestObservationEntry.TABLE_NAME,whereCause,null);
-                }
-                cursor.moveToNext();
-            }
-            return null;
-        }
-    }
-
-    private class DownloadImageForObjectTask extends AsyncTask<ObservationObject,Void,Void>{
-        Activity context;
-        NewestObservationDBHelper dbHelper;
-        SQLiteDatabase writableDatabase;
-        public DownloadImageForObjectTask(Activity context){
-            this.context=context;
-            dbHelper=new NewestObservationDBHelper(context);
-            writableDatabase= dbHelper.getWritableDatabase();
-        }
-        @Override
-        protected Void doInBackground(ObservationObject... params) {
-            ObservationObject observationObject=params[0];
-            String serverUri=observationObject.photoServerUri;
-            String nid=observationObject.nid;
-            String filename=new File(cacheFolder, System.currentTimeMillis()+nid).getPath();
-            //TODO:DOWNLOAD IMAGE TO LOCAL
-            try {
-                URL url = new URL(serverUri);
-                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                FileOutputStream out = new FileOutputStream(filename);
-                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            }catch (Exception e){Log.e("IMAGE_DOWNLOAD","Cannot download image");}
-            //TODO:UPDATE DATABASE
-            ContentValues contentValues=new ContentValues();
-            contentValues.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI, filename);
-            String whereCause= ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID+" = "+nid;
-            writableDatabase.update(ObservationContract.NewestObservationEntry.TABLE_NAME,contentValues,whereCause,null);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            ( (NewestObservationAdapter)((GridView)context.findViewById(R.id.content_gridview_NewestObsrvationActivity)).getAdapter()).notifyDataSetChanged();
-        }
-    }
-
 }

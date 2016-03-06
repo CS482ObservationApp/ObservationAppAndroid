@@ -6,8 +6,8 @@
     <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://www.cleverfinger.com.au/user-guide/">Term of Use</a></string>
 
     <!-- Drupal site services info-->
-    <string name="drupal_site_url">http://192.168.1.75/drupal7</string>
-    <string name="drupal_server_endpoint">rest</string>
+    <string name="drupal_site_url">http://137.149.157.10/cs482</string>
+    <string name="drupal_server_endpoint">mobile-api</string>
 
     <!-- Client side validation error message-->
     <string name="field_empty_error">This field cannot be empty</string>
@@ -38,4 +38,28 @@
     <!--Notification-->
     <string name="sessionExpiredNotificationTitle">Session Expired</string>
     <string name="sessionExpiredNotificationText">Click to login</string>
+
+    <!-- Sliding Menu-->
+    <string name="login_SlidingMenu">Login</string>
+
+    <!-- Upload Activities-->
+    <string name="category_uploadActivity">Category</string>
+    <string name="name_uploadActivity">Name</string>
+    <string name="picture_Description_uploadActivity">Picture&amp;Description</string>
+    <string name="sound_uploadActivity">Sound</string>
+    <string name="date_time_uploadActivity">Date&amp;Time</string>
+    <string name="location_uploadActivity">Location</string>
+    <string name="hint_name_uploadActivity">Write a name here&#8230;.</string>
+    <string name="hint_description_uploadActivity">Write a description here&#8230;</string>
+    <string name="hint_location_uploadActivity">Add a location</string>
+    <string name="image_description_uploadActivity">Upload an image</string>
+
+    <!-- User Profile Activity-->
+    <string name="my_observations_userProfileActivity">My Observations</string>
+    <string name="profile_photo_userProfileActivity">Profile Photo</string>
+    <string name="user_name_userProfileActivity">User Name</string>
+    <string name="email_userProfileActivity">Email</string>
+    <string name="address1_userProfileActivity">My Address 1</string>
+    <string name="address2_userProfileActivity">My Address 2</string>
+
 </resources>

@@ -22,7 +22,7 @@ public class NewestObservationDBHelper extends SQLiteOpenHelper {
                     NewestObservationEntry.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                     NewestObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI + TEXT_TYPE + COMMA_SEP +
                     NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI + TEXT_TYPE + COMMA_SEP +
-                    NewestObservationEntry.COLUMN_NAME_ADDRESS + TEXT_TYPE +COMMA_SEP+
+                    NewestObservationEntry.COLUMN_NAME_AUTHOR + TEXT_TYPE +COMMA_SEP+
                     NewestObservationEntry.COLUMN_NAME_DATE+ TEXT_TYPE +
             " )";
     private static final String SQL_DELETE_ENTRIES =

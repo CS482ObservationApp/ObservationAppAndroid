@@ -18,8 +18,8 @@ public class DrupalServicesView extends DrupalServicesBase  {
 
     public HashMap<String,String> retrive(View view,BasicNameValuePair... params) throws Exception{
         switch (view){
-            case OBSERVATION_SEARCH: setResource("observation-search");break;
-            case NEWEST_OBSERVATION: setResource("newest-observations");break;
+            case OBSERVATION_SEARCH: setResource("observation-search-mobile");break;
+            case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
         }
         return httpGetRequest(getURI(),params);
     }

@@ -60,9 +60,12 @@ public class DrupalAuthSession implements DrupalAuth {
         HttpClient httpClient  = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(this.baseURI + "/services/session/token");
 
+        String cookie=getSession();
+        if (cookie!=null) {
+            httpGet.setHeader("Cookie",cookie );
+        }
         HttpResponse token = httpClient.execute(httpGet);
         mToken =  EntityUtils.toString(token.getEntity());
-
     }
 
     @Override

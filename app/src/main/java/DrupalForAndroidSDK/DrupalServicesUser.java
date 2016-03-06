@@ -75,29 +75,3 @@ public class DrupalServicesUser extends DrupalServicesBase{
 }
 
 
-//        if (responseHashHashMap.get(DrupalServicesBase.STATUSCODE).equals("200")) {
-//            JSONObject responseJsonObject = new JSONObject(responseHashHashMap.get(DrupalServicesBase.RESPONSEBODY));
-//            JSONObject userJsonObject = responseJsonObject.getJSONObject("user");
-//            JSONObject rolesJsonObject = userJsonObject.getJSONObject(ROLES);
-//
-//            String sessionid = responseJsonObject.getString(SESSIONID);
-//            String sessionname = responseJsonObject.getString(SESSIONNAME);
-//            String userid = userJsonObject.getString(USERID);
-//            String rolesStr = "";
-//            HashMap<String, String> userInfoMap = new HashMap<>();
-//
-//            Iterator<String> keys = rolesJsonObject.keys();
-//
-//            while (keys.hasNext()) {
-//                String key = keys.next();
-//                rolesStr += rolesJsonObject.getString(key) + ",";
-//            }
-//
-//            userInfoMap.put(DrupalServicesBase.STATUSCODE, responseHashHashMap.get(DrupalServicesBase.STATUSCODE));
-//            userInfoMap.put(ROLES, rolesStr);
-//            userInfoMap.put(SESSIONID, sessionid);
-//            userInfoMap.put(USERID, userid);
-//            userInfoMap.put(SESSIONNAME, sessionname);
-//
-//            return userInfoMap;
-//        }

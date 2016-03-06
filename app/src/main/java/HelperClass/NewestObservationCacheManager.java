@@ -30,7 +30,9 @@ public class NewestObservationCacheManager {
     Activity context;
     int maxCacheAmount;
 
-    public NewestObservationCacheManager(){}
+    public NewestObservationCacheManager(Activity context){
+        this.context=context;
+    }
 
     public NewestObservationCacheManager(String cacheDir, Activity context, int maxCacheAmount){
         this.cacheDir=cacheDir;
@@ -106,16 +108,19 @@ public class NewestObservationCacheManager {
                 writableDatabase.delete(ObservationContract.NewestObservationEntry.TABLE_NAME,deleteWhereCause,null);
                 File file=new File(localFileUri);
                 if (file.exists()){
-                    file.delete();
+                    boolean deleted=file.delete();
+                    if (!deleted)
+                        Log.d("DELETE_FILE_FAILED","File is not deleted");
                 }
 ;            }
             ContentValues values = new ContentValues();
-            values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_ADDRESS, objectsToInsert.get(i).address);
             values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE, objectsToInsert.get(i).date);
             values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID, objectsToInsert.get(i).nid);
             values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI, objectsToInsert.get(i).photoLocalUri);
             values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI, objectsToInsert.get(i).photoServerUri);
             values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_TITLE, objectsToInsert.get(i).title);
+            values.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_AUTHOR, objectsToInsert.get(i).author);
+
             writableDatabase.insert(ObservationContract.NewestObservationEntry.TABLE_NAME,null,values);
         }
     }
@@ -123,7 +128,7 @@ public class NewestObservationCacheManager {
     public ArrayList<ObservationObject> getCache(int itemAmount){
         NewestObservationDBHelper dbHelper=new NewestObservationDBHelper(context);
         SQLiteDatabase readableDatabase=dbHelper.getReadableDatabase();
-        String sortOrder = ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE + " ASC";
+        String sortOrder = ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE + " DESC";
 
         //Get exist item count
         Cursor cursor= readableDatabase.query(
@@ -142,11 +147,11 @@ public class NewestObservationCacheManager {
             String emptyStr="";
             String nid=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID));
             String photoLocalUri=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI));
-            String address=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_ADDRESS));
             String date=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE));
             String title=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_TITLE));
             String photoServerUri=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI));
-            returnList.add(new ObservationObject(nid,title,emptyStr,emptyStr,photoServerUri,photoLocalUri,emptyStr,emptyStr,emptyStr,address,date));
+            String author=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_AUTHOR));
+            returnList.add(new ObservationObject(nid,title,emptyStr,emptyStr,photoServerUri,photoLocalUri,emptyStr,emptyStr,emptyStr,emptyStr,date,author));
             cursor.moveToNext();
         }
         return returnList;

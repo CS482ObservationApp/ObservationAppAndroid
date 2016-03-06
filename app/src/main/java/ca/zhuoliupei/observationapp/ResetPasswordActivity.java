@@ -1,5 +1,6 @@
 package ca.zhuoliupei.observationapp;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -27,8 +28,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
-        baseUrl=getResources().getString(R.string.drupal_site_url);
-        endpoint=getResources().getString(R.string.drupal_server_endpoint);
+        initializeVariables();
 
         findViewById(R.id.imgBtnSubmit_ResetPasswordActivity).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,6 +38,10 @@ public class ResetPasswordActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+    private void initializeVariables() {
+        baseUrl=getResources().getString(R.string.drupal_site_url);
+        endpoint=getResources().getString(R.string.drupal_server_endpoint);
     }
 
     private boolean validateInput(){
@@ -54,6 +58,11 @@ public class ResetPasswordActivity extends AppCompatActivity {
     }
 
     private class ResetPasswordTask extends AsyncTask<String,Void,HashMap<String,String>>{
+        Context context;
+
+        public ResetPasswordTask(Context context){
+            this.context=context;
+        }
         @Override
         protected HashMap<String,String> doInBackground(String... input) {
             DrupalServicesUser drupalServicesUser =new DrupalServicesUser(baseUrl,endpoint);
@@ -67,28 +76,24 @@ public class ResetPasswordActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(HashMap<String,String> results) {
-            handleRequestResponse(results);
+            String statusCode=results.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE);
+            try{
+                if (statusCode.equals(HTTPConst.HTTP_OK_200)){
+                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(getResources().getString(R.string.reset_successful));
+                }else if(statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401)||statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
+                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(results.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY)).text() );
+                }else {
+                    throw new Exception();
+                }
+            }catch (Exception e){
+                Toast.makeText(context,getText(R.string.network_error), Toast.LENGTH_LONG).show();
+            }
         }
     }
     private void sendResetPasswordRequest(String input){
-        new ResetPasswordTask().execute(input);
+        new ResetPasswordTask(this).execute(input);
     }
 
-    private void handleRequestResponse(HashMap<String,String> responseMap){
-        String statusCode=responseMap.get(DrupalServicesResponseConst.STATUSCODE);
-        try{
-            if (statusCode.equals(HTTPConst.HTTP_OK_200)){
-                ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(getResources().getString(R.string.reset_successful));
-            }else if(statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401)||statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
-                ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(responseMap.get(DrupalServicesResponseConst.RESPONSEBODY)).text() );
-            }else {
-                throw new Exception();
-            }
-        }catch (Exception e){
-            Toast.makeText(this, getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
-        }
-
-    }
 
     @Override
     public void onBackPressed() {
