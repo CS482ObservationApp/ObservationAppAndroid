@@ -72,6 +72,11 @@ public class DrupalServicesUser extends DrupalServicesBase{
         return httpPostRequest(getURI());
     }
 
+    public HashMap<String,String> update(BasicNameValuePair[] params,String userID) throws Exception{
+        setResource("user/"+userID);
+        return httpPutRequest(getURI(),params);
+    }
+
 }
 
 

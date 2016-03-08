@@ -17,8 +17,10 @@ import android.widget.TimePicker;
 
 import java.util.Calendar;
 
+import Const.RequestIDConst;
+import HelperClass.PhotoUtil;
+
 public class UploadActivity extends AppCompatActivity {
-    static final int PICK_PHOTO_REQUEST = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,10 +33,7 @@ public class UploadActivity extends AppCompatActivity {
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_PHOTO_REQUEST);
+                PhotoUtil.launchGalleryAppForPhoto((Activity)v.getContext());
             }
         });
     }

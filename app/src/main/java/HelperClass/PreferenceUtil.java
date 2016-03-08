@@ -18,6 +18,9 @@ public class PreferenceUtil {
         boolean sessionExpired=PreferenceManager.getDefaultSharedPreferences(context).getBoolean(SharedPreferencesConst.K_SESSION_EXPIRED, true);
         return currentUser != null&&!sessionExpired;
     }
+    public static String getCurrentUserID(Context context){
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(SharedPreferencesConst.K_USER_ID,EMPTY_STRING);
+    }
     public static String getCurrentUser(Context context){
         return PreferenceManager.getDefaultSharedPreferences(context).getString(SharedPreferencesConst.K_USER_NAME,EMPTY_STRING);
     }

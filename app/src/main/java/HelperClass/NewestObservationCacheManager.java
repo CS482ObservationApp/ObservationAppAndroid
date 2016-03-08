@@ -95,6 +95,7 @@ public class NewestObservationCacheManager {
             if (c.getCount()==0){
                 objectsToInsert.add(observationObject);
             }
+            c.close();
         }
 
         //Insert Objects
@@ -123,6 +124,7 @@ public class NewestObservationCacheManager {
 
             writableDatabase.insert(ObservationContract.NewestObservationEntry.TABLE_NAME,null,values);
         }
+        cursor.close();
     }
 
     public ArrayList<ObservationObject> getCache(int itemAmount){
@@ -154,6 +156,7 @@ public class NewestObservationCacheManager {
             returnList.add(new ObservationObject(nid,title,emptyStr,emptyStr,photoServerUri,photoLocalUri,emptyStr,emptyStr,emptyStr,emptyStr,date,author));
             cursor.moveToNext();
         }
+        cursor.close();
         return returnList;
     }
 }

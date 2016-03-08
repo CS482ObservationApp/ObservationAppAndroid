@@ -13,8 +13,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        android:orientation="horizontal">
-
+        android:orientation="horizontal"
+        android:id="@+id/ll_photo_UserProfileActivity">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -26,10 +26,10 @@
             android:layout_alignParentBottom="true">
 
             <ImageView
-                android:id="@+id/imgUserImage_UserProfileActivity"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:layout_alignParentRight="true" />
+                android:layout_alignParentRight="true"
+                android:id="@+id/imgUserImage_UserProfileActivity"/>
 
         </RelativeLayout>
 
@@ -40,18 +40,22 @@
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:minHeight="50dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:weightSum="5"
+        android:id="@+id/ll_name_UserProfileActivity">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/user_name_userProfileActivity"
+            android:layout_weight="2"
             />
 
         <TextView
             android:id="@+id/txtUserName_UserProfileActivity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"/>
     </LinearLayout>
 
     <LinearLayout
@@ -59,17 +63,21 @@
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:orientation="horizontal"
-        android:minHeight="50dp">
+        android:minHeight="50dp"
+        android:weightSum="5"
+        android:id="@+id/ll_email_UserProfileActivity">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/email_userProfileActivity" />
+            android:text="@string/email_userProfileActivity"
+            android:layout_weight="2"/>
 
         <TextView
             android:id="@+id/txtEmail_UserProfileActivity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"/>
     </LinearLayout>
 
     <LinearLayout
@@ -77,17 +85,20 @@
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:orientation="horizontal"
-        android:minHeight="50dp">
-
+        android:minHeight="50dp"
+        android:weightSum="5"
+        android:id="@+id/ll_address1_UserProfileActivity">
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/address1_userProfileActivity" />
+            android:text="@string/address1_userProfileActivity"
+            android:layout_weight="2"/>
 
         <TextView
             android:id="@+id/txtAddress1_UserProfileActivity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"/>
     </LinearLayout>
 
     <LinearLayout
@@ -95,17 +106,21 @@
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:orientation="horizontal"
-        android:minHeight="50dp">
+        android:minHeight="50dp"
+        android:weightSum="5"
+        android:id="@+id/ll_address2_UserProfileActivity">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/address2_userProfileActivity" />
+            android:text="@string/address2_userProfileActivity"
+            android:layout_weight="2"/>
 
         <TextView
             android:id="@+id/txtAddress2_UserProfileActivity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"/>
     </LinearLayout>
 
     <LinearLayout
@@ -114,7 +129,8 @@
         android:layout_marginTop="10dp"
         android:background="@color/white"
         android:orientation="horizontal"
-        android:minHeight="50dp">
+        android:minHeight="50dp"
+        android:id="@+id/ll_myObservations_UserProfileActivity">
 
         <ImageView
             android:layout_width="wrap_content"
@@ -126,5 +142,42 @@
             android:layout_height="wrap_content"
             android:text="@string/my_observations_userProfileActivity" />
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:minHeight="50dp"
+        android:id="@+id/ll_changePassword_UserProfileActivity">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/icon_password_reset" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/change_password_userProfileActivity" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:minHeight="50dp"
+        android:id="@+id/ll_logout_UserProfileActivity">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/icon_logout" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/logout_userProfileActivity" />
+    </LinearLayout>
+
 
 </LinearLayout>

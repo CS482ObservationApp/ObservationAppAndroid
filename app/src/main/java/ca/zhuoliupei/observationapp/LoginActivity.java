@@ -93,7 +93,65 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private class LoginTask extends AsyncTask<Void,Void,HashMap<String,String>>{
+        Context context;
 
+        public LoginTask(Context context){
+            this.context=context;
+        }
+        public HashMap<String,String> doInBackground(Void... voids){
+            DrupalAuthSession authSession=new DrupalAuthSession();
+            DrupalServicesUser drupalServicesUser =new DrupalServicesUser(baseUrl,endpoint);
+            drupalServicesUser.setAuth(authSession);
+
+            try {
+                return drupalServicesUser.login(userNameStr, passwordStr);
+            }catch (Exception e){
+                return new HashMap<String,String>();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(HashMap<String ,String> responseMap) {
+            String statusCode=responseMap.get(DrupalServicesResponseConst.STATUS_CODE);
+            String responseBody=responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY);
+
+            if (statusCode==null||statusCode.isEmpty()||responseBody==null||responseBody.isEmpty())
+            {
+                Toast.makeText(context,R.string.network_error,Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            /*If login successfully, store the return seesion info as well as user info into
+              Shared Preferences for further usage, and direct to Newest Observations Activity
+            */
+            if (statusCode.equals(HTTPConst.HTTP_OK_200)) {
+                if (!storeSessionInfoToSharedPreferences(responseBody))
+                    return;
+                if (!storeUserInfoToSharedPreferences(responseBody))
+                    return;
+                downloadUserImageTask=new DownloadUserImageTask(context);
+                downloadUserImageTask.execute(PreferenceUtil.getCurrentUserPictureServerUri(context));
+                startActivity(new Intent(LoginActivity.this, NewestObservationsActivity.class));
+            }
+
+            /*
+            If login is not successful, show the error message.
+            If it's because of wrong password credential, prompt user to reset password
+            */
+                else if (statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401) || statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)) {
+                    if (statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)) {
+                        txtLink.setText(getText(R.string.reset_password_link_loginActivity));
+                    }
+                    ((TextView) findViewById(R.id.txtMessage_LoginActivity)).setText(responseBody);
+                }
+
+            /*If server response other errors, just show network error message*/
+                else {
+                    Toast.makeText(context,getText(R.string.network_error).toString(), Toast.LENGTH_LONG).show();
+                }
+            }
+        }
     private boolean validateLoginInfo(){
         boolean validate=true;
 
@@ -215,66 +273,6 @@ public class LoginActivity extends AppCompatActivity {
         }
 
     }
-
-    private class LoginTask extends AsyncTask<Void,Void,HashMap<String,String>>{
-        Context context;
-
-        public LoginTask(Context context){
-            this.context=context;
-        }
-        public HashMap<String,String> doInBackground(Void... voids){
-            DrupalAuthSession authSession=new DrupalAuthSession();
-            DrupalServicesUser drupalServicesUser =new DrupalServicesUser(baseUrl,endpoint);
-            drupalServicesUser.setAuth(authSession);
-
-            try {
-                return drupalServicesUser.login(userNameStr, passwordStr);
-            }catch (Exception e){
-                return new HashMap<String,String>();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(HashMap<String ,String> responseMap) {
-            String statusCode=responseMap.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE);
-            String responseBody=responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY);
-
-            if (statusCode==null||statusCode.isEmpty()||responseBody==null||responseBody.isEmpty())
-            {
-                Toast.makeText(context,R.string.network_error,Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            /*If login successfully, store the return seesion info as well as user info into
-              Shared Preferences for further usage, and direct to Newest Observations Activity
-            */
-            if (statusCode.equals(HTTPConst.HTTP_OK_200)) {
-                if (!storeSessionInfoToSharedPreferences(responseBody))
-                    return;
-                if (!storeUserInfoToSharedPreferences(responseBody))
-                    return;
-                downloadUserImageTask=new DownloadUserImageTask(context);
-                downloadUserImageTask.execute(PreferenceUtil.getCurrentUserPictureServerUri(context));
-                startActivity(new Intent(LoginActivity.this, NewestObservationsActivity.class));
-            }
-
-            /*
-            If login is not successful, show the error message.
-            If it's because of wrong password credential, prompt user to reset password
-            */
-                else if (statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401) || statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)) {
-                    if (statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)) {
-                        txtLink.setText(getText(R.string.reset_password_link_loginActivity));
-                    }
-                    ((TextView) findViewById(R.id.txtMessage_LoginActivity)).setText(responseBody);
-                }
-
-            /*If server response other errors, just show network error message*/
-                else {
-                    Toast.makeText(context,getText(R.string.network_error).toString(), Toast.LENGTH_LONG).show();
-                }
-            }
-        }
 
     private class DownloadUserImageTask extends AsyncTask<String,Void,Void>{
         Context context;

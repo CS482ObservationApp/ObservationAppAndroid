@@ -56,10 +56,24 @@
 
     <!-- User Profile Activity-->
     <string name="my_observations_userProfileActivity">My Observations</string>
+    <string name="change_password_userProfileActivity">Change Password</string>
+    <string name="logout_userProfileActivity">Logout</string>
     <string name="profile_photo_userProfileActivity">Profile Photo</string>
     <string name="user_name_userProfileActivity">User Name</string>
     <string name="email_userProfileActivity">Email</string>
     <string name="address1_userProfileActivity">My Address 1</string>
     <string name="address2_userProfileActivity">My Address 2</string>
+
+    <string name="title_activity_choose_photo_upload_method">ChoosePhotoUploadMethodActivity
+    </string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <!-- ChoosePhotoUploadMethod Activity-->
+    <string name="upload_from_galary">Choose one from galary</string>
+    <string name="take_a_photo_now">Take a photo now</string>
+    <string name="title_activity_choose_upload_method">ChooseUploadMethodActivity</string>
+    <string name="image_reading_error">Cannot read image from local</string>
+    <string name="image_saving_error">Cannot save image to local</string>
 
 </resources>

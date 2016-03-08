@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ca.zhuoliupei.observationapp" >
 
+    <uses-feature android:name="android.hardware.camera" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -55,6 +57,15 @@
         <activity android:name=".UserProfileActivity" >
         </activity>
         <activity android:name=".SearchObservationActivity" >
+        </activity>
+        <activity
+            android:name=".ChooseUploadPhotoMethodActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_choose_upload_method"
+            android:theme="@style/Theme.Transparent" >
+        </activity>
+        <activity android:name=".ChangeUserNameActivity"
+            android:theme="@style/Theme.Transparent">
         </activity>
     </application>
 

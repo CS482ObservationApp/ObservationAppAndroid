@@ -144,46 +144,15 @@ public class DrupalServicesBase {
             if (resEntity != null) {
                 String responseBody = EntityUtils.toString(resEntity);
                 HashMap<String, String> responseMap = new HashMap<>();
-                responseMap.put(DrupalServicesResponseConst.LOGIN_STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
+                responseMap.put(DrupalServicesResponseConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
                 responseMap.put(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY, responseBody);
-
-//                HttpGet httpGet = new HttpGet(this.baseURI + "/services/session/token");
-//                try {
-//                    httpGet.setHeader("Cookie","SESS22c7cc780a2e11138b5d98ea62790668=ocztTG2Wll_4ASnOjwyhZCudUaulE4VLPG8TnWD2HBI");
-//                    HttpResponse token = client.execute(httpGet);
-//                    String mToken =  EntityUtils.toString(token.getEntity());
-//                    token=client.execute(httpGet);
-//                    mToken =  EntityUtils.toString(token.getEntity());
-//                    client=new DefaultHttpClient();
-//                    token=client.execute(httpGet);
-//                    mToken =  EntityUtils.toString(token.getEntity());
-//
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
 
                 return responseMap;
             }
             HashMap<String, String> responseMap = new HashMap<>();
-            responseMap.put(DrupalServicesResponseConst.LOGIN_STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
-
-
-
+            responseMap.put(DrupalServicesResponseConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
             return responseMap;
-
-
     }
     
 }
 
-/* debug code
-            //get request headers
-            Header[] headers2 = request.getAllHeaders();
-            for (Header header : headers2) {
-                System.out.println(header.getName()
-                        + ": " + header.getValue());
-            }
-
-            System.out.println("fuck!! not 200 " + response.getStatusLine().getReasonPhrase() + " " + response.getStatusLine().getStatusCode());
-            System.out.println("fuck!! not 200 Called URL" + request.getURI());
- */

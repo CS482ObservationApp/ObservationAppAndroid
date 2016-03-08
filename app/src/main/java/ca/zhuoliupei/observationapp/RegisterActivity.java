@@ -152,7 +152,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void handleRequestResponse(HashMap<String,String > response){
-        String statusCode =response.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE);
+        String statusCode =response.get(DrupalServicesResponseConst.STATUS_CODE);
         String responseStr=response.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY);
         try{
             if(statusCode.equals(HTTPConst.HTTP_OK_200)){

@@ -284,7 +284,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
     private ObservationObject[] getObservationObjectsFromResponse(HashMap<String, String> responseMap) {
         // Fetch info from json response, store the image url and other info into each observation objects
-        if (responseMap.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
+        if (responseMap.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
             try{
                 JSONArray responseJsonArray=new JSONArray(responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
                 ObservationObject[] observationObjects=new ObservationObject[responseJsonArray.length()];
@@ -367,7 +367,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         protected void onPostExecute(HashMap<String, String> sessionInfoMap) {
             if (!sessionInfoMap.isEmpty()) {
                 String rolesStr = "";
-                if (sessionInfoMap.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
+                if (sessionInfoMap.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
                     try {
                         JSONObject responseJsonObject = new JSONObject(sessionInfoMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
                         JSONObject userJsonObject = responseJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_USER);

@@ -76,7 +76,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(HashMap<String,String> results) {
-            String statusCode=results.get(DrupalServicesResponseConst.LOGIN_STATUS_CODE);
+            String statusCode=results.get(DrupalServicesResponseConst.STATUS_CODE);
             try{
                 if (statusCode.equals(HTTPConst.HTTP_OK_200)){
                     ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(getResources().getString(R.string.reset_successful));
