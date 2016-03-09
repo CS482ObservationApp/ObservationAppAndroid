@@ -1,13 +1,15 @@
 <resources>
+    <!-- App settings-->
     <string name="app_name">Observation App</string>
     <string name="action_settings">Settings</string>
+    <string name="drupal_site_url">http://137.149.157.10/cs482</string>
+    <string name="drupal_server_endpoint">mobile-api</string>
+    <string name="google_app_id">midyear-forest-124421</string>
 
     <string name="title_activity_splash">SplashActivity</string>
     <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://www.cleverfinger.com.au/user-guide/">Term of Use</a></string>
 
-    <!-- Drupal site services info-->
-    <string name="drupal_site_url">http://137.149.157.10/cs482</string>
-    <string name="drupal_server_endpoint">mobile-api</string>
+
 
     <!-- Client side validation error message-->
     <string name="field_empty_error">This field cannot be empty</string>
@@ -66,8 +68,6 @@
 
     <string name="title_activity_choose_photo_upload_method">ChoosePhotoUploadMethodActivity
     </string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
 
     <!-- ChoosePhotoUploadMethod Activity-->
     <string name="upload_from_galary">Choose one from galary</string>
@@ -76,4 +76,6 @@
     <string name="image_reading_error">Cannot read image from local</string>
     <string name="image_saving_error">Cannot save image to local</string>
 
+    <!-- button text-->
+    <string name="confirm_btn">Confirm</string>
 </resources>

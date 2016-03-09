@@ -16,8 +16,6 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
 
 
 
-    private boolean takePhotoClicked=false;
-    private boolean uploadPhotoClicked=false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,12 +33,10 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
         findViewById(R.id.root_LL_ChooseUploadPhotoMethodActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!uploadPhotoClicked && !takePhotoClicked) {
-                    Intent intent = new Intent();
-                    intent.putExtra("result", RequestIDConst.CANCEL_UPLOAD);
-                    setResult(RESULT_OK, intent);
-                    finish();
-                }
+                Intent intent = new Intent();
+                intent.putExtra("result", RequestIDConst.CANCEL_UPLOAD);
+                setResult(RESULT_CANCELED, intent);
+                finish();
             }
         });
     }
@@ -48,7 +44,6 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
         findViewById(R.id.imgTakeAPhoto_ChooseUploadMethodActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                takePhotoClicked = true;
                 Intent intent=new Intent();
                 intent.putExtra("result",RequestIDConst.CHOOSE_PHOTO_FROM_CAMERA_REQUEST);
                 setResult(RESULT_OK, intent);
@@ -60,7 +55,6 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
         findViewById(R.id.imgUploadFromGallary_ChooseUploadMethodActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadPhotoClicked = true;
                 Intent intent=new Intent();
                 intent.putExtra("result",RequestIDConst.CHOOSE_PHOTO_FROM_GALARY_REQUEST);
                 setResult(RESULT_OK, intent);

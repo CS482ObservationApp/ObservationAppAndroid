@@ -1,5 +1,6 @@
 package ca.zhuoliupei.observationapp;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +14,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.location.places.ui.PlacePicker;
 
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
@@ -33,7 +36,7 @@ import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.UploadUtil;
 
-public class UserProfileActivity extends AppCompatActivity {
+public class UserProfileActivity extends AppCompatActivity{
     String baseUrl, endpoint;
     DrupalAuthSession authSession;
     DrupalServicesUser drupalServicesUser;
@@ -43,12 +46,12 @@ public class UserProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_profile);
-        initializeVaribles();
+        initializeVariables();
         initializeView();
         setViewOnClickListeners();
     }
 
-    private void initializeVaribles() {
+    private void initializeVariables() {
         baseUrl = getText(R.string.drupal_site_url).toString();
         endpoint = getText(R.string.drupal_server_endpoint).toString();
         authSession = new DrupalAuthSession();
@@ -58,7 +61,6 @@ public class UserProfileActivity extends AppCompatActivity {
         drupalServicesUser.setAuth(authSession);
         drupalServicesFile.setAuth(authSession);
     }
-
     private void initializeView() {
         ImageView profileImageIV = (ImageView) findViewById(R.id.imgUserImage_UserProfileActivity);
         TextView userNameTV = (TextView) findViewById(R.id.txtUserName_UserProfileActivity);
@@ -83,70 +85,46 @@ public class UserProfileActivity extends AppCompatActivity {
         address2TV.setText(address2);
     }
 
+    /*
+    * setViewOnClickListeners contains the other setOnClickListener Methods
+    */
     private void setViewOnClickListeners() {
         //TODO:
         setProfilePhotoOnClickListener();
         setUserNameOnClickListener();
-    }
-
-    private void setProfilePhotoOnClickListener() {
-         findViewById(R.id.ll_photo_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                 startActivityForResult(new Intent((v.getContext()), ChooseUploadPhotoMethodActivity.class), RequestIDConst.CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST);
-             }
-         });
+        setAddress1OnClickListener();
     }
     private void setUserNameOnClickListener(){
         findViewById(R.id.ll_name_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivityForResult(new Intent((v.getContext()), ChangeUserNameActivity.class), RequestIDConst.CHANGE_USER_NAME_REQUEST);
+                startActivityForResult(new Intent((v.getContext()), ChangeTextFieldActivity.class), RequestIDConst.CHANGE_USER_NAME_REQUEST);
             }
         });
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case RequestIDConst.CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST: {
-                if (resultCode == RESULT_OK) {
-                    if (data == null) {
-                        return;
-                    }
-                    int result = data.getIntExtra("result", RequestIDConst.CANCEL_UPLOAD);
-                    startPickingPhotoActivity(result);
+    private void setAddress1OnClickListener(){
+        findViewById(R.id.ll_address1_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                try {
+                    startActivityForResult(builder.build((Activity) (v.getContext())), RequestIDConst.PROFILE_ADDRESS1_PICKER_REQUEST);
+                }catch (Exception ex){
+                    Toast.makeText(v.getContext(),R.string.network_error,Toast.LENGTH_SHORT).show();
                 }
-                break;
             }
-            case RequestIDConst.GET_PHOTO_REQUEST: {
-                if (resultCode == RESULT_OK) {
-                    if (data == null)
-                        return;
-                    Bitmap photo;
-                    //If photo comes from camera,use this to get bitmap
-                    photo=(Bitmap)data.getExtras().get("data");
-                    //If photo comes from gallary,photo would be null,use the helper method
-                    if (photo==null)
-                        photo=getBitmapFromUri(data.getData());
-
-                    new UpdateServerUserProfileImageTask(this).execute(photo);
-                }
-                break;
+        });
+    }
+    private void setProfilePhotoOnClickListener() {
+        findViewById(R.id.ll_photo_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent((v.getContext()), ChooseUploadPhotoMethodActivity.class), RequestIDConst.CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST);
             }
-        }
+        });
     }
 
-    private Bitmap getBitmapFromUri(Uri uri){
-        try {
-            // Let's read picked image path using content resolver
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            return BitmapFactory.decodeStream(inputStream);
-        }catch (Exception ex){
-            return null;
-        }
-    }
-    private void startPickingPhotoActivity(int result) {
+    private void startPickingPhoto(int result) {
         switch (result) {
             case RequestIDConst.CHOOSE_PHOTO_FROM_CAMERA_REQUEST: {
                 PhotoUtil.launchCameraForPhoto(this);
@@ -159,6 +137,64 @@ public class UserProfileActivity extends AppCompatActivity {
         }
     }
 
+    /* Handle Activity Results*/
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case RequestIDConst.CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST: {
+                handleChooseUploadMethodRequestResult(resultCode, data);
+                break;
+            }
+            case RequestIDConst.GET_PHOTO_REQUEST: {
+                handleGetPhotoRequestResult(resultCode, data);
+                break;
+            }
+            case RequestIDConst.CHANGE_USER_NAME_REQUEST:{
+                handleChangeUserNameRequestResult(resultCode,data);
+                break;
+            }
+            case RequestIDConst.PROFILE_ADDRESS1_PICKER_REQUEST:{
+
+                break;
+            }
+        }
+    }
+    private void handleChooseUploadMethodRequestResult(int resultCode, Intent data){
+        if (resultCode == RESULT_OK) {
+            if (data == null) {
+                return;
+            }
+            int result = data.getIntExtra("result", RequestIDConst.CANCEL_UPLOAD);
+            startPickingPhoto(result);
+        }
+    }
+    private void handleGetPhotoRequestResult(int resultCode, Intent data){
+        if (resultCode == RESULT_OK) {
+            if (data == null)
+                return;
+            Bitmap photo;
+            //If photo comes from camera,use this to get bitmap
+            Bundle bundle=data.getExtras();
+            if(bundle!=null)
+                photo=(Bitmap)bundle.get("data");
+            //If photo comes from gallary,photo would be null,use the helper method
+            else
+                photo=getBitmapFromUri(data.getData());
+
+            new UpdateServerUserProfileImageTask(this).execute(photo);
+        }
+    }
+    private void handleChangeUserNameRequestResult(int resultCode,Intent data){
+        if (resultCode == RESULT_OK) {
+            if (data == null)
+                return;
+            String newName=data.getExtras().getString("result");
+            if (newName!=null&&!newName.isEmpty())
+                new UpdateServerUserProfileNameTask(this).execute(newName);
+        }
+    }
+    private void handleChangeAddress1RequestResult(){}
     private class UpdateServerUserProfileImageTask extends AsyncTask<Bitmap,Void,Boolean>{
         Bitmap photo;
         Context context;
@@ -169,8 +205,7 @@ public class UserProfileActivity extends AppCompatActivity {
         protected Boolean doInBackground(Bitmap... params) {
             photo=params[0];
             try {
-                boolean updateResult = updateServerUserProfileImage(photo);
-                return updateResult;
+                return updateServerUserProfileImage(photo);
             }catch (Exception ex){
                  return false;
             }
@@ -188,42 +223,68 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         }
     }
-
-
-    private boolean updateLocalUserProfileImage(Bitmap photo,Context context){
-        String currentProfilePhotoPath=PreferenceUtil.getCurrentUserPictureLocalUri(context);
-        File currentProfilePhoto=new File(currentProfilePhotoPath);
-        if (currentProfilePhoto.exists())
-            currentProfilePhoto.delete();
-        String newFilePath=new File(context.getFilesDir(), "userImage_small_" + PreferenceUtil.getCurrentUser(context) + "_" + System.currentTimeMillis()).getPath();
-        try {
-            FileOutputStream out = new FileOutputStream(newFilePath);
-            photo.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            PreferenceUtil.saveString(context, SharedPreferencesConst.K_USER_IMAGE_LOCAL_URI, newFilePath);
-            return true;
-        }catch (Exception e){
-            return false;
+    private class UpdateServerUserProfileNameTask extends AsyncTask<String,Void,Boolean>{
+        Context context;
+        String newUserName;
+        public UpdateServerUserProfileNameTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected Boolean doInBackground(String... names) {
+            newUserName=names[0];
+            BasicNameValuePair[] params=new BasicNameValuePair[1];
+            params[0]=new BasicNameValuePair(DrupalServicesResponseConst.USER_NAME,newUserName);
+            try {
+                HashMap<String,String> updateResultMap = drupalServicesUser.update(params, PreferenceUtil.getCurrentUserID(context));
+                if (updateResultMap.get(DrupalServicesResponseConst.STATUS_CODE).equals("200"))
+                    return true;
+                else
+                    return false;
+            }catch (Exception ex){
+                return false;
+            }
         }
 
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result){
+                PreferenceUtil.saveString(context,SharedPreferencesConst.K_USER_NAME,newUserName);
+                ((TextView)(findViewById(R.id.txtUserName_UserProfileActivity))).setText(newUserName);
+            }
+        }
     }
 
     /********  Update Server User Profile Image function group***************/
     private boolean updateServerUserProfileImage(Bitmap bitmap) throws Exception{
         int oldFid=getUserImageFileID();
         int newFid=uploadNewUserProfileImage(bitmap);
-        boolean result=updateUserImage(newFid);
-        if (result){
+        boolean updateResult=false;
+        if (newFid!=-1) {
+            updateResult = updateUserImage(newFid);
+        }
+        if (updateResult){
             /*It doesn't matter if we failed to delete the old file
             *So just log without telling the user
             */
             try {
-                deleteOldUserProfileImage(oldFid);
+                deleteProfileImage(oldFid);
             }catch (Exception ex) {
                 Log.i("DELETE_FILE_FAILED","Failed to Delete file"+oldFid);
             }
             return true;
+        }else {
+            /*If not successfully link user with the new image
+            * but uploaded the new image to server
+            * Delete the uploaded file*/
+            if (newFid!=-1) {
+                try {
+                    deleteProfileImage(newFid);
+                }catch (Exception ex){
+                    Log.i("DELETE_FILE_FAILED","Failed to Delete file"+newFid);
+                }
+            }
+            return false;
         }
-        return false;
     }
     private int getUserImageFileID() throws Exception{
         HashMap<String, String> fetchUserInfoResponse = drupalServicesUser.getUser(Integer.valueOf(PreferenceUtil.getCurrentUserID(this)));
@@ -241,7 +302,7 @@ public class UserProfileActivity extends AppCompatActivity {
         }
         return -1;
     }
-    private void deleteOldUserProfileImage(int fid) throws Exception{
+    private void deleteProfileImage(int fid) throws Exception{
         drupalServicesFile.delete(fid);
     }
     private int uploadNewUserProfileImage(Bitmap bitmap) throws Exception{
@@ -262,5 +323,30 @@ public class UserProfileActivity extends AppCompatActivity {
         params[0]=new BasicNameValuePair(DrupalServicesResponseConst.USER_PICTURE,String.valueOf(fid));
         HashMap<String ,String> responseMap = drupalServicesUser.update(params, PreferenceUtil.getCurrentUserID(this));
         return responseMap.get(DrupalServicesResponseConst.STATUS_CODE).equals("200");
+    }
+    private Bitmap getBitmapFromUri(Uri uri){
+        try {
+            // Let's read picked image path using content resolver
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            return BitmapFactory.decodeStream(inputStream);
+        }catch (Exception ex){
+            return null;
+        }
+    }
+    /************ Update Local Cached User Profile Image********/
+    private boolean updateLocalUserProfileImage(Bitmap photo,Context context){
+        String currentProfilePhotoPath=PreferenceUtil.getCurrentUserPictureLocalUri(context);
+        File currentProfilePhoto=new File(currentProfilePhotoPath);
+        if (currentProfilePhoto.exists())
+            currentProfilePhoto.delete();
+        String newFilePath=new File(context.getFilesDir(), "userImage_small_" + PreferenceUtil.getCurrentUser(context) + "_" + System.currentTimeMillis()).getPath();
+        try {
+            FileOutputStream out = new FileOutputStream(newFilePath);
+            photo.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            PreferenceUtil.saveString(context, SharedPreferencesConst.K_USER_IMAGE_LOCAL_URI, newFilePath);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
     }
 }

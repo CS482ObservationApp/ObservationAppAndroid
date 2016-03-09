@@ -28,6 +28,7 @@ public class DrupalServicesResponseConst {
     public static final String LOGIN_LOCALITY="locality";
     public static final String LOGIN_THOROUGHFARE="thoroughfare";
     public static final String USER_PICTURE="picture";
+    public static final String USER_NAME="name";
     public static final String FILE_FILE_ID="fid";
     public static final String STATUS_CODE ="statusCode";
 
