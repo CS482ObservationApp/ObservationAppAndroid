@@ -14,7 +14,6 @@ public class DrupalServicesResponseConst {
     public static final String LOGIN_USER ="user";
     public static final String LOGIN_USER_ID ="uid";
     public static final String LOGIN_ROLES ="roles";
-    public static final String LOGIN_RESPONSE_BODY ="responseBody";
     public static final String LOGIN_COOKIE ="cookie";
     public static final String LOGIN_NAME ="name";
     public static final String LOGIN_PICTURE ="picture";
@@ -31,6 +30,7 @@ public class DrupalServicesResponseConst {
     public static final String USER_NAME="name";
     public static final String FILE_FILE_ID="fid";
     public static final String STATUS_CODE ="statusCode";
+    public static final String RESPONSE_BODY ="responseBody";
 
 
 }

@@ -47,7 +47,7 @@ public class DrupalServicesBase {
         auth.initAuth(baseURI, endpoint);
     }
 
-    public void setResource (String resource) {
+    protected void setResource (String resource) {
         this.resource = resource;
     }
 
@@ -145,7 +145,7 @@ public class DrupalServicesBase {
                 String responseBody = EntityUtils.toString(resEntity);
                 HashMap<String, String> responseMap = new HashMap<>();
                 responseMap.put(DrupalServicesResponseConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
-                responseMap.put(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY, responseBody);
+                responseMap.put(DrupalServicesResponseConst.RESPONSE_BODY, responseBody);
 
                 return responseMap;
             }

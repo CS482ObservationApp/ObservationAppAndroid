@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 
-import Const.RequestIDConst;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -14,6 +13,8 @@ import Const.RequestIDConst;
  */
 public class ChooseUploadPhotoMethodActivity extends Activity {
 
+    public static final int CHOOSE_PHOTO_FROM_CAMERA =1;
+    public static final int CHOOSE_PHOTO_FROM_GALARY =2;
 
 
     @Override
@@ -34,7 +35,6 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent();
-                intent.putExtra("result", RequestIDConst.CANCEL_UPLOAD);
                 setResult(RESULT_CANCELED, intent);
                 finish();
             }
@@ -45,7 +45,7 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent=new Intent();
-                intent.putExtra("result",RequestIDConst.CHOOSE_PHOTO_FROM_CAMERA_REQUEST);
+                intent.putExtra("result",CHOOSE_PHOTO_FROM_CAMERA);
                 setResult(RESULT_OK, intent);
                 finish();
             }
@@ -56,7 +56,7 @@ public class ChooseUploadPhotoMethodActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent=new Intent();
-                intent.putExtra("result",RequestIDConst.CHOOSE_PHOTO_FROM_GALARY_REQUEST);
+                intent.putExtra("result",CHOOSE_PHOTO_FROM_GALARY);
                 setResult(RESULT_OK, intent);
                 finish();
             }

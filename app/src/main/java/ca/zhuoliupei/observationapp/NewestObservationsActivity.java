@@ -58,12 +58,12 @@ import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.DownLoadUtil;
 import HelperClass.NewestObservationCacheManager;
 import HelperClass.PreferenceUtil;
+import HelperClass.ToolBarStyler;
 import Model.ObservationObject;
 import Model.SlidingMenuItem;
 
 public class NewestObservationsActivity extends AppCompatActivity {
 
-    private int refreshIconID=1;
     private enum Action{
         REFRESH,APPEND
     }
@@ -85,17 +85,62 @@ public class NewestObservationsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initializeViewAndVariables();
-        setFloatingButtonOnClick();
-        setContentGVOnScroll();
-        initializeContentView();
-        initializeSlidingMenu();
+        setContentView(R.layout.activity_newest_observations);
+        initializeVariables();
+        initializeUI();
+        setWidgetListeners();
 
         beginValidateSessionTask();
         beginDownloadObservationAsynctask();
         beginDetectPictureAsyncTask();
     }
 
+    private void initializeVariables(){
+        cacheFolder= getCacheDir()+"//Newest_Observation";
+        gvDataset=new ArrayList<>();
+    }
+    private void initializeUI(){
+        initializeToolBar();
+        initializeContentView();
+        initializeSlidingMenu();
+    }
+    private void setWidgetListeners(){
+        setFloatingButtonOnClick();
+        setGridViewOnItemClick();
+        setContentGVOnScroll();
+    }
+
+    //Wrapped in initializeUI()
+    private void initializeContentView(){
+        //Init view
+        Intent intent = getIntent();
+        Parcelable[] parcelables = intent.getParcelableArrayExtra("OBSERVATION_OBJECTS");
+        if (parcelables!=null&&parcelables.length>0) {
+            //Fill gridview content
+            for (int i = 0; i < parcelables.length; i++) {
+                gvDataset.add((ObservationObject) parcelables[i]);
+            }
+            NewestObservationAdapter adapter=new NewestObservationAdapter(gvDataset,this);
+            GridView gridview=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
+            gridview.setAdapter(adapter);
+        }else {
+            //Hide the grid view
+            GridView gridview=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
+            gridview.setVisibility(View.INVISIBLE);
+
+            //Show refreshing icon
+            refreshImgView=new ImageView(this);
+            refreshImgView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            refreshImgView.setImageResource(R.drawable.refresh_icon);
+            //refreshImgView.setId(refreshIconID);
+            ((LinearLayout) findViewById(R.id.root_LV_NewestObservationActivity)).addView(refreshImgView);
+            RotateAnimation rotateAnimation = new RotateAnimation(0, 359, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            rotateAnimation.setRepeatCount(Animation.INFINITE);
+            rotateAnimation.setRepeatMode(Animation.RESTART);
+            rotateAnimation.setDuration(1000);
+            refreshImgView.startAnimation(rotateAnimation);
+        }
+    }
     private void initializeSlidingMenu(){
         //TODO:
         ListView slidingMenuList=(ListView)findViewById(R.id.sliding_menu);
@@ -126,13 +171,12 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
         slidingMenuList.setAdapter(adapter);
     }
-    private void initializeViewAndVariables(){
-        setContentView(R.layout.activity_newest_observations);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        cacheFolder= getCacheDir()+"//Newest_Observation";
-        gvDataset=new ArrayList<>();
+    private void initializeToolBar(){
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
+        ToolBarStyler.styleToolBar(this,myToolbar,"Newest Observations");
     }
+
+    //Wrapped in setWidgetListeners()
     private void setFloatingButtonOnClick(){
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -140,6 +184,20 @@ public class NewestObservationsActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+    }
+    private void setGridViewOnItemClick(){
+        GridView gridview=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                GridView gridview = (GridView) findViewById(R.id.content_gridview_NewestObsrvationActivity);
+                NewestObservationAdapter adapter = (NewestObservationAdapter) gridview.getAdapter();
+                ObservationObject selectedObject = (ObservationObject) adapter.getItem(position);
+                Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
+                intent.putExtra("SELECT_OBSERVATION_OBJECT", selectedObject);
+                startActivity(intent);
             }
         });
     }
@@ -166,12 +224,14 @@ public class NewestObservationsActivity extends AppCompatActivity {
                         NewestObservationAdapter adapter = (NewestObservationAdapter) view.getAdapter();
                         ObservationObject lastobject = (ObservationObject) adapter.getItem(adapter.getCount() - 1);
                         sessionInfoMap.put("date", lastobject.date);
-                        new DownloadObsservationObjectTask((Activity) view.getContext()).execute(sessionInfoMap);
+                        downloadObsservationObjectTask = new DownloadObsservationObjectTask((Activity) view.getContext());
+                        downloadObsservationObjectTask.execute(sessionInfoMap);
                     }
                 }
             }
         });
     }
+
     private void beginValidateSessionTask(){
         //Start validating if the session is expired or not
         cookie = PreferenceUtil.getCookie(this);
@@ -207,47 +267,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         }else {
             detectPictureExistTask.execute(sessionInfoMap);
         }}
-    private void initializeContentView(){
-        //Init view
-        Intent intent = getIntent();
-        Parcelable[] parcelables = intent.getParcelableArrayExtra("OBSERVATION_OBJECTS");
-        if (parcelables!=null&&parcelables.length>0) {
-            //Fill gridview content
-            for (int i = 0; i < parcelables.length; i++) {
-                gvDataset.add((ObservationObject) parcelables[i]);
-            }
-            NewestObservationAdapter adapter=new NewestObservationAdapter(gvDataset,this);
-            GridView gridview=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
-            gridview.setAdapter(adapter);
-            gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    GridView gridview = (GridView) findViewById(R.id.content_gridview_NewestObsrvationActivity);
-                    NewestObservationAdapter adapter = (NewestObservationAdapter) gridview.getAdapter();
-                    ObservationObject selectedObject = (ObservationObject) adapter.getItem(position);
-                    Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
-                    intent.putExtra("SELECT_OBSERVATION_OBJECT", selectedObject);
-                    startActivity(intent);
-                }
-            });
-        }else {
-            //Hide the grid view
-            GridView gridview=(GridView)findViewById(R.id.content_gridview_NewestObsrvationActivity);
-            gridview.setVisibility(View.INVISIBLE);
 
-            //Show refreshing icon
-            refreshImgView=new ImageView(this);
-            refreshImgView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            refreshImgView.setImageResource(R.drawable.refresh_icon);
-            //refreshImgView.setId(refreshIconID);
-            ((LinearLayout) findViewById(R.id.root_LV_NewestObservationActivity)).addView(refreshImgView);
-            RotateAnimation rotateAnimation = new RotateAnimation(0, 359, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-            rotateAnimation.setRepeatCount(Animation.INFINITE);
-            rotateAnimation.setRepeatMode(Animation.RESTART);
-            rotateAnimation.setDuration(1000);
-            refreshImgView.startAnimation(rotateAnimation);
-        }
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -286,7 +306,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         // Fetch info from json response, store the image url and other info into each observation objects
         if (responseMap.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
             try{
-                JSONArray responseJsonArray=new JSONArray(responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
+                JSONArray responseJsonArray=new JSONArray(responseMap.get(DrupalServicesResponseConst.RESPONSE_BODY));
                 ObservationObject[] observationObjects=new ObservationObject[responseJsonArray.length()];
                 for (int i=0;i<responseJsonArray.length();i++){
                     JSONObject observationJsonObject=responseJsonArray.getJSONObject(i);
@@ -329,9 +349,9 @@ public class NewestObservationsActivity extends AppCompatActivity {
            day=String.valueOf(Integer.parseInt(day));
 
            BasicNameValuePair[] returnPairs=new BasicNameValuePair[3];
-           returnPairs[0]=new BasicNameValuePair("field_observation_date_value[value][year]",year);
-           returnPairs[1]=new BasicNameValuePair("field_observation_date_value[value][month]",month);
-           returnPairs[2]=new BasicNameValuePair("field_observation_date_value[value][day]",day);
+           returnPairs[0]=new BasicNameValuePair("field_date_observed_value[value][year]",year);
+           returnPairs[1]=new BasicNameValuePair("field_date_observed_value[value][month]",month);
+           returnPairs[2]=new BasicNameValuePair("field_date_observed_value[value][day]",day);
            return returnPairs;
        }
         return new BasicNameValuePair[0];
@@ -369,7 +389,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
                 String rolesStr = "";
                 if (sessionInfoMap.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
                     try {
-                        JSONObject responseJsonObject = new JSONObject(sessionInfoMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY));
+                        JSONObject responseJsonObject = new JSONObject(sessionInfoMap.get(DrupalServicesResponseConst.RESPONSE_BODY));
                         JSONObject userJsonObject = responseJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_USER);
                         JSONObject rolesJsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_ROLES);
 

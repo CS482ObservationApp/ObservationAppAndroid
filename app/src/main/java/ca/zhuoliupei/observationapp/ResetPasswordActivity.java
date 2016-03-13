@@ -81,7 +81,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
                 if (statusCode.equals(HTTPConst.HTTP_OK_200)){
                     ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(getResources().getString(R.string.reset_successful));
                 }else if(statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401)||statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
-                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(results.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY)).text() );
+                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(results.get(DrupalServicesResponseConst.RESPONSE_BODY)).text() );
                 }else {
                     throw new Exception();
                 }

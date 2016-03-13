@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 
-import Const.RequestIDConst;
 import HelperClass.RegexValidator;
 
 public class ChangeTextFieldActivity extends Activity {
@@ -79,7 +78,6 @@ public class ChangeTextFieldActivity extends Activity {
             @Override
             public void onClick(View v) {
                     Intent intent = new Intent();
-                    intent.putExtra("result", RequestIDConst.CANCEL_UPLOAD);
                     setResult(RESULT_CANCELED, intent);
                     finish();
             }

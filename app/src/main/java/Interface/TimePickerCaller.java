@@ -7,4 +7,5 @@ import android.widget.TimePicker;
  */
 public interface TimePickerCaller {
     void handleTimePickerSetData(TimePicker view, int hourOfDay, int minute);
+    void handleTimePickerCancelled();
 }

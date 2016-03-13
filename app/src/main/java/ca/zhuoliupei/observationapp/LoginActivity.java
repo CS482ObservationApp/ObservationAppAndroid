@@ -2,9 +2,13 @@ package ca.zhuoliupei.observationapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.EditText;
@@ -26,6 +30,7 @@ import DrupalForAndroidSDK.DrupalServicesUser;
 import HelperClass.DownLoadUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.RegexValidator;
+import HelperClass.ToolBarStyler;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -35,16 +40,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextView txtLink;
     private LoginTask loginTask;
     private DownloadUserImageTask downloadUserImageTask;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-        initializeVariables();
-        setRegisterBtnOnClick();
-        setLoginBtnOnClick();
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -52,6 +47,16 @@ public class LoginActivity extends AppCompatActivity {
             loginTask.cancel(true);
     }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        initializeVariables();
+        initializeUI();
+        setWidgetListeners();
+    }
+
+    //Initialization Wrappers
     private void initializeVariables(){
         baseUrl=getResources().getString(R.string.drupal_site_url);
         endpoint=getResources().getString(R.string.drupal_server_endpoint);
@@ -60,6 +65,22 @@ public class LoginActivity extends AppCompatActivity {
         if (txtLink!=null)
             txtLink.setMovementMethod(LinkMovementMethod.getInstance());
     }
+    private void initializeUI(){
+        initializeActionBar();
+    }
+    private void setWidgetListeners(){
+        setRegisterBtnOnClick();
+        setLoginBtnOnClick();
+    }
+
+    //Initialize UI Methods
+    private void initializeActionBar(){
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_LoginActivity);
+        ToolBarStyler.styleToolBar(this, myToolbar, "Login");
+    }
+
+
+    //Widgets Listeners, wrapped in setWidgetListeners()
     private void setRegisterBtnOnClick(){
         //When register button is clicked, start a register activity
         ImageButton registerBtn=(ImageButton)findViewById(R.id.imgBtnRegister__LoginActivity);
@@ -93,6 +114,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    //Worker Tasks Classes
     private class LoginTask extends AsyncTask<Void,Void,HashMap<String,String>>{
         Context context;
 
@@ -114,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(HashMap<String ,String> responseMap) {
             String statusCode=responseMap.get(DrupalServicesResponseConst.STATUS_CODE);
-            String responseBody=responseMap.get(DrupalServicesResponseConst.LOGIN_RESPONSE_BODY);
+            String responseBody=responseMap.get(DrupalServicesResponseConst.RESPONSE_BODY);
 
             if (statusCode==null||statusCode.isEmpty()||responseBody==null||responseBody.isEmpty())
             {
@@ -152,6 +174,27 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         }
+    private class DownloadUserImageTask extends AsyncTask<String,Void,Void>{
+        Context context;
+        public DownloadUserImageTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected Void doInBackground(String... params) {
+            String imgServerUrl=params[0];
+            if (imgServerUrl!=null) {
+                String userName = PreferenceUtil.getCurrentUser(context);
+                String pathToSave = new File(context.getFilesDir(), "userImage_small_" + userName + "_" + System.currentTimeMillis()).getPath();
+                boolean downloadSucceeded = DownLoadUtil.downloadImage(imgServerUrl, pathToSave);
+                if (downloadSucceeded) {
+                    PreferenceUtil.saveString(context, SharedPreferencesConst.K_USER_IMAGE_LOCAL_URI, pathToSave);
+                }
+            }
+            return null;
+        }
+    }
+
+    //Helper Methods
     private boolean validateLoginInfo(){
         boolean validate=true;
 
@@ -274,23 +317,4 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private class DownloadUserImageTask extends AsyncTask<String,Void,Void>{
-        Context context;
-        public DownloadUserImageTask(Context context){
-            this.context=context;
-        }
-        @Override
-        protected Void doInBackground(String... params) {
-            String imgServerUrl=params[0];
-            if (imgServerUrl!=null) {
-                String userName = PreferenceUtil.getCurrentUser(context);
-                String pathToSave = new File(context.getFilesDir(), "userImage_small_" + userName + "_" + System.currentTimeMillis()).getPath();
-                boolean downloadSucceeded = DownLoadUtil.downloadImage(imgServerUrl, pathToSave);
-                if (downloadSucceeded) {
-                    PreferenceUtil.saveString(context, SharedPreferencesConst.K_USER_IMAGE_LOCAL_URI, pathToSave);
-                }
-            }
-            return null;
-        }
-    }
 }

@@ -45,13 +45,14 @@
     <string name="login_SlidingMenu">Login</string>
 
     <!-- Upload Activities-->
-    <string name="category_uploadActivity">Category</string>
+    <string name="observation_record_uploadActivity">Record</string>
     <string name="name_uploadActivity">Name</string>
     <string name="picture_Description_uploadActivity">Picture&amp;Description</string>
     <string name="sound_uploadActivity">Sound</string>
     <string name="date_time_uploadActivity">Date&amp;Time</string>
     <string name="location_uploadActivity">Location</string>
-    <string name="hint_name_uploadActivity">Write a name here&#8230;.</string>
+    <string name="hint_record_uploadActivity">Enter a record name&#8230;</string>
+    <string name="hint_name_uploadActivity">Write a name here&#8230;</string>
     <string name="hint_description_uploadActivity">Write a description here&#8230;</string>
     <string name="hint_location_uploadActivity">Add a location</string>
     <string name="image_description_uploadActivity">Upload an image</string>
@@ -75,7 +76,17 @@
     <string name="title_activity_choose_upload_method">ChooseUploadMethodActivity</string>
     <string name="image_reading_error">Cannot read image from local</string>
     <string name="image_saving_error">Cannot save image to local</string>
+    <string name="failed_update_address">Failed to update address</string>
+
 
     <!-- button text-->
-    <string name="confirm_btn">Confirm</string>
+    <string name="confirm">Confirm</string>
+    <string name="submit">Submit</string>
+
+    <!--Dialog messages & titles-->
+    <string name="address_not_found_title">Address Not found</string>
+    <string name="address_not_found_choose_again_msg">Can not find corresponding address,select another one?</string>
+    <string name="yes">Yes</string>
+    <string name="btn_continue">Continue</string>
+    <string name="btn_cancel">Cancel</string>
 </resources>

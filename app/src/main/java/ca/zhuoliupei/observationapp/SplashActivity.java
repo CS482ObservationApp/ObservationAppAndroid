@@ -36,14 +36,15 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         hideStatusBarActionBar();
-
         setContentView(R.layout.activity_splash);
+        initializeVariables();
+    }
 
+    private void initializeVariables(){
         mNewestDBHelper=new NewestObservationDBHelper(this);
         initAppTask=new InitAppTask(this);
         initAppTask.execute();
     }
-
     private class InitAppTask extends AsyncTask<Void,Void,Void>{
         Context context;
         public InitAppTask(Context context){

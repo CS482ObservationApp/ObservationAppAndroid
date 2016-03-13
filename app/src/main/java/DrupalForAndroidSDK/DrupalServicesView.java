@@ -9,7 +9,9 @@ import java.util.HashMap;
  */
 public class DrupalServicesView extends DrupalServicesBase  {
     public enum View{
-        OBSERVATION_SEARCH,NEWEST_OBSERVATION
+        OBSERVATION_SEARCH,
+        NEWEST_OBSERVATION,
+        OBSERVATION_RECORD_AUTOCOMPLETE
     };
 
     public DrupalServicesView(String baseURI, String endpoint) {
@@ -20,6 +22,7 @@ public class DrupalServicesView extends DrupalServicesBase  {
         switch (view){
             case OBSERVATION_SEARCH: setResource("observation-search-mobile");break;
             case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
+            case OBSERVATION_RECORD_AUTOCOMPLETE: setResource("observation-record-autocomplete-mobile");break;
         }
         return httpGetRequest(getURI(),params);
     }
