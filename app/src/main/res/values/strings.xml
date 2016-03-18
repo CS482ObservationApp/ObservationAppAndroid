@@ -40,17 +40,22 @@
     <!--Notification-->
     <string name="sessionExpiredNotificationTitle">Session Expired</string>
     <string name="sessionExpiredNotificationText">Click to login</string>
-
+    <string name="uploadingNotificationTitle">Uploading…</string>
+    <string name="uploadingNotificationText">Uploading new observation entry</string>
+    <string name="uploadFailedNotificationTitle">Upload Failed</string>
+    <string name="uploadFailedNotificationText">Upload Failed,try again later…</string>
     <!-- Sliding Menu-->
     <string name="login_SlidingMenu">Login</string>
 
+    <!-- Login Activity-->
+    <string name="login_later_loginActivity">Login Later</string>
     <!-- Upload Activities-->
     <string name="observation_record_uploadActivity">Record</string>
     <string name="name_uploadActivity">Name</string>
     <string name="picture_Description_uploadActivity">Picture&amp;Description</string>
     <string name="sound_uploadActivity">Sound</string>
-    <string name="date_time_uploadActivity">Date&amp;Time</string>
-    <string name="location_uploadActivity">Location</string>
+    <string name="date_time_uploadActivity">Date&amp;Time:</string>
+    <string name="location_uploadActivity">Location:</string>
     <string name="hint_record_uploadActivity">Enter a record name&#8230;</string>
     <string name="hint_name_uploadActivity">Write a name here&#8230;</string>
     <string name="hint_description_uploadActivity">Write a description here&#8230;</string>
@@ -66,6 +71,8 @@
     <string name="email_userProfileActivity">Email</string>
     <string name="address1_userProfileActivity">My Address 1</string>
     <string name="address2_userProfileActivity">My Address 2</string>
+    <string name="update_profile_success_userProfileActivity">Successfully Update Profile</string>
+
 
     <string name="title_activity_choose_photo_upload_method">ChoosePhotoUploadMethodActivity
     </string>
@@ -86,7 +93,10 @@
     <!--Dialog messages & titles-->
     <string name="address_not_found_title">Address Not found</string>
     <string name="address_not_found_choose_again_msg">Can not find corresponding address,select another one?</string>
+    <string name="address_not_found_continue_upload_msg">Can not find corresponding address,continue to upload location?</string>
     <string name="yes">Yes</string>
-    <string name="btn_continue">Continue</string>
-    <string name="btn_cancel">Cancel</string>
+    <string name="cancel">Cancel</string>
+    <string name="cancel_upload_title">Cacnel Uploading</string>
+    <string name="cancel_upload_msg">Are you sure to cancel uploading?</string>
+
 </resources>

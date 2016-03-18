@@ -4,23 +4,14 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import android.util.Log;
-import android.widget.HeaderViewListAdapter;
 
-import java.io.Console;
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-import Const.DrupalServicesResponseConst;
 import DBContract.ObservationContract;
 import DBHelper.NewestObservationDBHelper;
-import DrupalForAndroidSDK.DrupalAuthSession;
-import DrupalForAndroidSDK.DrupalServicesNode;
-import DrupalForAndroidSDK.DrupalServicesUser;
-import Model.ObservationObject;
-import ca.zhuoliupei.observationapp.R;
+import Model.ObservationEntryObject;
 
 /**
  * Created by zhuol on 2/27/2016.
@@ -49,7 +40,7 @@ public class NewestObservationCacheManager {
         this.maxCacheAmount = maxCacheAmount;
     }
 
-    public void cache(ObservationObject[] observationObjects){
+    public void cache(ObservationEntryObject[] observationEntryObjects){
         NewestObservationDBHelper helper=new NewestObservationDBHelper(context);
         SQLiteDatabase readableDatabase=helper.getReadableDatabase();
         SQLiteDatabase writableDatabase=helper.getWritableDatabase();
@@ -80,10 +71,10 @@ public class NewestObservationCacheManager {
         );
 
         //Find out how many objects don't exist in DB
-        ArrayList<ObservationObject> objectsToInsert=new ArrayList<>();
-        for (ObservationObject observationObject:observationObjects) {
+        ArrayList<ObservationEntryObject> objectsToInsert=new ArrayList<>();
+        for (ObservationEntryObject observationEntryObject : observationEntryObjects) {
             final String whereCause= ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID+"=?";
-            final String[] whereArgs={observationObject.nid};
+            final String[] whereArgs={observationEntryObject.nid};
             Cursor c=readableDatabase.query(
                     ObservationContract.NewestObservationEntry.TABLE_NAME,
                     null,
@@ -93,7 +84,7 @@ public class NewestObservationCacheManager {
                     null,
                     null);
             if (c.getCount()==0){
-                objectsToInsert.add(observationObject);
+                objectsToInsert.add(observationEntryObject);
             }
             c.close();
         }
@@ -127,7 +118,7 @@ public class NewestObservationCacheManager {
         cursor.close();
     }
 
-    public ArrayList<ObservationObject> getCache(int itemAmount){
+    public ArrayList<ObservationEntryObject> getCache(int itemAmount){
         NewestObservationDBHelper dbHelper=new NewestObservationDBHelper(context);
         SQLiteDatabase readableDatabase=dbHelper.getReadableDatabase();
         String sortOrder = ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE + " DESC";
@@ -143,7 +134,7 @@ public class NewestObservationCacheManager {
                 sortOrder,                                // The sort order
                 String.valueOf(itemAmount)                // Limit
         );
-        ArrayList<ObservationObject> returnList=new ArrayList<>();
+        ArrayList<ObservationEntryObject> returnList=new ArrayList<>();
         cursor.moveToFirst();
         while (!cursor.isAfterLast()){
             String emptyStr="";
@@ -153,7 +144,7 @@ public class NewestObservationCacheManager {
             String title=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_TITLE));
             String photoServerUri=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI));
             String author=cursor.getString(cursor.getColumnIndex(ObservationContract.NewestObservationEntry.COLUMN_NAME_AUTHOR));
-            returnList.add(new ObservationObject(nid,title,emptyStr,emptyStr,photoServerUri,photoLocalUri,emptyStr,emptyStr,emptyStr,emptyStr,date,author));
+            returnList.add(new ObservationEntryObject(nid,title,emptyStr,emptyStr,photoServerUri,photoLocalUri,emptyStr,emptyStr,emptyStr,emptyStr,date,author));
             cursor.moveToNext();
         }
         cursor.close();

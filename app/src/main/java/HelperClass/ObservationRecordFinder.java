@@ -10,10 +10,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesView;
+import Model.RecordAutoCompleteItem;
 import ca.zhuoliupei.observationapp.R;
 
 /**
@@ -21,11 +22,13 @@ import ca.zhuoliupei.observationapp.R;
  */
 public class ObservationRecordFinder {
     Context context;
+    public static final String TITLE="title";
+    public static final String NID="Nid";
 
     public ObservationRecordFinder(Context context){
         this.context=context;
     }
-    public List<String> findRecords(String name){
+    public List<RecordAutoCompleteItem> findRecords(String name){
         DrupalAuthSession authSession=new DrupalAuthSession();
         authSession.setSession(PreferenceUtil.getCookie(context));
         String baseUrl= context.getText(R.string.drupal_site_url).toString();
@@ -37,8 +40,8 @@ public class ObservationRecordFinder {
         params[0]=new BasicNameValuePair("name",name);
         try {
             HashMap<String,String> responseMap= drupalServicesView.retrive(DrupalServicesView.View.OBSERVATION_RECORD_AUTOCOMPLETE, params);
-            if (responseMap.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)){
-                return getNameListFromJson(responseMap.get(DrupalServicesResponseConst.RESPONSE_BODY));
+            if (responseMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)){
+                return getNameListFromJson(responseMap.get(DrupalServicesFieldKeysConst.RESPONSE_BODY));
             }else {
                 return new ArrayList<>();
             }
@@ -46,13 +49,13 @@ public class ObservationRecordFinder {
             return new ArrayList<>();
         }
     }
-    private List<String> getNameListFromJson(String jsonStr){
+    private List<RecordAutoCompleteItem> getNameListFromJson(String jsonStr){
         try {
-            ArrayList<String> titleList=new ArrayList<>();
+            ArrayList<RecordAutoCompleteItem> titleList=new ArrayList<>();
             JSONArray titleArray=new JSONArray(jsonStr);
             for (int i=0;i<titleArray.length();i++ ){
-                JSONObject titleObject=titleArray.getJSONObject(i);
-                titleList.add(titleObject.getString("title"));
+                JSONObject jsonObjectObject=titleArray.getJSONObject(i);
+                titleList.add(new RecordAutoCompleteItem(jsonObjectObject.getString(TITLE),jsonObjectObject.getString(NID)) );
             }
             return  titleList;
         }catch (Exception ex){

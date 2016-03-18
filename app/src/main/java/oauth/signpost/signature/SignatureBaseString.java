@@ -34,7 +34,7 @@ public class SignatureBaseString {
      *        the HTTP request
      * @param requestParameters
      *        the set of request parameters from the Authorization header, query
-     *        string and form body
+     *        string and form description
      */
     public SignatureBaseString(HttpRequest request, HttpParameters requestParameters) {
         this.request = request;

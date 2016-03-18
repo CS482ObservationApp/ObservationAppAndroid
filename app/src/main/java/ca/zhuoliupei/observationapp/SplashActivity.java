@@ -2,8 +2,6 @@ package ca.zhuoliupei.observationapp;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.ActionBar;
@@ -15,14 +13,10 @@ import android.view.WindowManager;
 
 import java.util.ArrayList;
 
-import Const.AppConst;
-import Const.DrupalServicesResponseConst;
-import DBContract.ObservationContract;
-import DBContract.ObservationContract.NewestObservationEntry;
 import DBHelper.NewestObservationDBHelper;
 import HelperClass.NewestObservationCacheManager;
 import HelperClass.PreferenceUtil;
-import Model.ObservationObject;
+import Model.ObservationEntryObject;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -58,10 +52,10 @@ public class SplashActivity extends AppCompatActivity {
                 intent = new Intent(SplashActivity.this, LoginActivity.class);
             } else {
                 intent = new Intent(SplashActivity.this, NewestObservationsActivity.class);
-                ArrayList<ObservationObject> observationObjectList=getNewestObservationFromDB();
-                if (observationObjectList.size()!=0){
-                    ObservationObject[] observationObjects= getObservationObjectArrayFromArrayList(observationObjectList);
-                    intent.putExtra("OBSERVATION_OBJECTS",observationObjects);
+                ArrayList<ObservationEntryObject> observationEntryObjectList =getNewestObservationFromDB();
+                if (observationEntryObjectList.size()!=0){
+                    ObservationEntryObject[] observationEntryObjects = getObservationObjectArrayFromArrayList(observationEntryObjectList);
+                    intent.putExtra("OBSERVATION_OBJECTS", observationEntryObjects);
                 }
             }
             try {
@@ -76,26 +70,26 @@ public class SplashActivity extends AppCompatActivity {
 
 
     }
-    private ArrayList<ObservationObject> getNewestObservationFromDB(){
+    private ArrayList<ObservationEntryObject> getNewestObservationFromDB(){
         NewestObservationCacheManager cacheManager=new NewestObservationCacheManager(this);
         return cacheManager.getCache(10);
     }
 
-    private ObservationObject[] getObservationObjectArrayFromArrayList(ArrayList<ObservationObject> objects){
-        ObservationObject[] observationObjects=new ObservationObject[objects.size()];
+    private ObservationEntryObject[] getObservationObjectArrayFromArrayList(ArrayList<ObservationEntryObject> objects){
+        ObservationEntryObject[] observationEntryObjects =new ObservationEntryObject[objects.size()];
         String EMPTY_ATTRIBUTE="";
         int i=0;
-        for (ObservationObject object:objects) {
+        for (ObservationEntryObject object:objects) {
             String title = object.title;
             String nid = object.nid;
             String photoServerUri = object.photoServerUri;
             String photoLocalUri = object.photoLocalUri;
             String author = object.author;
             String date = object.date;
-            observationObjects[i]=new ObservationObject(nid,title,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,photoServerUri,photoLocalUri,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,date,author);
+            observationEntryObjects[i]=new ObservationEntryObject(nid,title,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,photoServerUri,photoLocalUri,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,EMPTY_ATTRIBUTE,date,author);
             i++;
         }
-        return observationObjects;
+        return observationEntryObjects;
     }
     private void hideStatusBarActionBar() {
         // If the Android version is lower than Jellybean, use this call to hide the status bar.
@@ -119,7 +113,8 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        initAppTask.cancel(true);
+        if (initAppTask!=null)
+            initAppTask.cancel(true);
     }
 }
 

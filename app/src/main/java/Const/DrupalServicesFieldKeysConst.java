@@ -4,8 +4,8 @@ package Const;
  * Created by zhuol on 2/23/2016.
  */
 
-public class DrupalServicesResponseConst {
-    //Drupal response json keys
+public class DrupalServicesFieldKeysConst {
+    //For login activity
     public static final String LOGIN_ROLE_AUTHENTICATED= "authenticated user";
     public static final String LOGIN_ROLE_ADMIN = "administrator";
     public static final String LOGIN_ROLE_ANONYMOUS = "anonymous user";
@@ -26,9 +26,12 @@ public class DrupalServicesResponseConst {
     public static final String LOGIN_ADMIN_AREA="administrative_area";
     public static final String LOGIN_LOCALITY="locality";
     public static final String LOGIN_THOROUGHFARE="thoroughfare";
+
+    //For user profile
     public static final String USER_PICTURE="picture";
     public static final String USER_NAME="name";
-    public static final String FILE_FILE_ID="fid";
+
+
     public static final String STATUS_CODE ="statusCode";
     public static final String RESPONSE_BODY ="responseBody";
 

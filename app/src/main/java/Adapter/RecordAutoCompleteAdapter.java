@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import HelperClass.ObservationRecordFinder;
+import Model.RecordAutoCompleteItem;
 import ca.zhuoliupei.observationapp.R;
 
 /**
@@ -20,7 +21,7 @@ import ca.zhuoliupei.observationapp.R;
  */
 public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable {
     private Context mContext;
-    private List<String> resultList = new ArrayList<String>();
+    private List<RecordAutoCompleteItem> resultList = new ArrayList<RecordAutoCompleteItem>();
 
     public RecordAutoCompleteAdapter(Context context) {
         mContext = context;
@@ -33,7 +34,8 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
 
     @Override
     public String getItem(int index) {
-        return resultList.get(index);
+        RecordAutoCompleteItem item=resultList.get(index);
+        return String.format("%s(%s)", item.title, item.nid);
     }
 
     @Override
@@ -59,11 +61,10 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults filterResults = new FilterResults();
                 if (constraint != null) {
-                    List<String> books = findRecords(mContext, constraint.toString());
-
+                    List<RecordAutoCompleteItem> items = findRecords(mContext, constraint.toString());
                     // Assign the data to the FilterResults
-                    filterResults.values = books;
-                    filterResults.count = books.size();
+                    filterResults.values = items;
+                    filterResults.count = items.size();
                 }
                 return filterResults;
             }
@@ -71,7 +72,7 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null && results.count > 0) {
-                    resultList = (List<String>) results.values;
+                    resultList = (List<RecordAutoCompleteItem>) results.values;
                     notifyDataSetChanged();
                 } else {
                     notifyDataSetInvalidated();
@@ -83,7 +84,7 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
     /**
      * Returns a search result for the given book title.
      */
-    private List<String> findRecords(Context context, String observationTitle) {
+    private List<RecordAutoCompleteItem> findRecords(Context context, String observationTitle) {
         ObservationRecordFinder finder=new ObservationRecordFinder(context);
         return finder.findRecords(observationTitle);
     }

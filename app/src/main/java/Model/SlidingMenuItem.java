@@ -11,8 +11,5 @@ public class SlidingMenuItem {
         this.itemType=itemType;
     }
     public ItemType itemType=ItemType.NORMAL_ITEM;
-    public String username="";
-    public String location="";
-    public String imgFileLocation="";
-    public String text="";
+    public String text;
 }

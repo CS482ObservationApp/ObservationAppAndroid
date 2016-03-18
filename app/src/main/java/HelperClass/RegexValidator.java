@@ -18,7 +18,6 @@ public class RegexValidator {
     private static final String USERNAME_PATTERN = "^[A-Za-z0-9_-]{3,15}$";
     private static final String PASSWORD_PATTERN="((?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{6,20})";
 
-
     /**
      * Validate hex with regular expression
      *

@@ -224,13 +224,13 @@ public abstract class AbstractOAuthConsumer implements OAuthConsumer {
     }
 
     /**
-     * Collects x-www-form-urlencoded body parameters as per OAuth Core 1.0 spec
+     * Collects x-www-form-urlencoded description parameters as per OAuth Core 1.0 spec
      * section 9.1.1
      */
     protected void collectBodyParameters(HttpRequest request, HttpParameters out)
             throws IOException {
 
-        // collect x-www-form-urlencoded body params
+        // collect x-www-form-urlencoded description params
         String contentType = request.getContentType();
         if (contentType != null && contentType.startsWith(OAuth.FORM_ENCODED)) {
             InputStream payload = request.getMessagePayload();

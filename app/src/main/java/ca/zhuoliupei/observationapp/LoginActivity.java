@@ -2,10 +2,7 @@ package ca.zhuoliupei.observationapp;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -13,6 +10,8 @@ import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,11 +21,12 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.HashMap;
 
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import Const.SharedPreferencesConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesUser;
+import HelperClass.AnimationUtil;
 import HelperClass.DownLoadUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.RegexValidator;
@@ -56,6 +56,31 @@ public class LoginActivity extends AppCompatActivity {
         setWidgetListeners();
     }
 
+    private void hideTransitionView(){
+        findViewById(R.id.txtPassword_LoginActivity).setEnabled(true);
+        findViewById(R.id.txtUserName_LoginActivity).setEnabled(true);
+        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(true);
+        findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(true);
+        findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(true);
+
+        ImageView transitionImgView=(ImageView)findViewById(R.id.imgTransition_LoginActivity);
+        if (transitionImgView != null) {
+            if (transitionImgView.getAnimation() != null)
+                transitionImgView.clearAnimation();
+        }
+        findViewById(R.id.fl_transition_LoginActivity).setVisibility(View.GONE);
+    }
+    private void showTransitionView(){
+        findViewById(R.id.txtPassword_LoginActivity).setEnabled(false);
+        findViewById(R.id.txtUserName_LoginActivity).setEnabled(false);
+        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(false);
+        findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(false);
+        findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(false);
+
+        ImageView transitionImgView=(ImageView)findViewById(R.id.imgTransition_LoginActivity);
+        transitionImgView.setAnimation(AnimationUtil.getRotateAnimation());
+        findViewById(R.id.fl_transition_LoginActivity).setVisibility(View.VISIBLE);
+    }
     //Initialization Wrappers
     private void initializeVariables(){
         baseUrl=getResources().getString(R.string.drupal_site_url);
@@ -71,6 +96,7 @@ public class LoginActivity extends AppCompatActivity {
     private void setWidgetListeners(){
         setRegisterBtnOnClick();
         setLoginBtnOnClick();
+        setLoginLaterOnClick();
     }
 
     //Initialize UI Methods
@@ -99,21 +125,30 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loginTask=new LoginTask(v.getContext());
+                loginTask = new LoginTask(v.getContext());
                 //Get input
-                userNameEditText=((EditText)findViewById(R.id.txtUserName_LoginActivity));
-                passwordEditText=((EditText)findViewById(R.id.txtPassword_LoginActivity));
-                userNameStr=userNameEditText.getText().toString().trim();
-                passwordStr=passwordEditText.getText().toString().trim();
+                userNameEditText = ((EditText) findViewById(R.id.txtUserName_LoginActivity));
+                passwordEditText = ((EditText) findViewById(R.id.txtPassword_LoginActivity));
+                userNameStr = userNameEditText.getText().toString().trim();
+                passwordStr = passwordEditText.getText().toString().trim();
 
                 //Validate input
-                if (validateLoginInfo()){
+                if (validateLoginInfo()) {
                     loginTask.execute();
+                    showTransitionView();
                 }
             }
         });
     }
-
+    private void setLoginLaterOnClick(){
+        findViewById(R.id.txtLoginLater_LoginActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(LoginActivity.this,NewestObservationsActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
     //Worker Tasks Classes
     private class LoginTask extends AsyncTask<Void,Void,HashMap<String,String>>{
         Context context;
@@ -135,8 +170,10 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(HashMap<String ,String> responseMap) {
-            String statusCode=responseMap.get(DrupalServicesResponseConst.STATUS_CODE);
-            String responseBody=responseMap.get(DrupalServicesResponseConst.RESPONSE_BODY);
+            hideTransitionView();
+
+            String statusCode=responseMap.get(DrupalServicesFieldKeysConst.STATUS_CODE);
+            String responseBody=responseMap.get(DrupalServicesFieldKeysConst.RESPONSE_BODY);
 
             if (statusCode==null||statusCode.isEmpty()||responseBody==null||responseBody.isEmpty())
             {
@@ -193,7 +230,6 @@ public class LoginActivity extends AppCompatActivity {
             return null;
         }
     }
-
     //Helper Methods
     private boolean validateLoginInfo(){
         boolean validate=true;
@@ -220,8 +256,8 @@ public class LoginActivity extends AppCompatActivity {
         try {
             //Fetch session info and store it
             responseJsonObjcet = new JSONObject(responseBody);
-            sessionID = responseJsonObjcet.getString(DrupalServicesResponseConst.LOGIN_SESSION_ID);
-            sessionName = responseJsonObjcet.getString(DrupalServicesResponseConst.LOGIN_SESSION_NAME);
+            sessionID = responseJsonObjcet.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_ID);
+            sessionName = responseJsonObjcet.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_NAME);
             cookie=sessionName+"="+ sessionID;
         }catch (Exception e) {
             Toast.makeText(this, R.string.network_error, Toast.LENGTH_LONG).show();
@@ -238,10 +274,10 @@ public class LoginActivity extends AppCompatActivity {
         String uid,userName,email,address1,address2,pictureServerUrl;
         try {
             responseJsonObject = new JSONObject(responseBody);
-            userJsonObject = responseJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_USER);
+            userJsonObject = responseJsonObject.getJSONObject(DrupalServicesFieldKeysConst.LOGIN_USER);
 
-            uid = userJsonObject.getString(DrupalServicesResponseConst.LOGIN_USER_ID);
-            userName = userJsonObject.getString(DrupalServicesResponseConst.LOGIN_NAME);
+            uid = userJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_USER_ID);
+            userName = userJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_NAME);
         }catch (Exception e) {
             Toast.makeText(this, R.string.network_error, Toast.LENGTH_LONG).show();
             return false;
@@ -251,19 +287,19 @@ public class LoginActivity extends AppCompatActivity {
         * If doesn't exist,just leave it empty
         */
         try {
-            userPictureJsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_PICTURE);
+            userPictureJsonObject = userJsonObject.getJSONObject(DrupalServicesFieldKeysConst.LOGIN_PICTURE);
             pictureServerUrl=getPictureServerUrlFromJsonObject(userPictureJsonObject);
         }catch (Exception e){
             pictureServerUrl="";
         }
         try {
-            address1JsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_ADDRESS_1);
+            address1JsonObject = userJsonObject.getJSONObject(DrupalServicesFieldKeysConst.LOGIN_ADDRESS_1);
             address1=getAddressFromAddressJsonObject(address1JsonObject);
         }catch (Exception e){
             address1="";
         }
         try {
-            address2JsonObject = userJsonObject.getJSONObject(DrupalServicesResponseConst.LOGIN_ADDRESS_2);
+            address2JsonObject = userJsonObject.getJSONObject(DrupalServicesFieldKeysConst.LOGIN_ADDRESS_2);
             address2=getAddressFromAddressJsonObject(address2JsonObject);
         }catch (Exception e){
             address2="";
@@ -283,7 +319,7 @@ public class LoginActivity extends AppCompatActivity {
     }
     private String getPictureServerUrlFromJsonObject(JSONObject object) {
         try {
-            String url = object.getString(DrupalServicesResponseConst.LOGIN_URL);
+            String url = object.getString(DrupalServicesFieldKeysConst.LOGIN_URL);
             if (url == null)
                 url = "";
             return url;
@@ -293,12 +329,12 @@ public class LoginActivity extends AppCompatActivity {
     }
     private String getAddressFromAddressJsonObject(JSONObject object){
         try {
-            JSONArray jsonArray = object.getJSONArray(DrupalServicesResponseConst.LOGIN_UND);
+            JSONArray jsonArray = object.getJSONArray(DrupalServicesFieldKeysConst.LOGIN_UND);
             JSONObject addressJsonObject = jsonArray.getJSONObject(0);
-            String country = addressJsonObject.getString(DrupalServicesResponseConst.LOGIN_COUNTRY);
-            String adminArea = addressJsonObject.getString(DrupalServicesResponseConst.LOGIN_ADMIN_AREA);
-            String locality = addressJsonObject.getString(DrupalServicesResponseConst.LOGIN_LOCALITY);
-            String thoroughfare = addressJsonObject.getString(DrupalServicesResponseConst.LOGIN_THOROUGHFARE);
+            String country = addressJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_COUNTRY);
+            String adminArea = addressJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_ADMIN_AREA);
+            String locality = addressJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_LOCALITY);
+            String thoroughfare = addressJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_THOROUGHFARE);
 
             return thoroughfare+"\r\n"+locality+","+adminArea+"\r\n"+country;
         }catch (Exception e){
@@ -307,7 +343,7 @@ public class LoginActivity extends AppCompatActivity {
     }
     private String getEmailFromUserJsonObject(JSONObject object) {
         try {
-            String email = object.getString(DrupalServicesResponseConst.LOGIN_EMAIL);
+            String email = object.getString(DrupalServicesFieldKeysConst.LOGIN_EMAIL);
             if (email==null)
                 email="";
             return email;

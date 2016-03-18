@@ -7,7 +7,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+
+import ca.zhuoliupei.observationapp.ChooseUploadPhotoMethodActivity;
 
 
 /**
@@ -34,5 +39,43 @@ public class PhotoUtil {
         } catch (Exception ex) {
             return null;
         }
+    }
+    public static Bitmap getBitmapFromFile(File file,int maxSize){
+        try {
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(new FileInputStream(file), null, o);
+            int scale=1;
+            while (o.outWidth/scale/2>=maxSize&&o.outHeight/scale/2>=maxSize){
+                scale*=2;
+            }
+            BitmapFactory.Options o2=new BitmapFactory.Options();
+            o2.inSampleSize=scale;
+            return BitmapFactory.decodeStream(new FileInputStream(file),null,o2);
+        }catch (FileNotFoundException e){}
+        return  null;
+    }
+    public static void startPickingPhoto(Activity context,int result,int requestID) {
+        switch (result) {
+            case ChooseUploadPhotoMethodActivity.CHOOSE_PHOTO_FROM_CAMERA: {
+                PhotoUtil.launchCameraForPhoto(context, requestID);
+                break;
+            }
+            case ChooseUploadPhotoMethodActivity.CHOOSE_PHOTO_FROM_GALARY: {
+                PhotoUtil.launchGalleryAppForPhoto(context, requestID);
+                break;
+            }
+        }
+    }
+
+    public static Bitmap reduceBitMapSize(Bitmap bitmap,int maxSize){
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        if (!(width*height>=maxSize))
+            return bitmap;
+        int ratio=(int)Math.ceil(Math.sqrt(width*height/maxSize));
+        int newWidth=(int)(width/ratio);
+        int newHeight=(int)(height/ratio);
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
     }
 }

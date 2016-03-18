@@ -20,7 +20,7 @@ import org.jsoup.Jsoup;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesUser;
@@ -152,8 +152,8 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void handleRequestResponse(HashMap<String,String > response){
-        String statusCode =response.get(DrupalServicesResponseConst.STATUS_CODE);
-        String responseStr=response.get(DrupalServicesResponseConst.RESPONSE_BODY);
+        String statusCode =response.get(DrupalServicesFieldKeysConst.STATUS_CODE);
+        String responseStr=response.get(DrupalServicesFieldKeysConst.RESPONSE_BODY);
         try{
             if(statusCode.equals(HTTPConst.HTTP_OK_200)){
                 TextView msgTextView = (TextView)findViewById(R.id.txtMessage_RegisterActivity);

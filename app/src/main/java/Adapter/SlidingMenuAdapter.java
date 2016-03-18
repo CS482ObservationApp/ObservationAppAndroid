@@ -1,25 +1,23 @@
 package Adapter;
 
 import android.app.Activity;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import Model.SlidingMenuItem.ItemType;
-
 import java.io.File;
 import java.util.ArrayList;
 
+import HelperClass.PhotoUtil;
+import HelperClass.PreferenceUtil;
 import Model.SlidingMenuItem;
+import ca.zhuoliupei.observationapp.LoginActivity;
 import ca.zhuoliupei.observationapp.R;
 import ca.zhuoliupei.observationapp.UploadActivity;
 import ca.zhuoliupei.observationapp.UserProfileActivity;
@@ -28,6 +26,7 @@ import ca.zhuoliupei.observationapp.UserProfileActivity;
  * Created by zhuol on 3/1/2016.
  */
 public class SlidingMenuAdapter extends BaseAdapter{
+    private final int MAX_USER_IMAGE_VIEW_SIZE=100*100;
     ArrayList<SlidingMenuItem> items;
     Activity context;
     public SlidingMenuAdapter(ArrayList<SlidingMenuItem> items,Activity context){
@@ -79,20 +78,20 @@ public class SlidingMenuAdapter extends BaseAdapter{
         LayoutInflater inflater = context.getLayoutInflater();
         View rowView= inflater.inflate(R.layout.sliding_menu_account_item, null, true);
         ImageView accountIV=(ImageView)rowView.findViewById(R.id.imgUser_SlidingMenu);
-        File imgFile = new File(item.imgFileLocation);
+        File imgFile = new File(PreferenceUtil.getCurrentUserPictureLocalUri(context));
         if (imgFile.exists())
-             accountIV.setImageURI(Uri.parse(item.imgFileLocation));
+             accountIV.setImageBitmap(PhotoUtil.getBitmapFromFile(imgFile, MAX_USER_IMAGE_VIEW_SIZE));
         else
             accountIV.setImageResource(R.drawable.icon_user_default);
         TextView nameTV=(TextView)rowView.findViewById(R.id.txtName_SlidingMenu);
-        nameTV.setText(item.username);
+        nameTV.setText(PreferenceUtil.getCurrentUser(context));
         TextView locationTV=(TextView)rowView.findViewById(R.id.txtLocation_SlidingMenu);
-        locationTV.setText(item.location);
+        locationTV.setText(PreferenceUtil.getCurrentUserLocation1(context));
         rowView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-                    v.getContext().startActivity(new Intent(v.getContext(), UserProfileActivity.class));
+                    ((Activity)v.getContext()).startActivity(new Intent(v.getContext(), UserProfileActivity.class));
                 }catch (Exception e){
                     Log.e("ONCLIK",e.getMessage());
                 }
@@ -103,6 +102,13 @@ public class SlidingMenuAdapter extends BaseAdapter{
     private View constructLoginItemView(SlidingMenuItem item){
         LayoutInflater inflater = context.getLayoutInflater();
         View rowView= inflater.inflate(R.layout.sliding_menu_login_item, null, true);
+        rowView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(context, LoginActivity.class);
+                context.startActivity(intent);
+            }
+        });
         return rowView;
     }
 }

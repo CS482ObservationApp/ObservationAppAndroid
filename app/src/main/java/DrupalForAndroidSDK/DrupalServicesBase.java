@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 
 /**
  * Created by jimmyko on 10/13/13.
@@ -144,13 +144,13 @@ public class DrupalServicesBase {
             if (resEntity != null) {
                 String responseBody = EntityUtils.toString(resEntity);
                 HashMap<String, String> responseMap = new HashMap<>();
-                responseMap.put(DrupalServicesResponseConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
-                responseMap.put(DrupalServicesResponseConst.RESPONSE_BODY, responseBody);
+                responseMap.put(DrupalServicesFieldKeysConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
+                responseMap.put(DrupalServicesFieldKeysConst.RESPONSE_BODY, responseBody);
 
                 return responseMap;
             }
             HashMap<String, String> responseMap = new HashMap<>();
-            responseMap.put(DrupalServicesResponseConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
+            responseMap.put(DrupalServicesFieldKeysConst.STATUS_CODE, String.valueOf(response.getStatusLine().getStatusCode()));
             return responseMap;
     }
     

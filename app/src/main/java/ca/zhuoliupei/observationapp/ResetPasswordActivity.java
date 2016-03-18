@@ -11,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jsoup.Jsoup;
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 import java.util.HashMap;
 
 import Const.HTTPConst;
@@ -76,12 +76,12 @@ public class ResetPasswordActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(HashMap<String,String> results) {
-            String statusCode=results.get(DrupalServicesResponseConst.STATUS_CODE);
+            String statusCode=results.get(DrupalServicesFieldKeysConst.STATUS_CODE);
             try{
                 if (statusCode.equals(HTTPConst.HTTP_OK_200)){
                     ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(getResources().getString(R.string.reset_successful));
                 }else if(statusCode.equals(HTTPConst.HTTP_UNAUTHORIZED_401)||statusCode.equals(HTTPConst.HTTP_UOT_ACCEPT_406)){
-                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(results.get(DrupalServicesResponseConst.RESPONSE_BODY)).text() );
+                    ((TextView)findViewById(R.id.txtMessage_RestPasswordActivity)).setText(Jsoup.parse(results.get(DrupalServicesFieldKeysConst.RESPONSE_BODY)).text() );
                 }else {
                     throw new Exception();
                 }

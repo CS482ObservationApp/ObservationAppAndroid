@@ -11,7 +11,8 @@ public class DrupalServicesView extends DrupalServicesBase  {
     public enum View{
         OBSERVATION_SEARCH,
         NEWEST_OBSERVATION,
-        OBSERVATION_RECORD_AUTOCOMPLETE
+        OBSERVATION_RECORD_AUTOCOMPLETE,
+        SINGLE_NODE_DETAIL
     };
 
     public DrupalServicesView(String baseURI, String endpoint) {
@@ -23,6 +24,7 @@ public class DrupalServicesView extends DrupalServicesBase  {
             case OBSERVATION_SEARCH: setResource("observation-search-mobile");break;
             case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
             case OBSERVATION_RECORD_AUTOCOMPLETE: setResource("observation-record-autocomplete-mobile");break;
+            case SINGLE_NODE_DETAIL: setResource("single-node-detail-mobile");break;
         }
         return httpGetRequest(getURI(),params);
     }

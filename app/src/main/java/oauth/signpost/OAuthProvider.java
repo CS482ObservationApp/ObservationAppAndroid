@@ -175,7 +175,7 @@ public interface OAuthProvider extends Serializable {
             OAuthCommunicationException;
 
     /**
-     * Any additional non-OAuth parameters returned in the response body of a
+     * Any additional non-OAuth parameters returned in the response description of a
      * token request can be obtained through this method. These parameters will
      * be preserved until the next token request is issued. The return value is
      * never null.

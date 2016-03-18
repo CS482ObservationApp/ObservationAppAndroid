@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
@@ -22,16 +21,16 @@ import android.widget.Toast;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.UrlTileProvider;
 
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 
-import Const.DrupalServicesResponseConst;
+import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,17 +40,23 @@ import Const.SharedPreferencesConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesFile;
 import DrupalForAndroidSDK.DrupalServicesUser;
+import HelperClass.GeoUtil;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.UploadUtil;
 
 public class UserProfileActivity extends AppCompatActivity {
+    private static final int INVALID=-1;
     private static final int CANCEL_UPLOAD=-1;
     private static final int CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST=0;
     private static final int PICK_PHOTO_REQUEST =1;
     private static final int CHANGE_USER_NAME_REQUEST=2;
     private static final int PROFILE_ADDRESS1_PICKER_REQUEST =3;
     private static final int PROFILE_ADDRESS2_PICKER_REQUEST =4;
+    private static final String FILE_FILE_ID="fid";
+
+    private final int MAX_USER_IMAGE_UPLOAD_SIZE=300*300;
+    private final int MAX_USER_IMAGE_VIEW_SIZE=50*50;
 
     String baseUrl, endpoint;
     DrupalAuthSession authSession;
@@ -95,9 +100,10 @@ public class UserProfileActivity extends AppCompatActivity {
         String address1 = PreferenceUtil.getCurrentUserLocation1(this);
         String address2 = PreferenceUtil.getCurrentUserLocation2(this);
 
+        //Control the bitmap size to prevent OOM
         File imgFile = new File(imgFilePath);
         if (imgFile.exists())
-            profileImageIV.setImageURI(Uri.parse(imgFilePath));
+            profileImageIV.setImageBitmap(PhotoUtil.getBitmapFromFile(imgFile,MAX_USER_IMAGE_VIEW_SIZE));
         else profileImageIV.setImageResource(R.drawable.icon_user_default);
 
         userNameTV.setText(userName);
@@ -158,18 +164,7 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
     }
-    private void startPickingPhoto(int result) {
-        switch (result) {
-            case ChooseUploadPhotoMethodActivity.CHOOSE_PHOTO_FROM_CAMERA: {
-                PhotoUtil.launchCameraForPhoto(this, PICK_PHOTO_REQUEST);
-                break;
-            }
-            case ChooseUploadPhotoMethodActivity.CHOOSE_PHOTO_FROM_GALARY: {
-                PhotoUtil.launchGalleryAppForPhoto(this, PICK_PHOTO_REQUEST);
-                break;
-            }
-        }
-    }
+
 
     /* Handle Activity Results*/
     @Override
@@ -205,7 +200,7 @@ public class UserProfileActivity extends AppCompatActivity {
                 return;
             }
             int result = data.getIntExtra("result", CANCEL_UPLOAD);
-            startPickingPhoto(result);
+            PhotoUtil.startPickingPhoto(this, result, PICK_PHOTO_REQUEST);
         }
     }
     private void handleGetPhotoRequestResult(int resultCode, Intent data) {
@@ -220,7 +215,7 @@ public class UserProfileActivity extends AppCompatActivity {
                 //If photo comes from gallary,photo would be null,use the helper method
             else
                 photo = PhotoUtil.getBitmapFromUri(data.getData(), this);
-
+            photo=PhotoUtil.reduceBitMapSize(photo,MAX_USER_IMAGE_UPLOAD_SIZE);
             updateServerUserProfileImageTask=new UpdateServerUserProfileImageTask(this);
             updateServerUserProfileImageTask.execute(photo);
         }
@@ -278,9 +273,13 @@ public class UserProfileActivity extends AppCompatActivity {
                 boolean saveResult = updateLocalUserProfileImage(photo, context);
                 if (saveResult) {
                     ((ImageView) findViewById(R.id.imgUserImage_UserProfileActivity)).setImageBitmap(photo);
+                    Toast.makeText(context, R.string.update_profile_success_userProfileActivity, Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(context, R.string.image_saving_error, Toast.LENGTH_SHORT).show();
                 }
+            }
+            else{
+                Toast.makeText(context,R.string.network_error,Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -296,10 +295,10 @@ public class UserProfileActivity extends AppCompatActivity {
         protected Boolean doInBackground(String... names) {
             newUserName = names[0];
             BasicNameValuePair[] params = new BasicNameValuePair[1];
-            params[0] = new BasicNameValuePair(DrupalServicesResponseConst.USER_NAME, newUserName);
+            params[0] = new BasicNameValuePair(DrupalServicesFieldKeysConst.USER_NAME, newUserName);
             try {
                 HashMap<String, String> updateResultMap = drupalServicesUser.update(params, PreferenceUtil.getCurrentUserID(context));
-                if (updateResultMap.get(DrupalServicesResponseConst.STATUS_CODE).equals("200"))
+                if (updateResultMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals("200"))
                     return true;
                 else
                     return false;
@@ -344,7 +343,7 @@ public class UserProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(final Address address) {
             if (address == null) {
-                //Show Dialog to select continue or not
+                //Show Dialog to select choose another address or not
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setMessage(R.string.address_not_found_choose_again_msg).setTitle(R.string.address_not_found_title);
                 builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
@@ -357,7 +356,7 @@ public class UserProfileActivity extends AppCompatActivity {
                         }
                     }
                 });
-                builder.setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
+                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                     }
                 });
@@ -433,14 +432,14 @@ public class UserProfileActivity extends AppCompatActivity {
     }
     private int getUserImageFileID() throws Exception {
         HashMap<String, String> fetchUserInfoResponse = drupalServicesUser.getUser(Integer.valueOf(PreferenceUtil.getCurrentUserID(this)));
-        if (fetchUserInfoResponse.get(DrupalServicesResponseConst.STATUS_CODE).equals("200")) {
-            String resposneString = fetchUserInfoResponse.get(DrupalServicesResponseConst.RESPONSE_BODY);
+        if (fetchUserInfoResponse.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals("200")) {
+            String resposneString = fetchUserInfoResponse.get(DrupalServicesFieldKeysConst.RESPONSE_BODY);
             JSONObject resposneObject = new JSONObject(resposneString);
             JSONObject pictureObjecct;
             //Picture object may not exist,then return -1 to tell caller that user doesn't have a picture
             try {
-                pictureObjecct = resposneObject.getJSONObject(DrupalServicesResponseConst.USER_PICTURE);
-                return pictureObjecct.getInt(DrupalServicesResponseConst.FILE_FILE_ID);
+                pictureObjecct = resposneObject.getJSONObject(DrupalServicesFieldKeysConst.USER_PICTURE);
+                return pictureObjecct.getInt(FILE_FILE_ID);
             } catch (Exception e) {
                 return -1;
             }
@@ -453,21 +452,21 @@ public class UserProfileActivity extends AppCompatActivity {
         String encoded = UploadUtil.getBase64StringFromBitmap(bitmap);
         BasicNameValuePair[] params = UploadUtil.constructBasicFileUploadParams(filename, fileServerPath, encoded);
         HashMap<String, String> createFileResponse = drupalServicesFile.create(params);
-        if (createFileResponse.get(DrupalServicesResponseConst.STATUS_CODE).equals("200")) {
-            JSONObject responseObject = new JSONObject(createFileResponse.get(DrupalServicesResponseConst.RESPONSE_BODY));
-            int fid = responseObject.getInt(DrupalServicesResponseConst.FILE_FILE_ID);
+        if (createFileResponse.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals("200")) {
+            JSONObject responseObject = new JSONObject(createFileResponse.get(DrupalServicesFieldKeysConst.RESPONSE_BODY));
+            int fid = responseObject.getInt(FILE_FILE_ID);
             return fid;
         }
-        return -1;
+        return INVALID;
     }
     private void deleteOldProfileImage(int fid) throws Exception {
         drupalServicesFile.delete(fid);
     }
     private boolean updateUserImageFid(int fid) throws Exception {
         BasicNameValuePair[] params = new BasicNameValuePair[1];
-        params[0] = new BasicNameValuePair(DrupalServicesResponseConst.USER_PICTURE, String.valueOf(fid));
+        params[0] = new BasicNameValuePair(DrupalServicesFieldKeysConst.USER_PICTURE, String.valueOf(fid));
         HashMap<String, String> responseMap = drupalServicesUser.update(params, PreferenceUtil.getCurrentUserID(this));
-        return responseMap.get(DrupalServicesResponseConst.STATUS_CODE).equals("200");
+        return responseMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals("200");
     }
     /********** Upload User Location*************/
     private boolean updateServerUserLocation(LatLng latLng,Address address,int requestCode) {
@@ -480,8 +479,8 @@ public class UserProfileActivity extends AppCompatActivity {
         paramList.add( new BasicNameValuePair("field_location_lat_long[und][0][geom][lon]", String.valueOf(lon)));*/
 
         switch (requestCode){
-            case PROFILE_ADDRESS1_PICKER_REQUEST:addressField="field_l1_address";break;
-            case PROFILE_ADDRESS2_PICKER_REQUEST:addressField="field_l2_address";break;
+            case PROFILE_ADDRESS1_PICKER_REQUEST:addressField= DrupalServicesFieldKeysConst.LOGIN_ADDRESS_1;break;
+            case PROFILE_ADDRESS2_PICKER_REQUEST:addressField= DrupalServicesFieldKeysConst.LOGIN_ADDRESS_2;break;
         }
         //TODO: Country code may not be accepted by Drupal,need a better solution in the future
         if (address==null)
@@ -502,7 +501,7 @@ public class UserProfileActivity extends AppCompatActivity {
         BasicNameValuePair[] params = paramList.toArray(new BasicNameValuePair[paramList.size()]);
         try {
             HashMap<String, String> updateResult = drupalServicesUser.update(params, PreferenceUtil.getCurrentUserID(this));
-            if (!updateResult.get(DrupalServicesResponseConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
+            if (!updateResult.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
                 return false;
             }
             return true;
@@ -533,6 +532,8 @@ public class UserProfileActivity extends AppCompatActivity {
     private boolean updateLocalUserName(String newUserName, Context context) {
         PreferenceUtil.saveString(context, SharedPreferencesConst.K_USER_NAME, newUserName);
         ((TextView) (findViewById(R.id.txtUserName_UserProfileActivity))).setText(newUserName);
+        Toast.makeText(context, R.string.update_profile_success_userProfileActivity, Toast.LENGTH_SHORT).show();
+
         return true;
     }
     private boolean updateLocalUserLocation(Context context,Address address,int requestCode){
@@ -540,16 +541,22 @@ public class UserProfileActivity extends AppCompatActivity {
             case PROFILE_ADDRESS1_PICKER_REQUEST:
             {
                 TextView txtAddress=(TextView)findViewById(R.id.txtAddress1_UserProfileActivity);
-                txtAddress.setText(address.getAddressLine(0));
-                PreferenceUtil.saveString(context,SharedPreferencesConst.K_USER_ADDRESS_1,address.getAddressLine(0));
+                String fullAddress=GeoUtil.getFullAddress(address);
+                txtAddress.setText(fullAddress);
+                PreferenceUtil.saveString(context,SharedPreferencesConst.K_USER_ADDRESS_1,fullAddress);
+                break;
             }
             case PROFILE_ADDRESS2_PICKER_REQUEST:
             {
+                String fullAddress= GeoUtil.getFullAddress(address);
                 TextView txtAddress=(TextView)findViewById(R.id.txtAddress2_UserProfileActivity);
-                txtAddress.setText(address.getAddressLine(0));
-                PreferenceUtil.saveString(context,SharedPreferencesConst.K_USER_ADDRESS_2,address.getAddressLine(0));
+                txtAddress.setText(fullAddress);
+                PreferenceUtil.saveString(context,SharedPreferencesConst.K_USER_ADDRESS_2,fullAddress);
+                break;
             }
         }
+        Toast.makeText(context, R.string.update_profile_success_userProfileActivity, Toast.LENGTH_SHORT).show();
+
         return true;
     }
 }

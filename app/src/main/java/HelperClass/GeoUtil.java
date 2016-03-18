@@ -3,6 +3,7 @@ package HelperClass;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.provider.Telephony;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -39,5 +40,26 @@ public class GeoUtil {
             ArrayList<String> addressFragments = new ArrayList<String>();
             return ReverseGeoCodingResult.ADDRESS_FOUND;
         }
+    }
+
+    public static String getFullAddress(Address address){
+        String fullAddress="";
+        if (address.getFeatureName()!=null&& !address.getFeatureName().isEmpty())
+            fullAddress+=address.getFeatureName() +",";
+        if (address.getThoroughfare()!=null&& !address.getThoroughfare().isEmpty())
+            fullAddress+=address.getThoroughfare()+",";
+        if (address.getLocality()!=null&& !address.getLocality().isEmpty())
+            fullAddress+=address.getLocality()+",";
+        if (address.getSubAdminArea()!=null&& !address.getSubAdminArea().isEmpty())
+            fullAddress+=address.getSubAdminArea()+",";
+        if (address.getAdminArea()!=null&& !address.getAdminArea().isEmpty())
+            fullAddress+=address.getAdminArea()+",";
+        if (address.getCountryCode()!=null&& !address.getCountryCode().isEmpty())
+            fullAddress+=address.getCountryCode()+",";
+        if (address.getPostalCode()!=null&& !address.getPostalCode().isEmpty())
+            fullAddress+=address.getPostalCode() +",";
+        if (!fullAddress.isEmpty())
+            fullAddress=fullAddress.substring(0,fullAddress.length()-2);
+        return fullAddress;
     }
 }

@@ -9,7 +9,8 @@
         <ScrollView
             android:layout_width="fill_parent"
             android:layout_height="0dip"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:scrollbars="none">
 
             <LinearLayout
                 android:layout_width="fill_parent"
@@ -65,6 +66,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:maxLength="50"
                         android:text="@string/name_uploadActivity"
                         />
 
@@ -73,14 +75,16 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:background="@android:color/white"
+                        android:id="@+id/txtName_UploadActivity"
                         android:hint="@string/hint_name_uploadActivity"
                         android:padding="10dp"
+                        android:inputType="textPersonName"
                         />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="100dp"
                     android:layout_marginBottom="10dp"
                     android:layout_marginTop="10dp"
                     android:orientation="vertical">
@@ -100,7 +104,7 @@
                         <ImageView
                             android:padding="5dp"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="fill_parent"
                             android:layout_weight="1"
                             android:contentDescription="@string/image_description_uploadActivity"
                             android:src="@drawable/photo_default_icon_medium"
@@ -111,8 +115,9 @@
                             android:layout_height="match_parent"
                             android:layout_weight="2"
                             android:background="@android:color/white"
-
-                            android:hint="@string/hint_description_uploadActivity" />
+                            android:id="@+id/txtDescription_UploadActivity"
+                            android:hint="@string/hint_description_uploadActivity"
+                            android:maxLength="5000" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -178,16 +183,16 @@
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
-                android:text="@string/btn_cancel"
+                android:text="@string/cancel"
                 android:background="#DDDDDD"
-                android:id="@+id/btnSubmit_UploadActivity"/>
+                android:id="@+id/btnCancel_UploadActivity"/>
             <Button
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
                 android:text="@string/submit"
                 android:background="#55FF55"
-                android:id="@+id/btnCancel_UploadActivity" />
+                android:id="@+id/btnSubmit_UploadActivity" />
 
         </LinearLayout>
     </LinearLayout>

@@ -1,6 +1,5 @@
 package Adapter;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.net.Uri;
 import android.view.LayoutInflater;
@@ -14,7 +13,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.ArrayList;
 
-import Model.ObservationObject;
+import Model.ObservationEntryObject;
 import ca.zhuoliupei.observationapp.R;
 
 /**
@@ -22,26 +21,26 @@ import ca.zhuoliupei.observationapp.R;
  */
 public class NewestObservationAdapter extends BaseAdapter {
 
-    private ArrayList<ObservationObject> observationObjects;
+    private ArrayList<ObservationEntryObject> observationEntryObjects;
     private final Activity context;
 
-    public NewestObservationAdapter(ArrayList<ObservationObject> observationObjects,Activity context){
-        this.observationObjects=observationObjects;
+    public NewestObservationAdapter(ArrayList<ObservationEntryObject> observationEntryObjects,Activity context){
+        this.observationEntryObjects = observationEntryObjects;
         this.context=context;
     }
     @Override
     public int getCount() {
-        return observationObjects.size();
+        return observationEntryObjects.size();
     }
 
     @Override
     public long getItemId(int position) {
-        return Long.parseLong(observationObjects.get(position).nid);
+        return Long.parseLong(observationEntryObjects.get(position).nid);
     }
 
     @Override
     public Object getItem(int position) {
-        return observationObjects.get(position);
+        return observationEntryObjects.get(position);
     }
 
     @Override
@@ -55,13 +54,13 @@ public class NewestObservationAdapter extends BaseAdapter {
         TextView titleTextView=(TextView)rowView.findViewById(R.id.newObsItemTitle);
         TextView authorTextView=(TextView)rowView.findViewById(R.id.newObsItemDateTime);
 
-        File imgFile = new File(observationObjects.get(position).photoLocalUri);
+        File imgFile = new File(observationEntryObjects.get(position).photoLocalUri);
         if (imgFile.exists())
-            imageView.setImageURI(Uri.parse(observationObjects.get(position).photoLocalUri));
+            imageView.setImageURI(Uri.parse(observationEntryObjects.get(position).photoLocalUri));
         else imageView.setImageResource(R.color.white);
 
-        titleTextView.setText( observationObjects.get(position).title);
-        authorTextView.setText( observationObjects.get(position).date);
+        titleTextView.setText( observationEntryObjects.get(position).title);
+        authorTextView.setText( observationEntryObjects.get(position).date);
         return rowView;
     }
 }

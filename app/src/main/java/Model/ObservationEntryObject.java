@@ -6,62 +6,63 @@ import android.os.Parcelable;
 /**
  * Created by zhuol on 2/25/2016.
  */
-public class ObservationObject implements Parcelable{
+public class ObservationEntryObject implements Parcelable{
+
     public String nid="";
     public String title="";
-    public String body="";
-    public String kingdom ="";
+    public String description ="";
+    public String record ="";
     public String photoServerUri ="";
     public String photoLocalUri="";
     public String audioUri="";
     public String lattitude="";
-    public String altitude="";
+    public String longitude ="";
     public String address="";
     public String date="";
     public String author="";
 
-    public static final Parcelable.Creator<ObservationObject> CREATOR = new Creator<ObservationObject>() {
+    public static final Parcelable.Creator<ObservationEntryObject> CREATOR = new Creator<ObservationEntryObject>() {
 
         @Override
-        public ObservationObject[] newArray(int size) {
+        public ObservationEntryObject[] newArray(int size) {
             // TODO Auto-generated method stub
-            return new ObservationObject[size];
+            return new ObservationEntryObject[size];
         }
 
         @Override
-        public ObservationObject createFromParcel(Parcel source) {
+        public ObservationEntryObject createFromParcel(Parcel source) {
             // TODO Auto-generated method stub
-            return new ObservationObject(source);
+            return new ObservationEntryObject(source);
         }
     };
 
-    public ObservationObject(Parcel in) {
+    public ObservationEntryObject(Parcel in) {
         super();
         nid = in.readString();
         title = in.readString();
-        body = in.readString();
-        kingdom = in.readString();
+        description = in.readString();
+        record = in.readString();
         photoServerUri = in.readString();
         photoLocalUri=in.readString();
         audioUri = in.readString();
         lattitude = in.readString();
-        altitude = in.readString();
+        longitude = in.readString();
         address = in.readString();
         date=in.readString();
         author=in.readString();
     }
 
-    public ObservationObject(){}
-    public ObservationObject(String nid,String title,String body,String kingdom,String photoServerUri,String photoLocalUri,String audioUri,String lattitude,String altitude,String address,String date,String author){
+    public ObservationEntryObject(){}
+    public ObservationEntryObject(String nid, String title, String description, String record, String photoServerUri, String photoLocalUri, String audioUri, String lattitude, String longitude, String address, String date, String author){
         this.nid=nid;
         this.title=title;
-        this.body=body;
-        this.kingdom = kingdom;
+        this.description = description;
+        this.record = record;
         this.photoServerUri = photoServerUri;
         this.photoLocalUri=photoLocalUri;
         this.audioUri=audioUri;
         this.lattitude=lattitude;
-        this.altitude=altitude;
+        this.longitude = longitude;
         this.address=address;
         this.date=date;
         this.author=author;
@@ -77,13 +78,13 @@ public class ObservationObject implements Parcelable{
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(nid);
         dest.writeString(title);
-        dest.writeString(body);
-        dest.writeString(kingdom);
+        dest.writeString(description);
+        dest.writeString(record);
         dest.writeString(photoServerUri);
         dest.writeString(photoLocalUri);
         dest.writeString(audioUri);
         dest.writeString(lattitude);
-        dest.writeString(altitude);
+        dest.writeString(longitude);
         dest.writeString(address);
         dest.writeString(date);
         dest.writeString(author);
