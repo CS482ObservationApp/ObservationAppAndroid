@@ -572,11 +572,14 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             if (action.equals(Action.REFRESH.toString())) {
                 loadedPage = 0;
             }
-            ArrayList<ObservationEntryObject> newList = newestObservationCacheManager.getCache((++loadedPage) * itemsPerPage);
+            ArrayList<ObservationEntryObject> newList = newestObservationCacheManager.getCache((loadedPage +1) * itemsPerPage);
             itemAmountChanged = (newList.size() != gvDataset.size());
-            gvDataset.clear();
-            for (ObservationEntryObject object : newList) {
-                gvDataset.add(object);
+            if(itemAmountChanged||action.equals(Action.REFRESH.toString())) {
+                gvDataset.clear();
+                for (ObservationEntryObject object : newList) {
+                    gvDataset.add(object);
+                }
+                loadedPage++;
             }
             return gvDataset;
         }
@@ -595,6 +598,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             }
             if (itemAmountChanged)
                 adapter.notifyDataSetChanged();
+
             flag_loading = false;
             if (refreshImgView != null) {
                 if (refreshImgView.getAnimation() != null)
