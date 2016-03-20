@@ -26,6 +26,7 @@ public class SplashActivity extends AppCompatActivity {
 
     InitAppTask initAppTask;
     NewestObservationDBHelper mNewestDBHelper;
+    NewestObservationCacheManager cacheManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +37,7 @@ public class SplashActivity extends AppCompatActivity {
 
     private void initializeVariables(){
         mNewestDBHelper=new NewestObservationDBHelper(this);
+        cacheManager=NewestObservationCacheManager.getInstance(this);
         initAppTask=new InitAppTask(this);
         initAppTask.execute();
     }
@@ -71,7 +73,6 @@ public class SplashActivity extends AppCompatActivity {
 
     }
     private ArrayList<ObservationEntryObject> getNewestObservationFromDB(){
-        NewestObservationCacheManager cacheManager=new NewestObservationCacheManager(this);
         return cacheManager.getCache(10);
     }
 

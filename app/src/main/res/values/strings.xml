@@ -61,6 +61,7 @@
     <string name="hint_description_uploadActivity">Write a description here&#8230;</string>
     <string name="hint_location_uploadActivity">Add a location</string>
     <string name="image_description_uploadActivity">Upload an image</string>
+    <string name="record_not_exist">Record Not Exist</string>
 
     <!-- User Profile Activity-->
     <string name="my_observations_userProfileActivity">My Observations</string>

@@ -15,8 +15,11 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -72,8 +75,15 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     public static final int PICK_PHOTO_REQUEST =1;
     public static final int  CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST=2;
     public static final int MAX_UPLOAD_SIZE=1600*1600;
-    private final int THRESHOLD=3;
+    private final int THRESHOLD=2;
     DelayAutoCompleteTextView txtRecord;
+    ImageView imgView;
+    TextView txtName;
+    TextView txtDateTime;
+    TextView txtLocation;
+    TextView txtDescription;
+    Button btnCancel;
+    Button btnSubmit;
 
     ReverseGeoCodeTask reverseGeoCodeTask;
     UploadObservationTask uploadObservationTask;
@@ -90,6 +100,11 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     LatLng locationLatLng;
     Address selectedAddress;
     int imageFileID=INVALID;
+    String recordID;
+
+    RecordAutoCompleteAdapter autoCompleteAdapter;
+    boolean recordSelected=true; //Flag to detect if the user pick an item from the autocomplete list, true by default because it could be empty
+    boolean imageUploaded=false;//Flag to indicate if image is uploaded
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +117,10 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
 
     @Override
     public void onBackPressed() {
-        showConfirmCancelUploadDialog(this);
+        if (inputFieldNotEmpty())
+            showConfirmCancelUploadDialog(this);
+        else
+            finish();
     }
 
     @Override
@@ -131,12 +149,23 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         drupalAuthSession.setSession(PreferenceUtil.getCookie(this));
         drupalServicesFile.setAuth(drupalAuthSession);
         drupalServicesNode.setAuth(drupalAuthSession);
+
+        autoCompleteAdapter=new RecordAutoCompleteAdapter(this);
+
+        txtRecord = (DelayAutoCompleteTextView) findViewById(R.id.txtRecord_UploadActivity);
+        imgView=(ImageView)findViewById(R.id.img_photo_uploadActivity);
+        txtDateTime=(EditText)findViewById(R.id.txtDateTime_uploadActivity);
+        txtLocation=(EditText)findViewById(R.id.txt_location_uploadActivity);
+        btnCancel=(Button)findViewById(R.id.btnCancel_UploadActivity);
+        btnSubmit=(Button)findViewById(R.id.btnSubmit_UploadActivity);
+        txtName=(EditText)findViewById(R.id.txtName_UploadActivity);
+        txtDescription=(TextView)findViewById(R.id.txtDescription_UploadActivity);
     }
     private void initializeView(){
-        txtRecord = (DelayAutoCompleteTextView) findViewById(R.id.txtRecord_UploadActivity);
         txtRecord.setThreshold(THRESHOLD);
-        txtRecord.setAdapter(new RecordAutoCompleteAdapter(this));
+        txtRecord.setAdapter(autoCompleteAdapter);
         txtRecord.setLoadingIndicator((android.widget.ProgressBar) findViewById(R.id.pb_loading_indicator));
+        txtRecord.setTag(-1);//Initial tag which would be invalid to upload
     }
     private void setWidgetListeners(){
         setImageViewOnClick();
@@ -145,11 +174,12 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         setLocationTextOnClick();
         setSubmitBtnOnClick();
         setCancelBtnOnClick();
+        setTxtRecordOnTextChanged();
     }
 
     //Widgets Listeners,wrapped in setWidgetListeners()
     private void setImageViewOnClick(){
-        findViewById(R.id.img_photo_uploadActivity).setOnClickListener(new View.OnClickListener() {
+        imgView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivityForResult(new Intent((v.getContext()), ChooseUploadPhotoMethodActivity.class), CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST);
@@ -157,8 +187,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         });
     }
     private void setDateTimeTextOnClick(){
-        EditText editText=(EditText)findViewById(R.id.txtDateTime_uploadActivity);
-        editText.setOnClickListener(new View.OnClickListener() {
+        txtDateTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DialogFragment newFragment = new DatePickerFragment();
@@ -167,7 +196,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         });
     }
     private void setLocationTextOnClick(){
-        findViewById(R.id.txt_location_uploadActivity).setOnClickListener(new View.OnClickListener() {
+        txtLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
@@ -184,16 +213,35 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 String record = (String) adapterView.getItemAtPosition(position);
+                String nid = autoCompleteAdapter.getItemNodeID(position);
                 txtRecord.setText(record);
+                txtRecord.setTag(nid);
+                recordSelected = true;
+            }
+        });
+    }
+    private void setTxtRecordOnTextChanged(){
+        txtRecord.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (txtRecord.getText()==null || txtRecord.getText().toString().trim().isEmpty()){
+                    recordSelected=true;
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                recordSelected=false;
             }
         });
     }
     private void setSubmitBtnOnClick(){
-        findViewById(R.id.btnSubmit_UploadActivity).setOnClickListener(new View.OnClickListener() {
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (validateInputOnClient()) {
-                    NotificationUtil.showNotification(v.getContext(),AppConst.UPLOADING_NOTIFICATION_ID);
+                    NotificationUtil.showNotification(v.getContext(), AppConst.UPLOADING_NOTIFICATION_ID);
                     uploadObservationTask = new UploadObservationTask(v.getContext());
                     uploadObservationTask.execute();
                     finish();
@@ -202,10 +250,13 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         });
     }
     private void setCancelBtnOnClick(){
-        findViewById(R.id.btnCancel_UploadActivity).setOnClickListener(new View.OnClickListener() {
+        btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showConfirmCancelUploadDialog(v.getContext());
+                if (inputFieldNotEmpty())
+                    showConfirmCancelUploadDialog(v.getContext());
+                else
+                    finish();
             }
         });
     }
@@ -235,7 +286,8 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
                 photo = PhotoUtil.getBitmapFromUri(data.getData(),this);
 
             this.selectedPicture=PhotoUtil.reduceBitMapSize(photo,MAX_UPLOAD_SIZE);
-            ((ImageView)findViewById(R.id.img_photo_uploadActivity)).setImageBitmap(photo);
+            imgView.setImageBitmap(photo);
+            imageUploaded=true;
         }
     }
     private void handlePickLocationRequestResult(int resultCode, Intent data){
@@ -290,7 +342,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
                 builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         try {
-                            ((TextView)findViewById(R.id.txt_location_uploadActivity)).setText(constructLatLonString(locationLatLng));
+                            txtLocation.setText(constructLatLonString(locationLatLng));
                         } catch (Exception ex) {
                             Toast.makeText(context, R.string.network_error, Toast.LENGTH_SHORT).show();
                         }
@@ -303,7 +355,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
                 dialog.show();
             } else {
                 selectedAddress=address;
-                ((TextView)findViewById(R.id.txt_location_uploadActivity)).setText(GeoUtil.getFullAddress(address));
+               txtLocation.setText(GeoUtil.getFullAddress(address));
             }
         }
     }
@@ -340,22 +392,24 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
 
     //Helper Methods
     private boolean validateInputOnClient(){
-        EditText nameTextBox=(EditText)findViewById(R.id.txtName_UploadActivity);
-        String name=nameTextBox.getText().toString();
+        String name=txtName.getText().toString();
+        if (!recordSelected){
+            txtRecord.setError(getText(R.string.record_not_exist));
+            return false;
+        }
         if ( name.isEmpty()){
-            nameTextBox.setError(getText(R.string.field_empty_error));
+            txtName.setError(getText(R.string.field_empty_error));
             return false;
         }
-        EditText dateTimeTextBox=(EditText)findViewById(R.id.txtDateTime_uploadActivity);
-        String datetime=dateTimeTextBox.getText().toString();
+        String datetime=txtDateTime.getText().toString();
         if (datetime.isEmpty()){
-            dateTimeTextBox.setError(getText(R.string.field_empty_error));
+            txtDateTime.setError(getText(R.string.field_empty_error));
             return false;
         }
-        EditText locationTextBox=(EditText)findViewById(R.id.txt_location_uploadActivity);
-        String location=locationTextBox.getText().toString();
+        String location=txtLocation.getText().toString();
         if (locationLatLng==null||location.isEmpty()){
-            locationTextBox.setError(getText(R.string.field_empty_error));
+            txtLocation.setError(getText(R.string.field_empty_error));
+            return false;
         }
         return true;
     }
@@ -365,9 +419,10 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         else return "";
     }
     private void fillVariablesFromInput(){
-        record=((TextView)findViewById(R.id.txtRecord_UploadActivity)).getText().toString();
-        name=((TextView)findViewById(R.id.txtName_UploadActivity)).getText().toString();
-        description=((TextView)findViewById(R.id.txtDescription_UploadActivity)).getText().toString();
+        record=txtRecord.getText().toString().trim();
+        recordID=(String)txtRecord.getTag();
+        name=txtName.getText().toString().trim();
+        description=txtDescription.getText().toString().trim();
     }
     private void showConfirmCancelUploadDialog(Context context){
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -397,12 +452,26 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         }
         return INVALID;
     }
-
+    private boolean inputFieldNotEmpty(){
+        if (txtRecord.getText()!=null && !txtRecord.getText().toString().isEmpty())
+            return true;
+        if (txtName.getText()!=null && !txtName.getText().toString().isEmpty())
+            return true;
+        if (txtDescription.getText()!=null && !txtDescription.getText().toString().isEmpty())
+            return true;
+        if (txtDateTime.getText()!=null && !txtDateTime.getText().toString().isEmpty())
+            return true;
+        if (txtLocation.getText()!=null && !txtLocation.getText().toString().isEmpty())
+            return true;
+        if (imageUploaded)
+            return true;
+        return false;
+    }
     private BasicNameValuePair[] constructHttpParams(){
         ArrayList<BasicNameValuePair> paramsList=new ArrayList<>();
         paramsList.add(new BasicNameValuePair(CONTENT_TYPE, "climate_diary_entry"));
         if (record!=null&&!record.isEmpty()){
-            paramsList.add(new BasicNameValuePair(RECORD,record));
+            paramsList.add(new BasicNameValuePair(RECORD+"[und][0][target_id]",record));
         }
         if (description!=null && !description.isEmpty()){
             paramsList.add(new BasicNameValuePair(DESCRIPTION,description));
@@ -438,9 +507,8 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         this.year=year;
         this.month=month+1;//Jan is month 0
         this.day=day;
-        TextView textView=((TextView)findViewById(R.id.txtDateTime_uploadActivity));
-        textView .setText(String.format("%s-%d-%d", String.valueOf(year), month+1, day));
-        textView.setError(null);
+        txtDateTime .setText(String.format("%s-%d-%d", String.valueOf(year), month+1, day));
+        txtDateTime.setError(null);
     }
 
     @Override

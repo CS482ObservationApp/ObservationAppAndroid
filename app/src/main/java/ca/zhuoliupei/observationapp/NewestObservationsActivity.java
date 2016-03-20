@@ -6,13 +6,13 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GravityCompat;
@@ -20,12 +20,11 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -80,15 +79,22 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     private ArrayList<ObservationEntryObject> gvDataset;
     private String cookie;
     private boolean userScrolled = false;
+    private boolean gvScrolling=false;
     private boolean flag_loading = false;
     private DetectPictureExistTask detectPictureExistTask;
-    private DownloadObsservationObjectTask downloadObsservationObjectTask;
+    private DownloadObservationObjectTask downloadObservationObjectTask;
     private CacheObservationObjectTask cacheObservationObjectTask;
     private RefreshGVDatasetTask refreshGVDatasetTask;
     private ValidateSessionTask validateSessionTask;
     private ImageView refreshImgView;
     private SlidingMenuAdapter slidingMenuAdapter;
-
+    private NewestObservationCacheManager newestObservationCacheManager;
+    private Toolbar toolbar;
+    private final Object lock = new Object();
+    private long timeStamp;
+    private int prevFirstVisibleItem;
+    private double scrollingSpeed;
+    private double speedThreadshold=1;
     @Override
     public void onBackPressed() {
         //Hide the sliding menu if it's opened
@@ -123,18 +129,21 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     private void initializeVariables() {
         cacheFolder = getCacheDir() + "//Newest_Observation";
         gvDataset = new ArrayList<>();
+        newestObservationCacheManager=NewestObservationCacheManager.getInstance(this);
     }
 
     private void initializeUI() {
         initializeToolBar();
         initializeContentView();
         initializeSlidingMenu();
+        initializeFloatingButton();
     }
 
     private void setWidgetListeners() {
         setFloatingButtonOnClick();
         setGridViewOnItemClick();
         setContentGVOnScroll();
+        setToolbarNavigationOnClick();
     }
 
     //Wrapped in initializeUI()
@@ -195,20 +204,27 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     }
 
     private void initializeToolBar() {
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
-        ToolBarStyler.styleToolBar(this, myToolbar, "Newest Observations");
+        toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
+        ToolBarStyler.styleToolBar(this, toolbar, "Newest Observations");
     }
 
+    private void initializeFloatingButton(){
+        if (!PreferenceUtil.getCurrentUserStatus(this)) {
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            fab.setVisibility(View.GONE);
+        }
+    }
     //Wrapped in setWidgetListeners()
-    private void setFloatingButtonOnClick() {
+    private void setFloatingButtonOnClick()  {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        if (fab!=null) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    startActivity(new Intent(NewestObservationsActivity.this, UploadActivity.class));
+                }
+            });
+        }
     }
 
     private void setGridViewOnItemClick() {
@@ -220,7 +236,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                 NewestObservationAdapter adapter = (NewestObservationAdapter) gridview.getAdapter();
                 ObservationEntryObject selectedObject = (ObservationEntryObject) adapter.getItem(position);
                 Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
-                Bundle dataBundle = new Bundle();
                 intent.putExtra(NID, selectedObject.nid);
                 startActivity(intent);
             }
@@ -237,11 +252,21 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                 if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
                     userScrolled = true;
                 }
+
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (userScrolled && firstVisibleItem + visibleItemCount >= totalItemCount) {
+                if (prevFirstVisibleItem != firstVisibleItem) {
+                    long currTime = System.currentTimeMillis();
+                    long timeToScrollOneElement = currTime - timeStamp;
+                    scrollingSpeed = ((double) 1 / timeToScrollOneElement) * 1000;
+                    prevFirstVisibleItem = firstVisibleItem;
+                    timeStamp = currTime;
+                }else {
+                    scrollingSpeed=0;
+                }
+                if (userScrolled && totalItemCount < newestObservationCacheManager.getMaxCacheAmount() && firstVisibleItem + visibleItemCount >= totalItemCount) {
                     if (!flag_loading) {
                         flag_loading = true;
                         HashMap<String, String> sessionInfoMap = new HashMap<>();
@@ -250,9 +275,21 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                         NewestObservationAdapter adapter = (NewestObservationAdapter) view.getAdapter();
                         ObservationEntryObject lastobject = (ObservationEntryObject) adapter.getItem(adapter.getCount() - 1);
                         sessionInfoMap.put("date", lastobject.date);
-                        downloadObsservationObjectTask = new DownloadObsservationObjectTask((Activity) view.getContext());
-                        downloadObsservationObjectTask.execute(sessionInfoMap);
+                        downloadObservationObjectTask = new DownloadObservationObjectTask((Activity) view.getContext());
+                        downloadObservationObjectTask.execute(sessionInfoMap);
                     }
+                }
+            }
+        });
+    }
+
+    private void setToolbarNavigationOnClick(){
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.root_dl_NewestObservationActivity);
+                if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.openDrawer(Gravity.LEFT);
                 }
             }
         });
@@ -278,12 +315,11 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
         sessionInfoMap.put("Action", Action.REFRESH.toString());
-        downloadObsservationObjectTask = new DownloadObsservationObjectTask(this);
-        detectPictureExistTask = new DetectPictureExistTask(this);
+        downloadObservationObjectTask = new DownloadObservationObjectTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            downloadObsservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+            downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
         } else {
-            downloadObsservationObjectTask.execute(sessionInfoMap);
+            downloadObservationObjectTask.execute(sessionInfoMap);
         }
     }
 
@@ -291,6 +327,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
         sessionInfoMap.put("Action", Action.REFRESH.toString());
+        detectPictureExistTask = new DetectPictureExistTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
         } else {
@@ -326,8 +363,8 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (downloadObsservationObjectTask!=null)
-            downloadObsservationObjectTask.cancel(true);
+        if (downloadObservationObjectTask !=null)
+            downloadObservationObjectTask.cancel(true);
         if (detectPictureExistTask!=null)
             detectPictureExistTask.cancel(true);
         if (validateSessionTask!=null)
@@ -481,11 +518,11 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     * Then pass it to Cache Manager to cache them to database
     * Lastly fetch from database to refresh the gridview (text only without picture)
     */
-    private class DownloadObsservationObjectTask extends AsyncTask<HashMap<String, String>, Void, ObservationEntryObject[]> {
+    private class DownloadObservationObjectTask extends AsyncTask<HashMap<String, String>, Void, ObservationEntryObject[]> {
         Activity context;
         String action;
 
-        public DownloadObsservationObjectTask(Activity context) {
+        public DownloadObservationObjectTask(Activity context) {
             this.context = context;
         }
 
@@ -539,8 +576,9 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             //Cache to database
             ObservationEntryObject[] observationEntryObjects = params[0];
             if (observationEntryObjects.length > 0) {
-                NewestObservationCacheManager newestObservationCacheManager = new NewestObservationCacheManager(cacheFolder, context, maxCacheAmount);
-                newestObservationCacheManager.cache(observationEntryObjects);
+                synchronized (lock) {
+                    newestObservationCacheManager.cache(observationEntryObjects);
+                }
             }
             return null;
         }
@@ -568,11 +606,13 @@ public class NewestObservationsActivity extends AppCompatActivity  {
 
         @Override
         protected ArrayList<ObservationEntryObject> doInBackground(Void... params) {
-            NewestObservationCacheManager newestObservationCacheManager = new NewestObservationCacheManager(cacheFolder, context, maxCacheAmount);
             if (action.equals(Action.REFRESH.toString())) {
                 loadedPage = 0;
             }
-            ArrayList<ObservationEntryObject> newList = newestObservationCacheManager.getCache((loadedPage +1) * itemsPerPage);
+            ArrayList<ObservationEntryObject> newList;
+            synchronized (lock) {
+                newList = newestObservationCacheManager.getCache((loadedPage + 1) * itemsPerPage);
+            }
             itemAmountChanged = (newList.size() != gvDataset.size());
             if(itemAmountChanged||action.equals(Action.REFRESH.toString())) {
                 gvDataset.clear();
@@ -589,16 +629,16 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             GridView contentGV = (GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity);
             if (contentGV == null)
                 return;
-
-            NewestObservationAdapter adapter = (NewestObservationAdapter) contentGV.getAdapter();
-            if (adapter == null) {
-                adapter = new NewestObservationAdapter(gvDataset, context);
-                ((GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity)).setAdapter(adapter);
-                context.findViewById(R.id.content_gridview_NewestObsrvationActivity).setVisibility(View.VISIBLE);
+            synchronized (lock) {
+                NewestObservationAdapter adapter = (NewestObservationAdapter) contentGV.getAdapter();
+                if (adapter == null) {
+                    adapter = new NewestObservationAdapter(gvDataset, context);
+                    ((GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity)).setAdapter(adapter);
+                    context.findViewById(R.id.content_gridview_NewestObsrvationActivity).setVisibility(View.VISIBLE);
+                }
+                if (itemAmountChanged)
+                    adapter.notifyDataSetChanged();
             }
-            if (itemAmountChanged)
-                adapter.notifyDataSetChanged();
-
             flag_loading = false;
             if (refreshImgView != null) {
                 if (refreshImgView.getAnimation() != null)
@@ -618,8 +658,11 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         ArrayList<ObservationEntryObject> objectsLackPicture;
         NewestObservationDBHelper dbHelper;
         SQLiteDatabase writableDatabase;
+        SQLiteDatabase readableDatabase;
+        Cursor c=null;
         GridView contentGV;
         NewestObservationAdapter adapter;
+
 
         public DetectPictureExistTask(Activity context) {
             this.context = context;
@@ -627,10 +670,21 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             this.objectsLackPicture = new ArrayList<>();
             this.dbHelper = new NewestObservationDBHelper(context);
             this.writableDatabase = dbHelper.getWritableDatabase();
+            this.readableDatabase = dbHelper.getReadableDatabase();
             this.contentGV = (GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity);
             if (contentGV != null) {
                 adapter = (NewestObservationAdapter) contentGV.getAdapter();
             }
+        }
+
+        @Override
+        protected void onCancelled() {
+            if (c!=null){
+                c.close();
+            }
+            readableDatabase.close();
+            writableDatabase.close();
+            super.onCancelled();
         }
 
         @Override
@@ -641,36 +695,62 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                 } catch (Exception e) {
                     Log.e("DETECT_LACK_PICTURE", "Detect Picture Task Sleep interrupted");
                 }
-                visibleObjects.clear();
-                GridView contentGV = (GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity);
-                adapter = (NewestObservationAdapter) contentGV.getAdapter();
-                int firstVisiblePosition = contentGV.getFirstVisiblePosition();
-                int lastVisiblePosition = contentGV.getLastVisiblePosition();
-                if (adapter != null) {
-                    for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
-                        visibleObjects.add((ObservationEntryObject) adapter.getItem(i));
+                if (scrollingSpeed>2)
+                    continue;
+                /*The following code would access the GridView's adapter and DB which would be modified by CacheTask and RefreshGVTask
+                * So we need to lock the lock object to prevent the adpter and DB being modified in the middle*/
+                synchronized (lock) {
+                    //Get all visible objects
+                    visibleObjects.clear();
+                    GridView contentGV = (GridView) context.findViewById(R.id.content_gridview_NewestObsrvationActivity);
+                    adapter = (NewestObservationAdapter) contentGV.getAdapter();
+                    int firstVisiblePosition = contentGV.getFirstVisiblePosition();
+                    int lastVisiblePosition = contentGV.getLastVisiblePosition();
+                    if (adapter != null) {
+                        for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
+                            visibleObjects.add((ObservationEntryObject) adapter.getItem(i));
+                        }
                     }
-                }
-                objectsLackPicture.clear();
-                for (ObservationEntryObject object : visibleObjects) {
-                    if (object.photoLocalUri == null || object.photoLocalUri.isEmpty() || !new File(object.photoLocalUri).exists()) {
-                        String serverUri = object.photoServerUri;
-                        if (serverUri == null || serverUri.isEmpty())
-                            continue;
-                        String nid = object.nid;
-                        String filename = new File(context.getFilesDir(), System.currentTimeMillis() + nid).getPath();
 
-                        //DOWNLOAD IMAGE TO LOCAL
-                        boolean downloadSucceed = DownLoadUtil.downloadImage(serverUri, filename);
+                    //Get all objects that don't have cached picture
+                    objectsLackPicture.clear();
+                    for (ObservationEntryObject object : visibleObjects) {
+                        if (object.photoLocalUri == null || object.photoLocalUri.isEmpty() || !new File(object.photoLocalUri).exists()) {
+                            /*First we need to make sure this object still exist in DB
+                            * Since the object is gotten from Adapter, the corresponding record in DB
+                            * may be deleted by CacheTask before we lock the lock object*/
+                            final String whereCause = ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID + "=?";
+                            final String[] whereArgs = {object.nid};
+                            c = readableDatabase.query(
+                                    ObservationContract.NewestObservationEntry.TABLE_NAME,
+                                    null,
+                                    whereCause,
+                                    whereArgs,
+                                    null,
+                                    null,
+                                    null);
+                            if (c.getCount() == 0) {
+                                c.close();
+                                continue;
+                            }
 
-                        if (downloadSucceed) {
-                            //UPDATE DATABASE
-                            ContentValues contentValues = new ContentValues();
-                            contentValues.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI, filename);
-                            String whereCause = ObservationContract.NewestObservationEntry.COLUMN_NAME_NODE_ID + " = " + nid;
-                            object.photoLocalUri = filename;
-                            writableDatabase.update(ObservationContract.NewestObservationEntry.TABLE_NAME, contentValues, whereCause, null);
-                            publishProgress();
+                            //If the object exist in Database, begin download the image
+                            String serverUri = object.photoServerUri;
+                            if (serverUri == null || serverUri.isEmpty())
+                                continue;
+                            String nid = object.nid;
+                            String filename = new File(context.getFilesDir(), System.currentTimeMillis() + nid).getPath();
+
+                            //DOWNLOAD IMAGE TO LOCAL
+                            boolean downloadSucceed = DownLoadUtil.downloadImage(serverUri, filename);
+                            if (downloadSucceed) {
+                                //UPDATE DATABASE
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(ObservationContract.NewestObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI, filename);
+                                object.photoLocalUri = filename;
+                                writableDatabase.update(ObservationContract.NewestObservationEntry.TABLE_NAME, contentValues, whereCause, whereArgs);
+                                publishProgress();
+                            }
                         }
                     }
                 }

@@ -33,6 +33,9 @@ public class SlidingMenuAdapter extends BaseAdapter{
         this.items=items;
         this.context=context;
     }
+    View normalItemView;
+    View userAccountItemView;
+    View loginItemView;
 
     @Override
     public long getItemId(int position) {
@@ -86,7 +89,18 @@ public class SlidingMenuAdapter extends BaseAdapter{
         TextView nameTV=(TextView)rowView.findViewById(R.id.txtName_SlidingMenu);
         nameTV.setText(PreferenceUtil.getCurrentUser(context));
         TextView locationTV=(TextView)rowView.findViewById(R.id.txtLocation_SlidingMenu);
-        locationTV.setText(PreferenceUtil.getCurrentUserLocation1(context));
+        String address=PreferenceUtil.getCurrentUserLocation1(context);
+        String[] addressArray=address.split("[\r\n]");
+        address="";
+        for (String str:addressArray){
+            if (str.trim().isEmpty())
+                continue;
+            if (str.substring(str.length()-1,str.length()).equals(","))
+                str=str.substring(0,str.length()-1);
+            address= address+str+",";
+        }
+        address=address.substring(0,address.length()-1);
+        locationTV.setText(address);
         rowView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

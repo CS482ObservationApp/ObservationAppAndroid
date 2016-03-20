@@ -37,7 +37,10 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
         RecordAutoCompleteItem item=resultList.get(index);
         return String.format("%s(%s)", item.title, item.nid);
     }
-
+    public String getItemNodeID(int index){
+        RecordAutoCompleteItem item=resultList.get(index);
+        return  item.nid;
+    }
     @Override
     public long getItemId(int position) {
         return position;
@@ -82,7 +85,7 @@ public class RecordAutoCompleteAdapter extends BaseAdapter implements Filterable
     }
 
     /**
-     * Returns a search result for the given book title.
+     * Returns a search result for the given title.
      */
     private List<RecordAutoCompleteItem> findRecords(Context context, String observationTitle) {
         ObservationRecordFinder finder=new ObservationRecordFinder(context);
