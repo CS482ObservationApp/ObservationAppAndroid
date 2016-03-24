@@ -59,7 +59,7 @@ public class GeoUtil {
         if (address.getPostalCode()!=null&& !address.getPostalCode().isEmpty())
             fullAddress+=address.getPostalCode() +",";
         if (!fullAddress.isEmpty())
-            fullAddress=fullAddress.substring(0,fullAddress.length()-2);
+            fullAddress=fullAddress.substring(0,fullAddress.length()-1);
         return fullAddress;
     }
 }

@@ -6,16 +6,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -27,7 +24,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.http.message.BasicNameValuePair;
@@ -68,9 +64,10 @@ public class ObservationDetailActivity extends AppCompatActivity {
 
 
     private static final int INVALID=-1;
-    private ImageView refreshImgView;
     private DownloadObservationDetailTask downloadObservationDetailTask;
     private DownloadObservationImageTask downloadObservationImageTask;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private LinearLayout rootLinearLayout;
     private int nid;
     private String baseUrl,endpoint;
     private DrupalServicesView drupalServicesView;
@@ -99,6 +96,8 @@ public class ObservationDetailActivity extends AppCompatActivity {
         nid=Integer.parseInt(intent.getExtras().getString(NID, String.valueOf(INVALID))) ;
         baseUrl=getString(R.string.drupal_site_url);
         endpoint=getString(R.string.drupal_server_endpoint);
+        swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_ObservationDetailActivity);
+        rootLinearLayout=(LinearLayout)findViewById(R.id.content_ll_ObservationDetailActivity);
         drupalAuthSession=new DrupalAuthSession();
         drupalAuthSession.setSession(PreferenceUtil.getCookie(this));
         drupalServicesView=new DrupalServicesView(baseUrl,endpoint);
@@ -119,14 +118,14 @@ public class ObservationDetailActivity extends AppCompatActivity {
     }
     private void initializeContentView(){
         hideScrollView();
-        showLoadingAnimation();
+        showLoadingView();
         beginDownloadObservationDetail();
     }
 
     // setWidgetListeners subroutines
     private void setTransparentImageViewOnTouch(){
         //http://stackoverflow.com/questions/16974983/google-maps-api-v2-supportmapfragment-inside-scrollview-users-cannot-scroll-th
-        final ScrollView mainScrollView = (ScrollView) findViewById(R.id.root_sv_ObservationDetailActivity);
+        final ScrollView mainScrollView = (ScrollView) findViewById(R.id.content_sv_ObservationDetailActivity);
         ImageView transparentImageView = (ImageView) findViewById(R.id.transparent_image);
 
         transparentImageView.setOnTouchListener(new View.OnTouchListener() {
@@ -160,23 +159,29 @@ public class ObservationDetailActivity extends AppCompatActivity {
     // initializeContentView() subroutines
     private void hideScrollView(){
         //Hide the grid view
-        ScrollView scrollView=(ScrollView)findViewById(R.id.root_sv_ObservationDetailActivity);
+        ScrollView scrollView=(ScrollView)findViewById(R.id.content_sv_ObservationDetailActivity);
         scrollView.setVisibility(View.GONE);
     }
-    private void showLoadingAnimation(){
-        //Show refreshing icon
-        refreshImgView=new ImageView(this);
-        LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.gravity= Gravity.CENTER;
-        refreshImgView.setLayoutParams(layoutParams);
-        refreshImgView.setImageResource(R.drawable.refresh_icon);
+    private void showLoadingView(){
+        rootLinearLayout.setVisibility(View.GONE);
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.post(new Runnable() {
+           @Override
+           public void run() {
+               swipeRefreshLayout.setRefreshing(true);
+           }
+       });
+    }
 
-        ((LinearLayout) findViewById(R.id.root_ll_ObservationDetailActivity)).addView(refreshImgView);
-        RotateAnimation rotateAnimation = new RotateAnimation(0, 359, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        rotateAnimation.setRepeatCount(Animation.INFINITE);
-        rotateAnimation.setRepeatMode(Animation.RESTART);
-        rotateAnimation.setDuration(1000);
-        refreshImgView.startAnimation(rotateAnimation);
+    private void hideLoadingView(){
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+        swipeRefreshLayout.setVisibility(View.GONE);
+        rootLinearLayout.setVisibility(View.VISIBLE);
     }
 
     private void beginDownloadObservationDetail(){
@@ -210,21 +215,22 @@ public class ObservationDetailActivity extends AppCompatActivity {
                 return;
             }
             String statusCode=resultMap.get(DrupalServicesFieldKeysConst.STATUS_CODE);
+            String responseBody=resultMap.get(DrupalServicesFieldKeysConst.RESPONSE_BODY);
             if (statusCode.equals(HTTPConst.HTTP_OK_200))
-                loadViewWithDetail(resultMap.get(DrupalServicesFieldKeysConst.RESPONSE_BODY));
+                if (responseBody.equals("[]")||responseBody.length()<5)
+                    showNodeNotFoundView();
+                else
+                    loadViewWithDetail(responseBody);
             else if(statusCode.equals(HTTPConst.HTTP_NOT_FOUND_404))
                 showNodeNotFoundView();
         }
     }
     private void loadViewWithDetail(String detailJsonStr){
         try {
-            //Hide the refresh view
-            if (refreshImgView!=null){
-                if (refreshImgView.getAnimation()!=null)
-                    refreshImgView.clearAnimation();
-                refreshImgView.setVisibility(View.GONE);
-            }
-            findViewById(R.id.root_sv_ObservationDetailActivity).setVisibility(View.VISIBLE);
+            //Hide the refresh animation
+            hideLoadingView();
+
+            findViewById(R.id.content_sv_ObservationDetailActivity).setVisibility(View.VISIBLE);
             //Load info
             JSONObject jsonObject = new JSONArray(detailJsonStr).getJSONObject(0);
             observationEntryObject=constructObservationEntryObject(jsonObject);
@@ -365,19 +371,13 @@ public class ObservationDetailActivity extends AppCompatActivity {
         return object;
     }
     private void showNodeNotFoundView(){
-        if (refreshImgView!=null){
-            if (refreshImgView.getAnimation()!=null)
-                refreshImgView.clearAnimation();
-            refreshImgView.setVisibility(View.GONE);
-        }
+        hideLoadingView();
+        findViewById(R.id.invisible_fl_ObservationDetailActivity).setVisibility(View.VISIBLE);
+        findViewById(R.id.content_ll_ObservationDetailActivity).setVisibility(View.GONE);
     }
     private void showNetworkErrorView(){
         Toast.makeText(this,R.string.network_error,Toast.LENGTH_SHORT).show();
-        if (refreshImgView!=null){
-            if (refreshImgView.getAnimation()!=null)
-                refreshImgView.clearAnimation();
-            refreshImgView.setVisibility(View.GONE);
-        }
+        hideLoadingView();
     }
 
 

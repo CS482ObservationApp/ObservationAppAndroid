@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.location.Address;
 import android.location.Geocoder;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.UrlTileProvider;
 
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
@@ -65,6 +63,7 @@ public class UserProfileActivity extends AppCompatActivity {
     UpdateServerUserProfileImageTask updateServerUserProfileImageTask;
     UpdateServerUserProfileNameTask updateServerUserProfileNameTask;
     UpdateServerUserLocationTask updateServerUserLocationTask;
+    LogoutUserTask logoutUserTask;
     ReverseGeoCodeTask reverseGeoCodeTask;
 
     @Override
@@ -73,7 +72,7 @@ public class UserProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_user_profile);
         initializeVariables();
         initializeView();
-        setViewOnClickListeners();
+        setWidgetListeners();
     }
 
     private void initializeVariables() {
@@ -113,20 +112,30 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     /*
-    * setViewOnClickListeners contains the other setOnClickListener Methods
+    * setWidgetListeners contains the other setOnClickListener Methods
     */
-    private void setViewOnClickListeners() {
-        //TODO:
+    private void setWidgetListeners() {
         setProfilePhotoOnClickListener();
         setUserNameOnClickListener();
+        setEmailOnClickListener();
         setAddress1OnClickListener();
         setAddress2OnClickListener();
+        setLogoutOnClickListener();
+        setMyPostOnClickListener();
     }
     private void setUserNameOnClickListener() {
         findViewById(R.id.ll_name_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivityForResult(new Intent((v.getContext()), ChangeTextFieldActivity.class), CHANGE_USER_NAME_REQUEST);
+            }
+        });
+    }
+    private void setEmailOnClickListener(){
+        findViewById(R.id.ll_email_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(UserProfileActivity.this,R.string.cannot_change_email_userProfileActivity,Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -164,7 +173,46 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
     }
+    private void setLogoutOnClickListener(){
+        findViewById(R.id.ll_logout_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final Context context=v.getContext();
 
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setMessage(R.string.logout_msg_userProfileActivity)
+                        .setTitle(R.string.logout_title_userProfileActivity);
+                builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        boolean result=deleteLocalUserSessionInfo(context);
+                        if (result){
+                            logoutUserTask=new LogoutUserTask(context,drupalServicesUser);
+                            logoutUserTask.execute();
+                            //Start a whole new activity without back stack
+                            Intent intent=new Intent(UserProfileActivity.this, NewestObservationsActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        }else {
+                            Toast.makeText(context,R.string.failed_logout_userProfileActivity,Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {/*Do nothing*/}
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
+    }
+    private void setMyPostOnClickListener(){
+        findViewById(R.id.ll_myObservations_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(UserProfileActivity.this,MyPostActivity.class));
+            }
+        });
+    }
 
     /* Handle Activity Results*/
     @Override
@@ -396,7 +444,25 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         }
     }
+    private class LogoutUserTask extends AsyncTask<Void, Void, Void> {
+        Context context;
+        DrupalServicesUser drupalServicesUser;
 
+        public LogoutUserTask(Context context, DrupalServicesUser drupalServicesUser) {
+            this.context = context;
+            this.drupalServicesUser = drupalServicesUser;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                drupalServicesUser.logout(context);
+
+            } catch (Exception ex) {
+            }
+            return null;
+        }
+    }
 
     /******** Update Server User Profile Image function group***************/
     private boolean updateServerUserProfileImage(Bitmap bitmap) throws Exception {
@@ -519,7 +585,7 @@ public class UserProfileActivity extends AppCompatActivity {
         File currentProfilePhoto = new File(currentProfilePhotoPath);
         if (currentProfilePhoto.exists())
             currentProfilePhoto.delete();
-        String newFilePath = new File(context.getFilesDir(), "userImage_small_" + PreferenceUtil.getCurrentUser(context) + "_" + System.currentTimeMillis()).getPath();
+        String newFilePath = new File(context.getCacheDir(), "userImage_small_" + PreferenceUtil.getCurrentUser(context) + "_" + System.currentTimeMillis()).getPath();
         try {
             FileOutputStream out = new FileOutputStream(newFilePath);
             photo.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -557,6 +623,10 @@ public class UserProfileActivity extends AppCompatActivity {
         }
         Toast.makeText(context, R.string.update_profile_success_userProfileActivity, Toast.LENGTH_SHORT).show();
 
+        return true;
+    }
+    private boolean deleteLocalUserSessionInfo(Context context){
+        PreferenceUtil.deleteKey(context, SharedPreferencesConst.K_SESSION_EXPIRED);
         return true;
     }
 }

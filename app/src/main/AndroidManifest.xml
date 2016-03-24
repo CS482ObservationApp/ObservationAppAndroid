@@ -93,7 +93,8 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Transparent" >
         </activity>
-        <activity android:name=".MyPostActivity" >
+        <activity android:name=".MyPostActivity"
+            android:screenOrientation="portrait">
         </activity>
     </application>
 

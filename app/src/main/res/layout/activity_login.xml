@@ -103,18 +103,15 @@
                 android:textColor="#04B431"
                 android:textSize="20dp" />
         </LinearLayout>
-        <FrameLayout
+        <android.support.v4.widget.SwipeRefreshLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:background="#CCFFFFFF"
-            android:id="@+id/fl_transition_LoginActivity"
+            android:id="@+id/swiperefresh_LoginActivity"
             android:visibility="gone">
-            <ImageView
+            <ListView
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/imgTransition_LoginActivity"
-                android:src="@drawable/refresh_icon"
-                android:layout_gravity="center"/>
-        </FrameLayout>
+                android:layout_height="wrap_content"></ListView>
+        </android.support.v4.widget.SwipeRefreshLayout>
     </FrameLayout>
 </LinearLayout>

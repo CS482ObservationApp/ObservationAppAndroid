@@ -16,7 +16,7 @@ public class PreferenceUtil {
         //If the user login before,his/her info would be in Shared Preferences, otherwise return false
         String currentUser= PreferenceManager.getDefaultSharedPreferences(context).getString(SharedPreferencesConst.K_USER_NAME,EMPTY_STRING);
         boolean sessionExpired=PreferenceManager.getDefaultSharedPreferences(context).getBoolean(SharedPreferencesConst.K_SESSION_EXPIRED, true);
-        return currentUser != null&&!sessionExpired;
+        return currentUser!=null &&!currentUser.equals(EMPTY_STRING)&&!sessionExpired;
     }
     public static String getCurrentUserID(Context context){
         return PreferenceManager.getDefaultSharedPreferences(context).getString(SharedPreferencesConst.K_USER_ID,EMPTY_STRING);
@@ -51,5 +51,10 @@ public class PreferenceUtil {
     }
     public static void saveBoolean(Context context,String key,boolean value){
         PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(key, value).commit();
+    }
+
+    /*****************************  Delete *************************/
+    public static void deleteKey(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().remove(key).commit();
     }
 }

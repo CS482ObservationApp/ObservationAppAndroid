@@ -3,6 +3,7 @@ package ca.zhuoliupei.observationapp;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -63,12 +64,8 @@ public class LoginActivity extends AppCompatActivity {
         findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(true);
         findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(true);
 
-        ImageView transitionImgView=(ImageView)findViewById(R.id.imgTransition_LoginActivity);
-        if (transitionImgView != null) {
-            if (transitionImgView.getAnimation() != null)
-                transitionImgView.clearAnimation();
-        }
-        findViewById(R.id.fl_transition_LoginActivity).setVisibility(View.GONE);
+        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
+        swipeRefreshLayout.setVisibility(View.GONE);
     }
     private void showTransitionView(){
         findViewById(R.id.txtPassword_LoginActivity).setEnabled(false);
@@ -77,9 +74,14 @@ public class LoginActivity extends AppCompatActivity {
         findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(false);
         findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(false);
 
-        ImageView transitionImgView=(ImageView)findViewById(R.id.imgTransition_LoginActivity);
-        transitionImgView.setAnimation(AnimationUtil.getRotateAnimation());
-        findViewById(R.id.fl_transition_LoginActivity).setVisibility(View.VISIBLE);
+        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
     }
     //Initialization Wrappers
     private void initializeVariables(){

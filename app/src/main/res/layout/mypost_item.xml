@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:weightSum="5">
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:id="@+id/txtDate_MyPostItem"
+        android:text="2014,Feb,25"/>
+    <ImageView
+        android:id="@+id/img_MyPostItem"
+        android:layout_width="0dp"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:src="@drawable/icon_user_default"/>
+    <TextView
+        android:id="@+id/txtTitle_MyPostItem"
+        android:layout_width="0dp"
+        android:layout_height="fill_parent"
+        android:layout_weight="3"
+        android:gravity="center"
+        android:text="helloworld"/>
+</LinearLayout>

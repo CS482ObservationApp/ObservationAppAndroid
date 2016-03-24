@@ -17,6 +17,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -75,18 +76,16 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     private int loadedPage = 0;
     private int itemsPerPage = 10;
     private String cacheFolder;
-    private final int maxCacheAmount = 200;
     private ArrayList<ObservationEntryObject> gvDataset;
     private String cookie;
     private boolean userScrolled = false;
-    private boolean gvScrolling=false;
     private boolean flag_loading = false;
     private DetectPictureExistTask detectPictureExistTask;
     private DownloadObservationObjectTask downloadObservationObjectTask;
     private CacheObservationObjectTask cacheObservationObjectTask;
     private RefreshGVDatasetTask refreshGVDatasetTask;
     private ValidateSessionTask validateSessionTask;
-    private ImageView refreshImgView;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private SlidingMenuAdapter slidingMenuAdapter;
     private NewestObservationCacheManager newestObservationCacheManager;
     private Toolbar toolbar;
@@ -122,28 +121,29 @@ public class NewestObservationsActivity extends AppCompatActivity  {
     @Override
     protected void onResume() {
         super.onResume();
-        if (slidingMenuAdapter!=null)
-            slidingMenuAdapter.notifyDataSetChanged();
+        initializeSlidingMenu();
+        initializeFloatingButton();
     }
 
     private void initializeVariables() {
         cacheFolder = getCacheDir() + "//Newest_Observation";
         gvDataset = new ArrayList<>();
         newestObservationCacheManager=NewestObservationCacheManager.getInstance(this);
+        swipeRefreshLayout=((SwipeRefreshLayout) findViewById(R.id.swiperefresh_NewestObservationActivity));
     }
-
     private void initializeUI() {
         initializeToolBar();
         initializeContentView();
         initializeSlidingMenu();
         initializeFloatingButton();
     }
-
     private void setWidgetListeners() {
         setFloatingButtonOnClick();
         setGridViewOnItemClick();
+        setSlidingMenuOnItemClick();
         setContentGVOnScroll();
         setToolbarNavigationOnClick();
+        setSwipeRefreshOnRefresh();
     }
 
     //Wrapped in initializeUI()
@@ -151,6 +151,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         //Init view
         Intent intent = getIntent();
         Parcelable[] parcelables = intent.getParcelableArrayExtra("OBSERVATION_OBJECTS");
+        showRefreshView();
         if (parcelables != null && parcelables.length > 0) {
             //Fill gridview content
             for (int i = 0; i < parcelables.length; i++) {
@@ -163,17 +164,8 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             //Hide the grid view
             GridView gridview = (GridView) findViewById(R.id.content_gridview_NewestObsrvationActivity);
             gridview.setVisibility(View.INVISIBLE);
-
-            //Show refreshing icon
-            refreshImgView = new ImageView(this);
-            refreshImgView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            refreshImgView.setImageResource(R.drawable.refresh_icon);
-            ((LinearLayout) findViewById(R.id.root_LV_NewestObservationActivity)).addView(refreshImgView);
-
-            refreshImgView.startAnimation(AnimationUtil.getRotateAnimation());
         }
     }
-
     private void initializeSlidingMenu() {
         //TODO:
         ListView slidingMenuList = (ListView) findViewById(R.id.sliding_menu);
@@ -182,19 +174,19 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         if (PreferenceUtil.getCurrentUserStatus(this)) {
             SlidingMenuItem accountItem = new SlidingMenuItem(SlidingMenuItem.ItemType.USER_ACCOUNT_ITEM);
             items.add(accountItem);
+            SlidingMenuItem uploadItem = new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
+            uploadItem.text = "Upload";
+            items.add(uploadItem);
         } else {
             SlidingMenuItem loginItem = new SlidingMenuItem(SlidingMenuItem.ItemType.LOGIN_ITEM);
             items.add(loginItem);
         }
-        SlidingMenuItem uploadItem = new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
-        uploadItem.text = "Upload";
+
         SlidingMenuItem searchItem = new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
         searchItem.text = "Search";
         SlidingMenuItem userGuideItem = new SlidingMenuItem(SlidingMenuItem.ItemType.NORMAL_ITEM);
         userGuideItem.text = "User Guide";
 
-        if (PreferenceUtil.getCurrentUserStatus(this))
-            items.add(uploadItem);
         items.add(searchItem);
         items.add(userGuideItem);
 
@@ -202,18 +194,18 @@ public class NewestObservationsActivity extends AppCompatActivity  {
 
         slidingMenuList.setAdapter(slidingMenuAdapter);
     }
-
     private void initializeToolBar() {
         toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
         ToolBarStyler.styleToolBar(this, toolbar, "Newest Observations");
     }
-
     private void initializeFloatingButton(){
         if (!PreferenceUtil.getCurrentUserStatus(this)) {
             FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
             fab.setVisibility(View.GONE);
         }
     }
+
+
     //Wrapped in setWidgetListeners()
     private void setFloatingButtonOnClick()  {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -226,7 +218,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             });
         }
     }
-
     private void setGridViewOnItemClick() {
         GridView gridview = (GridView) findViewById(R.id.content_gridview_NewestObsrvationActivity);
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -241,7 +232,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             }
         });
     }
-
     private void setContentGVOnScroll() {
         // Load data and append to Gridview when scroll to bottom
         final GridView contentGV = (GridView) findViewById(R.id.content_gridview_NewestObsrvationActivity);
@@ -263,8 +253,8 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                     scrollingSpeed = ((double) 1 / timeToScrollOneElement) * 1000;
                     prevFirstVisibleItem = firstVisibleItem;
                     timeStamp = currTime;
-                }else {
-                    scrollingSpeed=0;
+                } else {
+                    scrollingSpeed = 0;
                 }
                 if (userScrolled && totalItemCount < newestObservationCacheManager.getMaxCacheAmount() && firstVisibleItem + visibleItemCount >= totalItemCount) {
                     if (!flag_loading) {
@@ -282,7 +272,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             }
         });
     }
-
     private void setToolbarNavigationOnClick(){
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -294,12 +283,32 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             }
         });
     }
+    private void setSlidingMenuOnItemClick(){
+        ((ListView)findViewById(R.id.sliding_menu)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 1:
+                        startActivity(new Intent(NewestObservationsActivity.this, UploadActivity.class));
+                        break;
+                }
+            }
+        });
+    }
+    private void setSwipeRefreshOnRefresh(){
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                beginDownloadObservation();
+            }
+        });
+    }
 
     //Begin AsyncTasks
     private void beginValidateSession() {
         //Start validating if the session is expired or not
         cookie = PreferenceUtil.getCookie(this);
-        if (!cookie.isEmpty()) {
+        if (!cookie.isEmpty()&&PreferenceUtil.getCurrentUserStatus(this)) {
             HashMap<String, String> sessionInfoMap = new HashMap<>();
             sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
             validateSessionTask = new ValidateSessionTask(this);
@@ -310,7 +319,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             }
         }
     }
-
     private void beginDownloadObservation() {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
@@ -322,7 +330,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             downloadObservationObjectTask.execute(sessionInfoMap);
         }
     }
-
     private void beginDetectPicture() {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
@@ -335,6 +342,23 @@ public class NewestObservationsActivity extends AppCompatActivity  {
         }
     }
 
+    //Helper functions
+    private void showRefreshView(){
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
+    }
+    private void hideRefreshView(){
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -350,14 +374,12 @@ public class NewestObservationsActivity extends AppCompatActivity  {
 
         return super.onOptionsItemSelected(item);
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_newest_observations, menu);
         return true;
     }
-
     /*CacheObservationObjectTask is not canceled because it could complete in a short time
     * The same as RefreshGVDatasetTask*/
     @Override
@@ -408,7 +430,6 @@ public class NewestObservationsActivity extends AppCompatActivity  {
             return new ObservationEntryObject[0];
         }
     }
-
     private BasicNameValuePair[] getParamsFromDate(String dateTime) {
         if (dateTime != null && !dateTime.isEmpty()) {
             String date = dateTime.split(" ")[0];
@@ -528,6 +549,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
 
         @Override
         protected ObservationEntryObject[] doInBackground(HashMap<String, String>... params) {
+            flag_loading=true;
             DrupalAuthSession authSession = new DrupalAuthSession();
             DrupalServicesView newestObservationView = new DrupalServicesView(getText(R.string.drupal_site_url).toString(), getText(R.string.drupal_server_endpoint).toString());
 
@@ -640,11 +662,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                     adapter.notifyDataSetChanged();
             }
             flag_loading = false;
-            if (refreshImgView != null) {
-                if (refreshImgView.getAnimation() != null)
-                    refreshImgView.clearAnimation();
-                refreshImgView.setVisibility(View.GONE);
-            }
+            hideRefreshView();
         }
     }
 
@@ -695,7 +713,7 @@ public class NewestObservationsActivity extends AppCompatActivity  {
                 } catch (Exception e) {
                     Log.e("DETECT_LACK_PICTURE", "Detect Picture Task Sleep interrupted");
                 }
-                if (scrollingSpeed>2)
+                if (scrollingSpeed>speedThreadshold)
                     continue;
                 /*The following code would access the GridView's adapter and DB which would be modified by CacheTask and RefreshGVTask
                 * So we need to lock the lock object to prevent the adpter and DB being modified in the middle*/

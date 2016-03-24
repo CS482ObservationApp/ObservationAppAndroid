@@ -75,7 +75,7 @@ public class NewestObservationAdapter extends BaseAdapter {
         else viewHolderItem.imageView.setImageResource(R.color.white);
 
         viewHolderItem.titleTextView.setText( observationEntryObjects.get(position).title);
-        viewHolderItem.datetimeTextView.setText(observationEntryObjects.get(position).date);
+        viewHolderItem.datetimeTextView.setText(observationEntryObjects.get(position).date.split("[ ]")[0]);
         return convertView ;
     }
 }

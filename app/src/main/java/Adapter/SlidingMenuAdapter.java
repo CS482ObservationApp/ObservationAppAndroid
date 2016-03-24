@@ -63,18 +63,10 @@ public class SlidingMenuAdapter extends BaseAdapter{
     }
     private View constructNormalItemView(SlidingMenuItem item){
         LayoutInflater inflater = context.getLayoutInflater();
-        View rowView= inflater.inflate(R.layout.sliding_menu_normal_item, null, true);
+        View rowView= inflater.inflate(R.layout.sliding_menu_normal_item, null, false);
         TextView textView=(TextView)rowView.findViewById(R.id.txtText_SlidingMenu);
         textView.setText(item.text);
-        if (item.text.toLowerCase().trim().equals("upload"))
-        {
-            rowView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    context.startActivity(new Intent(context, UploadActivity.class));
-                }
-            });
-        }
+
         return rowView;
     }
     private View constructUserAccountItemView(SlidingMenuItem item){

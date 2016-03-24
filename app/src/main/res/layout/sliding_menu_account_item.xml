@@ -2,7 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="150dp"
+    android:layout_height="190dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp"
     android:weightSum="5">
 
         <ViewAndFragmentClass.MLRoundedImageView
@@ -16,10 +18,11 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:layout_weight="3"
-            android:weightSum="4"
+            android:weightSum="2"
             android:layout_marginLeft="10dp">
 
         <TextView
+            android:gravity="center_vertical"
             android:id="@+id/txtName_SlidingMenu"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
@@ -33,6 +36,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:textColor="#FFFFFF"
+            android:gravity="center_vertical"
             />
 
     </LinearLayout>

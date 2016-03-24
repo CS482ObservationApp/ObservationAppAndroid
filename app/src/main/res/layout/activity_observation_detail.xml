@@ -25,12 +25,12 @@
     </android.support.design.widget.AppBarLayout>
 
     <LinearLayout
-        android:id="@+id/root_ll_ObservationDetailActivity"
+        android:id="@+id/content_ll_ObservationDetailActivity"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
         <ScrollView
-            android:id="@+id/root_sv_ObservationDetailActivity"
+            android:id="@+id/content_sv_ObservationDetailActivity"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:padding="20dp"
@@ -165,6 +165,26 @@
 
         </ScrollView>
     </LinearLayout>
-
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/swiperefresh_ObservationDetailActivity"
+        android:visibility="gone">
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"></ListView>
+    </android.support.v4.widget.SwipeRefreshLayout>
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone"
+        android:id="@+id/invisible_fl_ObservationDetailActivity">
+        <TextView
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtNodeNotFound_ObservationDetailActivity"
+            android:text="@string/node_not_found_observationDetailActivity"/>
+    </RelativeLayout>
 
 </LinearLayout>

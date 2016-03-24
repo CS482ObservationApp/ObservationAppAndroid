@@ -54,8 +54,8 @@
     <string name="name_uploadActivity">Name</string>
     <string name="picture_Description_uploadActivity">Picture&amp;Description</string>
     <string name="sound_uploadActivity">Sound</string>
-    <string name="date_time_uploadActivity">Date&amp;Time:</string>
-    <string name="location_uploadActivity">Location:</string>
+    <string name="date_time_uploadActivity">Date &amp; Time</string>
+    <string name="location_uploadActivity">Location</string>
     <string name="hint_record_uploadActivity">Enter a record name&#8230;</string>
     <string name="hint_name_uploadActivity">Write a name here&#8230;</string>
     <string name="hint_description_uploadActivity">Write a description here&#8230;</string>
@@ -73,7 +73,10 @@
     <string name="address1_userProfileActivity">My Address 1</string>
     <string name="address2_userProfileActivity">My Address 2</string>
     <string name="update_profile_success_userProfileActivity">Successfully Update Profile</string>
-
+    <string name="failed_logout_userProfileActivity">Failed to logout, try again later</string>
+    <string name="logout_title_userProfileActivity">Logout</string>
+    <string name="logout_msg_userProfileActivity">Are you sure to logout current account?</string>
+    <string name="cannot_change_email_userProfileActivity">Cannot change email</string>
 
     <string name="title_activity_choose_photo_upload_method">ChoosePhotoUploadMethodActivity
     </string>
@@ -100,4 +103,6 @@
     <string name="cancel_upload_title">Cacnel Uploading</string>
     <string name="cancel_upload_msg">Are you sure to cancel uploading?</string>
 
+    <!-- Observation Detail Activity-->
+    <string name="node_not_found_observationDetailActivity">The record may be deleted</string>
 </resources>
