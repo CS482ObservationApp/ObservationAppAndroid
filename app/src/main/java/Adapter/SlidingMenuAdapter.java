@@ -33,10 +33,6 @@ public class SlidingMenuAdapter extends BaseAdapter{
         this.items=items;
         this.context=context;
     }
-    View normalItemView;
-    View userAccountItemView;
-    View loginItemView;
-
     @Override
     public long getItemId(int position) {
         return position;
@@ -55,7 +51,8 @@ public class SlidingMenuAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         switch (items.get(position).itemType){
-            case NORMAL_ITEM:return constructNormalItemView(items.get(position));
+            case UPLOAD_ITEM:case USER_GUIDE_ITEM:case SEARCH_ITEM:
+                return constructNormalItemView(items.get(position));
             case USER_ACCOUNT_ITEM: return constructUserAccountItemView(items.get(position));
             case LOGIN_ITEM:return constructLoginItemView(items.get(position));
             default:return constructNormalItemView(items.get(position));
@@ -93,28 +90,12 @@ public class SlidingMenuAdapter extends BaseAdapter{
         }
         address=address.substring(0,address.length()-1);
         locationTV.setText(address);
-        rowView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    ((Activity)v.getContext()).startActivity(new Intent(v.getContext(), UserProfileActivity.class));
-                }catch (Exception e){
-                    Log.e("ONCLIK",e.getMessage());
-                }
-            }
-        });
+
         return rowView;
     }
     private View constructLoginItemView(SlidingMenuItem item){
         LayoutInflater inflater = context.getLayoutInflater();
         View rowView= inflater.inflate(R.layout.sliding_menu_login_item, null, true);
-        rowView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent=new Intent(context, LoginActivity.class);
-                context.startActivity(intent);
-            }
-        });
         return rowView;
     }
 }

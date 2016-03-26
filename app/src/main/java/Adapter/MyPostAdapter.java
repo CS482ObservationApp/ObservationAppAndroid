@@ -9,7 +9,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
 import Model.ObservationEntryObject;
@@ -63,16 +62,16 @@ public class MyPostAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (getItemViewType(position)==HEADER_TYPE)
-            return constructHeaderItem(convertView);
+            return buildHeaderItem(convertView);
         else
-            return constructMyPostItem(position,convertView);
+            return buildMyPostItem(position, convertView);
 
     }
 static class HeaderViewHolder{
     ImageView userImg;
     TextView spaceHolderTextView;
 }
-    private View constructHeaderItem(View convertView){
+    private View buildHeaderItem(View convertView){
         HeaderViewHolder viewHolder;
         if (convertView==null){
             convertView=LayoutInflater.from(context).inflate(R.layout.mypost_header_item,null,false);
@@ -110,7 +109,7 @@ static class HeaderViewHolder{
         TextView titleTextView;
     }
 
-    private View constructMyPostItem(int position,View convertView){
+    private View buildMyPostItem(int position, View convertView){
         MyPostViewHolder viewHolder;
         if (convertView==null){
             convertView=LayoutInflater.from(context).inflate(R.layout.mypost_item,null,false);

@@ -105,4 +105,14 @@
 
     <!-- Observation Detail Activity-->
     <string name="node_not_found_observationDetailActivity">The record may be deleted</string>
+
+    <!-- Newest Observation Activity-->
+    <string name="loading_newestObservationActivity">Loading&#8230;</string>
+    <string name="no_more_newestObservationActivity">No More New Observations</string>
+
+
+    <!-- Sliding menu-->
+    <string name="upload_slidingMenuItem">Upload</string>
+    <string name="search_slidingMenuItem">Search</string>
+    <string name="guide_slidingMenuItem">User Guide</string>
 </resources>

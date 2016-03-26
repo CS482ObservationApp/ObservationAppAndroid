@@ -5,11 +5,11 @@ package Model;
  */
 public class SlidingMenuItem {
     public enum ItemType{
-        USER_ACCOUNT_ITEM,NORMAL_ITEM,LOGIN_ITEM
+        USER_ACCOUNT_ITEM,LOGIN_ITEM,SEARCH_ITEM,UPLOAD_ITEM,USER_GUIDE_ITEM
     }
     public SlidingMenuItem(ItemType itemType){
         this.itemType=itemType;
     }
-    public ItemType itemType=ItemType.NORMAL_ITEM;
+    public ItemType itemType;
     public String text;
 }

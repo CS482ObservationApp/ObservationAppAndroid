@@ -513,5 +513,4 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
 
     @Override
     public void handleDatePickerCancelled() {/*Do nothing....*/}
-
 }
