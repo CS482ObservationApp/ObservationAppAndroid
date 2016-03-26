@@ -1,5 +1,6 @@
 package ca.zhuoliupei.observationapp;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -28,6 +29,7 @@ import android.view.MenuItem;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -64,7 +66,7 @@ import Model.ObservationEntryObject;
 import Model.SlidingMenuItem;
 import ViewAndFragmentClass.GridViewWithHeaderAndFooter;
 
-public class NewestObservationsActivity extends AppCompatActivity {
+public class NewestObservationsActivity extends AppCompatActivity{
 
     private final static String NID = "nid";
 
@@ -96,6 +98,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
     private final NewestObservationAdapter contentGVAdapter = new NewestObservationAdapter(gvDataset, this);
     private NewestObservationCacheManager newestObservationCacheManager;
     private long timeStamp;
+    private long toolbarTitleClickedTimeStamp=0;
     private int prevFirstVisibleItem;
     private double scrollingSpeed;
     private double speedThreadshold = 1;
@@ -132,7 +135,6 @@ public class NewestObservationsActivity extends AppCompatActivity {
 
     }
 
-
     private void initializeVariables() {
         cacheFolder = getCacheDir() + "//Newest_Observation";
         newestObservationCacheManager = NewestObservationCacheManager.getInstance(this);
@@ -154,6 +156,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         setContentGVOnScroll();
         setToolbarNavigationOnClick();
         setSwipeRefreshOnRefresh();
+        setToolbarOnClick();
     }
 
     //Wrapped in initializeUI()
@@ -344,6 +347,27 @@ public class NewestObservationsActivity extends AppCompatActivity {
         });
     }
 
+    private void setToolbarOnClick(){
+        if (toolbar==null) {
+            toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
+        }
+        //Double clicke the tool bar to scroll to top and refresh
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // How much time passed since last click
+                long currentTimeInMillSecond = System.currentTimeMillis();
+                double timePassed = (currentTimeInMillSecond - toolbarTitleClickedTimeStamp) / 1000;
+                if (timePassed < 0.3) {
+                    scrollGridViewToTop();
+                    showRefreshView();
+                    beginDownloadObservation();
+                }
+                toolbarTitleClickedTimeStamp = currentTimeInMillSecond;
+            }
+        });
+    }
+
     //Begin AsyncTasks
     private void beginValidateSession() {
         //Start validating if the session is expired or not
@@ -398,6 +422,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
             @Override
             public void run() {
                 swipeRefreshLayout.setRefreshing(true);
+
             }
         });
     }
@@ -480,6 +505,14 @@ public class NewestObservationsActivity extends AppCompatActivity {
             gridViewFooterTextView.setText(R.string.network_error);
         }
     }
+
+    private void scrollGridViewToTop(){
+        if (contentGV==null)
+            contentGV=(GridViewWithHeaderAndFooter)findViewById(R.id.content_gridview_NewestObsrvationActivity);
+        if (contentGV!=null)
+           contentGV.smoothScrollToPosition(0);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -700,7 +733,7 @@ public class NewestObservationsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(ObservationEntryObject[] observationEntryObjects) {
             //If download error, only show network unavailable when user wants to refresh
-            if (observationEntryObjects.length==0||action.equals(Action.REFRESH.toString()))
+            if (observationEntryObjects.length==0&&action.equals(Action.REFRESH.toString()))
                 Toast.makeText(context,R.string.network_error,Toast.LENGTH_SHORT).show();
 
             cacheObservationObjectTask = new CacheObservationObjectTask(context, action);
@@ -783,6 +816,8 @@ public class NewestObservationsActivity extends AppCompatActivity {
                 contentGV.setVisibility(View.VISIBLE);
             if (gvDataset.size() <= 0)
                 showNoMoreObservationView();
+            else if (action.equals(Action.REFRESH.toString()))
+                scrollGridViewToTop();
             flag_loading = false;
             hideRefreshView();
         }

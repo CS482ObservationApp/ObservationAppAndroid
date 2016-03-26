@@ -55,6 +55,7 @@ public class LoginActivity extends AppCompatActivity {
         initializeVariables();
         initializeUI();
         setWidgetListeners();
+        //TODO:delete the default login name and password
     }
 
     private void hideTransitionView(){

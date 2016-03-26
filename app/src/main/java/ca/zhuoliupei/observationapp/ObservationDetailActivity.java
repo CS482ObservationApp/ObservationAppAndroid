@@ -33,6 +33,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -69,6 +70,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout rootLinearLayout;
     private int nid;
+    private int mapZoomRate;
     private String baseUrl,endpoint;
     private DrupalServicesView drupalServicesView;
     private DrupalAuthSession drupalAuthSession;
@@ -93,6 +95,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
     }
     private void initializeVariables(){
         Intent intent=getIntent();
+        mapZoomRate=25;
         nid=Integer.parseInt(intent.getExtras().getString(NID, String.valueOf(INVALID))) ;
         baseUrl=getString(R.string.drupal_site_url);
         endpoint=getString(R.string.drupal_server_endpoint);
@@ -260,14 +263,16 @@ public class ObservationDetailActivity extends AppCompatActivity {
                 double lat = Double.parseDouble(observationEntryObject.lattitude);
                 double lon = Double.parseDouble(observationEntryObject.longitude);
                 final LatLng location = new LatLng(lat, lon);
-                googleMap.addMarker(new MarkerOptions().position(location).title(observationEntryObject.title));
+                DecimalFormat df = new DecimalFormat("#.00");
+                String markerSnippet= String.format("（Lat/Lon:%s,%s）", df.format(lat), df.format(lon));
+                googleMap.addMarker(new MarkerOptions().position(location).title(observationEntryObject.title).snippet(markerSnippet));
                 googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
                 googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
                 googleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
                 googleMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
                 googleMap.getUiSettings().setZoomGesturesEnabled(true);
                 CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(lat, lon));
-                CameraUpdate zoom = CameraUpdateFactory.zoomTo(15);
+                CameraUpdate zoom = CameraUpdateFactory.zoomTo(mapZoomRate);
                 googleMap.moveCamera(center);
                 googleMap.animateCamera(zoom);
             }catch (Exception ex){

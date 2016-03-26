@@ -22,7 +22,7 @@ import Model.ObservationEntryObject;
 public class NewestObservationCacheManager {
     static String mCacheDir;
     static Activity mContext;
-    final int maxCacheAmount = 15;
+    final int maxCacheAmount = 15;//TODO:Change it to 200
     static final Object lock = new Object();
 
     protected NewestObservationCacheManager() {
