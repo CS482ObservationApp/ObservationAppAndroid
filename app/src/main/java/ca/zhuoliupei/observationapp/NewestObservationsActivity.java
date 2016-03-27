@@ -1,6 +1,5 @@
 package ca.zhuoliupei.observationapp;
 
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -29,7 +28,6 @@ import android.view.MenuItem;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -69,6 +67,9 @@ import ViewAndFragmentClass.GridViewWithHeaderAndFooter;
 public class NewestObservationsActivity extends AppCompatActivity{
 
     private final static String NID = "nid";
+    private final static String COOKIE = "cookie";
+    private final static String ACTION = "Action";
+    private final static String DATE = "date";
 
     private enum Action {
         REFRESH, APPEND
@@ -78,7 +79,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private int itemsPerPage = 10;
     private String cacheFolder;
     private final ArrayList<ObservationEntryObject> gvDataset = new ArrayList<>();
-    private String cookie;
+    private  String cookie ;
     private boolean userScrolled = false;
     private boolean flag_loading = false;
 
@@ -94,14 +95,15 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private ImageView gridViewFooterImageView;
     private TextView gridViewFooterTextView;
 
-    private SlidingMenuAdapter slidingMenuAdapter;
-    private final NewestObservationAdapter contentGVAdapter = new NewestObservationAdapter(gvDataset, this);
-    private NewestObservationCacheManager newestObservationCacheManager;
+    private  SlidingMenuAdapter slidingMenuAdapter;
+    private  NewestObservationAdapter contentGVAdapter;
+    private  NewestObservationCacheManager newestObservationCacheManager;
+
     private long timeStamp;
     private long toolbarTitleClickedTimeStamp=0;
     private int prevFirstVisibleItem;
     private double scrollingSpeed;
-    private double speedThreadshold = 1;
+    private final double speedThreadshold = 1;
 
     @Override
     public void onBackPressed() {
@@ -136,10 +138,13 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
     private void initializeVariables() {
-        cacheFolder = getCacheDir() + "//Newest_Observation";
-        newestObservationCacheManager = NewestObservationCacheManager.getInstance(this);
         swipeRefreshLayout = ((SwipeRefreshLayout) findViewById(R.id.swiperefresh_NewestObservationActivity));
         contentGV = (GridViewWithHeaderAndFooter) findViewById(R.id.content_gridview_NewestObsrvationActivity);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
+        cacheFolder = getCacheDir() + "//Newest_Observation";
+        cookie= PreferenceUtil.getCookie(this);
+        contentGVAdapter = new NewestObservationAdapter(gvDataset, this);
+        newestObservationCacheManager = NewestObservationCacheManager.getInstance(this);
     }
 
     private void initializeUI() {
@@ -211,13 +216,12 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
     private void initializeToolBar() {
-        toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
         ToolBarStyler.styleToolBar(this, toolbar, "Newest Observations");
     }
 
     private void initializeFloatingButton() {
         if (!PreferenceUtil.getCurrentUserStatus(this)) {
-            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_NewestObservationActivity);
             fab.setVisibility(View.GONE);
         }
     }
@@ -225,7 +229,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     //Wrapped in setWidgetListeners()
     private void setFloatingButtonOnClick() {
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_NewestObservationActivity);
         if (fab != null) {
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -249,6 +253,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
     private void setContentGVOnScroll() {
+
         // Load data and append to Gridview when scroll to bottom
         contentGV.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
@@ -256,9 +261,10 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
                     userScrolled = true;
-                }
+                else
+                    userScrolled=false;
             }
 
             @Override
@@ -284,14 +290,14 @@ public class NewestObservationsActivity extends AppCompatActivity{
                     if (!flag_loading) {
                         HashMap<String, String> sessionInfoMap = new HashMap<>();
                         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
-                        sessionInfoMap.put("Action", Action.APPEND.toString());
+                        sessionInfoMap.put(ACTION, Action.APPEND.toString());
                         ObservationEntryObject lastobject = null;
                         synchronized (gvDataset) {
-                            if (contentGVAdapter.getCount() > 0)
-                                lastobject = (ObservationEntryObject) contentGVAdapter.getItem(contentGVAdapter.getCount() - 1);
+                            if (gvDataset.size() > 0)
+                                lastobject = (ObservationEntryObject) contentGVAdapter.getItem(gvDataset.size() - 1);
                         }
                         if (lastobject != null) {
-                            sessionInfoMap.put("date", lastobject.date);
+                            sessionInfoMap.put(DATE, lastobject.date);
                             downloadObservationObjectTask = new DownloadObservationObjectTask((Activity) view.getContext());
                             downloadObservationObjectTask.execute(sessionInfoMap);
                             flag_loading = true;
@@ -371,7 +377,6 @@ public class NewestObservationsActivity extends AppCompatActivity{
     //Begin AsyncTasks
     private void beginValidateSession() {
         //Start validating if the session is expired or not
-        cookie = PreferenceUtil.getCookie(this);
         if (!cookie.isEmpty() && PreferenceUtil.getCurrentUserStatus(this)) {
             HashMap<String, String> sessionInfoMap = new HashMap<>();
             sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
@@ -386,8 +391,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void beginDownloadObservation() {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
-        sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
-        sessionInfoMap.put("Action", Action.REFRESH.toString());
+        sessionInfoMap.put(COOKIE, cookie);
+        sessionInfoMap.put(ACTION, Action.REFRESH.toString());
         downloadObservationObjectTask = new DownloadObservationObjectTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
@@ -398,8 +403,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void beginDetectPicture() {
         HashMap<String, String> sessionInfoMap = new HashMap<>();
-        sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
-        sessionInfoMap.put("Action", Action.REFRESH.toString());
+        sessionInfoMap.put(COOKIE, cookie);
+        sessionInfoMap.put(ACTION, Action.REFRESH.toString());
         detectPictureExistTask = new DetectPictureExistTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
@@ -412,7 +417,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private void addGridViewFooter() {
         //Add footer view to GridView to show the loading status
         LayoutInflater layoutInflater = LayoutInflater.from(this);
-        View footerView = layoutInflater.inflate(R.layout.scrollview_footer_loading, null, false);
+        View footerView = layoutInflater.inflate(R.layout.scrollview_footer_loading, contentGV, false);
         footerView.setTag("footer");
         contentGV.addFooterView(footerView);
     }
@@ -438,9 +443,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void showLoadingMoreView() {
         if (gridViewFooterImageView == null)
-            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_NewestObservationLoadingItem);
+            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
         if (gridViewFooterTextView == null)
-            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_NewestObservationLoadingItem);
+            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
         if (gridViewFooterImageView != null) {
             if (gridViewFooterImageView.getVisibility() == View.GONE)
@@ -459,9 +464,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void hideLoadingMoreView() {
         if (gridViewFooterImageView == null)
-            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_NewestObservationLoadingItem);
+            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
         if (gridViewFooterTextView == null)
-            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_NewestObservationLoadingItem);
+            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
         if (gridViewFooterImageView != null) {
             if (gridViewFooterImageView.getAnimation() != null) {
@@ -478,9 +483,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void showNoMoreObservationView() {
         if (gridViewFooterImageView == null)
-            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_NewestObservationLoadingItem);
+            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
         if (gridViewFooterTextView == null)
-            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_NewestObservationLoadingItem);
+            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
         if (gridViewFooterImageView != null) {
             gridViewFooterImageView.setAnimation(null);
@@ -493,9 +498,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private void showLoadingMoreFailedView() {
         if (gridViewFooterImageView == null)
-            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_NewestObservationLoadingItem);
+            gridViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
         if (gridViewFooterTextView == null)
-            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_NewestObservationLoadingItem);
+            gridViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
         if (gridViewFooterImageView != null) {
             gridViewFooterImageView.setAnimation(null);
@@ -537,7 +542,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
     /*CacheObservationObjectTask is not canceled because it could complete in a short time
-    * The same as RefreshGVDatasetTask*/
+    * The same as RefreshContentViewDataSetTask*/
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -691,7 +696,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
     /* These 3 classes are called in a consecutive way:
-    * DonwloadObservationObjectTask--->CacheObservationObjectTask--->RefreshGVDatasetTask
+    * DonwloadObservationObjectTask--->CacheObservationObjectTask--->RefreshContentViewDataSetTask
     * First fetch observations in Json and construct an array of Observation Objects
     * Then pass it to Cache Manager to cache them to database
     * Lastly fetch from database to refresh the gridview (text only without picture)
@@ -706,18 +711,17 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
         @Override
         protected ObservationEntryObject[] doInBackground(HashMap<String, String>... params) {
-            flag_loading = true;
             DrupalAuthSession authSession = new DrupalAuthSession();
             DrupalServicesView newestObservationView = new DrupalServicesView(getText(R.string.drupal_site_url).toString(), getText(R.string.drupal_server_endpoint).toString());
 
-            action = params[0].get("Action");
+            action = params[0].get(ACTION);
 
             //Get cookie
             String cookie = params[0].get(DrupalServicesFieldKeysConst.LOGIN_COOKIE);
             authSession.setSession(cookie);
             newestObservationView.setAuth(authSession);
             //Get date parameter
-            String date = params[0].get("date");
+            String date = params[0].get(DATE);
 
 
             BasicNameValuePair[] pairs = getParamsFromDate(date);
@@ -785,6 +789,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
             this.action = action;
         }
 
+        /*If the user refreshed the view, set the loaded page back to 0
+        * Then fetch required amount of data from database
+        * Pass the fetched data to onPostExecute()*/
         @Override
         protected ArrayList<ObservationEntryObject> doInBackground(Void... params) {
             if (action.equals(Action.REFRESH.toString())) {
@@ -795,6 +802,11 @@ public class NewestObservationsActivity extends AppCompatActivity{
             return newList;
         }
 
+        /* First check if the new dataset has the same amount of data as the existing adapter dataset
+        *  This check is for Append Action
+        *  If yes, it means there's no more data in database to load and append
+        *  (Though some old data may be updated or replaced, but there's no need to check so accurately in this activity)
+        *  Or if the user refreshed the view, we need to refresh the adapter dataset */
         @Override
         protected void onPostExecute(ArrayList<ObservationEntryObject> newList) {
             if (contentGV == null)
@@ -808,18 +820,17 @@ public class NewestObservationsActivity extends AppCompatActivity{
                         gvDataset.add(object);
                     }
                     loadedPage++;
-                }
-                if (itemAmountChanged)
                     contentGVAdapter.notifyDataSetChanged();
+                }
+                if (contentGV.getVisibility() != View.VISIBLE)
+                    contentGV.setVisibility(View.VISIBLE);
+                if (gvDataset.size() <= 0||(action.equals(Action.APPEND.toString())&&!itemAmountChanged))
+                    showNoMoreObservationView();
+                else if (action.equals(Action.REFRESH.toString()))
+                    scrollGridViewToTop();
+                flag_loading = false;
+                hideRefreshView();
             }
-            if (contentGV.getVisibility() != View.VISIBLE)
-                contentGV.setVisibility(View.VISIBLE);
-            if (gvDataset.size() <= 0)
-                showNoMoreObservationView();
-            else if (action.equals(Action.REFRESH.toString()))
-                scrollGridViewToTop();
-            flag_loading = false;
-            hideRefreshView();
         }
     }
 
@@ -872,11 +883,11 @@ public class NewestObservationsActivity extends AppCompatActivity{
                  * Get all visible objects */
                 synchronized (gvDataset) {
                     visibleObjects.clear();
-                    if (contentGVAdapter != null) {
+                    if (contentGVAdapter != null&&gvDataset.size()>0) {
                         int firstVisiblePosition = contentGV.getFirstVisiblePosition();
                         int lastVisiblePosition = contentGV.getLastVisiblePosition();
-                        if (lastVisiblePosition >= contentGVAdapter.getCount())
-                            lastVisiblePosition = contentGVAdapter.getCount() - 1;
+                        if (lastVisiblePosition >= gvDataset.size())
+                            lastVisiblePosition = gvDataset.size() - 1;
                         for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++)
                             visibleObjects.add(gvDataset.get(i));
                     }

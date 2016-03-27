@@ -115,4 +115,11 @@
     <string name="upload_slidingMenuItem">Upload</string>
     <string name="search_slidingMenuItem">Search</string>
     <string name="guide_slidingMenuItem">User Guide</string>
+
+    <!-- My Post Activity-->
+    <string name="my_post_toolbar_title_myPostActivity">My Posts</string>
+    <string name="view_more_on_web_myPostActivity">Click Me To View More On Web</string>
+    <string name="write_something_myPostActivity">Write Something!</string>
+    <string name="no_more_myPostActivity">No More Observations</string>
+
 </resources>

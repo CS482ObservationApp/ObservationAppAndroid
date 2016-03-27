@@ -2,22 +2,22 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="40dp"
-    android:minHeight="40dp"
     android:gravity="center"
-    android:background="#DFDFDF">
+    android:background="#DFDFDF"
+    android:id="@+id/scrollview_footer">
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <ImageView
-                android:id="@+id/imgLoading_NewestObservationLoadingItem"
+                android:id="@+id/imgLoading_ScrollViewFooterLoading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/refresh_icon"/>
             <TextView
-                android:id="@+id/txtLoading_NewestObservationLoadingItem"
+                android:id="@+id/txtLoading_ScrollViewFooterLoading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/loading_newestObservationActivity"/>
+                />
         </LinearLayout>
 </RelativeLayout>

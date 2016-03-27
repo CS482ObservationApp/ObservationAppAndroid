@@ -12,8 +12,9 @@ public class DrupalServicesView extends DrupalServicesBase  {
         OBSERVATION_SEARCH,
         NEWEST_OBSERVATION,
         OBSERVATION_RECORD_AUTOCOMPLETE,
-        SINGLE_NODE_DETAIL
-    };
+        SINGLE_NODE_DETAIL,
+        PERSONAL_OBSERVATION
+    }
 
     public DrupalServicesView(String baseURI, String endpoint) {
         super(baseURI, endpoint);
@@ -25,6 +26,7 @@ public class DrupalServicesView extends DrupalServicesBase  {
             case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
             case OBSERVATION_RECORD_AUTOCOMPLETE: setResource("observation-record-autocomplete-mobile");break;
             case SINGLE_NODE_DETAIL: setResource("single-node-detail-mobile");break;
+            case PERSONAL_OBSERVATION: setResource("my-posts");break;
         }
         return httpGetRequest(getURI(),params);
     }

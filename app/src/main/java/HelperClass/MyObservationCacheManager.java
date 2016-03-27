@@ -18,29 +18,31 @@ import Model.ObservationEntryObject;
  * Created by zhuol on 3/21/2016.
  */
 public class MyObservationCacheManager {
-    static  String mCacheDir;
+    static String mCacheDir;
     static Activity mContext;
-    final int maxCacheAmount=5000;
-    static final Object lock=new Object();
+    final int maxCacheAmount = 2000;
+    static final Object lock = new Object();
 
-    protected MyObservationCacheManager(){}
+    protected MyObservationCacheManager() {
+    }
+
     private static class InstanceHolder {
         private static final MyObservationCacheManager instance = new MyObservationCacheManager();
     }
 
-    public static MyObservationCacheManager getInstance(Activity context){
-        mContext =context;
-        mCacheDir = context.getCacheDir() + "//My_Observation";
+    public static MyObservationCacheManager getInstance(Activity context) {
+        mContext = context;
+        mCacheDir = context.getCacheDir() + "//My_Observations";
         return InstanceHolder.instance;
     }
 
-    public void cache(ObservationEntryObject[] observationEntryObjects){
-        MyObservationDBHelper helper=new MyObservationDBHelper(mContext);
-        SQLiteDatabase readableDatabase=helper.getReadableDatabase();
-        SQLiteDatabase writableDatabase=helper.getWritableDatabase();
-        String sortOrder = ObservationContract.NewestObservationEntry.COLUMN_NAME_DATE + " DESC";
+    public void cache(ObservationEntryObject[] observationEntryObjects) {
+        synchronized (lock) {
+            MyObservationDBHelper helper = new MyObservationDBHelper(mContext);
+            SQLiteDatabase readableDatabase = helper.getReadableDatabase();
+            SQLiteDatabase writableDatabase = helper.getWritableDatabase();
+            String sortOrder = ObservationContract.MyObservationEntry.COLUMN_NAME_DATE + " DESC";
 
-        synchronized(lock) {
             //Find out how many objects don't exist in DB
             ArrayList<ObservationEntryObject> objectsToInsert = new ArrayList<>();
             for (ObservationEntryObject observationEntryObject : observationEntryObjects) {
@@ -89,8 +91,8 @@ public class MyObservationCacheManager {
                 cursor.moveToLast();
                 for (int i = 0; i < existItemAmount - maxCacheAmount; i++) {
                     //Delete record in DB and file in cache
-                    String nid = cursor.getColumnName(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID));
-                    String localFileUri = cursor.getColumnName(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI));
+                    String nid = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID));
+                    String localFileUri = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI));
                     String deleteWhereCause = ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID + "=" + nid;
                     writableDatabase.delete(ObservationContract.MyObservationEntry.TABLE_NAME, deleteWhereCause, null);
 
@@ -108,12 +110,14 @@ public class MyObservationCacheManager {
             readableDatabase.close();
         }
     }
-    public ArrayList<ObservationEntryObject> getCache(int itemAmount){
-        MyObservationDBHelper dbHelper=new MyObservationDBHelper(mContext);
-        SQLiteDatabase readableDatabase=dbHelper.getReadableDatabase();
+
+    public ArrayList<ObservationEntryObject> getCache(int itemAmount) {
         String sortOrder = ObservationContract.MyObservationEntry.COLUMN_NAME_DATE + " DESC";
         Cursor cursor;
-        synchronized(lock) {
+        MyObservationDBHelper dbHelper = new MyObservationDBHelper(mContext);
+        SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+
+        synchronized (lock) {
             //Get exist item count
             cursor = readableDatabase.query(
                     ObservationContract.MyObservationEntry.TABLE_NAME,  // The table to query
@@ -126,23 +130,65 @@ public class MyObservationCacheManager {
                     String.valueOf(itemAmount)                // Limit
             );
         }
-        ArrayList<ObservationEntryObject> returnList=new ArrayList<>();
+        ArrayList<ObservationEntryObject> returnList = new ArrayList<>();
         cursor.moveToFirst();
-        while (!cursor.isAfterLast()){
-            final String EMPTY_STR="";
-            String nid=cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID));
-            String photoLocalUri=cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI));
-            String date=cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_DATE));
-            String title=cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_TITLE));
-            String photoServerUri=cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI));
-            returnList.add(new ObservationEntryObject(nid,title,EMPTY_STR,EMPTY_STR,photoServerUri,photoLocalUri,EMPTY_STR,EMPTY_STR,EMPTY_STR,EMPTY_STR,date,EMPTY_STR));
+        while (!cursor.isAfterLast()) {
+            String EMPTY_STR = "";
+            String nid = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID));
+            String photoLocalUri = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI));
+            String date = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_DATE));
+            String title = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_TITLE));
+            String photoServerUri = cursor.getString(cursor.getColumnIndex(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_SERVER_URI));
+            returnList.add(new ObservationEntryObject(nid, title, EMPTY_STR, EMPTY_STR, photoServerUri, photoLocalUri, EMPTY_STR, EMPTY_STR, EMPTY_STR, EMPTY_STR, date, EMPTY_STR));
             cursor.moveToNext();
         }
         cursor.close();
         readableDatabase.close();
         return returnList;
     }
-    public int getMaxCacheAmount(){
+
+    public int getMaxCacheAmount() {
         return maxCacheAmount;
+    }
+
+    public void updateRecordImageLocation(ArrayList<ObservationEntryObject> observationEntryObjects) {
+        synchronized (lock) {
+            MyObservationDBHelper dbHelper = new MyObservationDBHelper(mContext);
+            SQLiteDatabase readableDatabase = dbHelper.getReadableDatabase();
+            SQLiteDatabase writableDatabase = dbHelper.getWritableDatabase();
+
+            for (ObservationEntryObject object : observationEntryObjects) {
+                /*First we need to make sure this object still exist in DB
+                * Since the object is gotten from Adapter, the corresponding record in DB
+                * may be deleted  before we lock the lock object*/
+                final String whereCause = ObservationContract.MyObservationEntry.COLUMN_NAME_NODE_ID + "=?";
+                final String[] whereArgs = {object.nid};
+                Cursor c = readableDatabase.query(
+                        ObservationContract.MyObservationEntry.TABLE_NAME,
+                        null,
+                        whereCause,
+                        whereArgs,
+                        null,
+                        null,
+                        null);
+                if (c.getCount() == 0) {
+                    //If the record already deleted, delete the file as well
+                    File imgFile = new File(object.photoLocalUri);
+                    if (imgFile.exists()) {
+                        try {
+                            imgFile.delete();
+                        } catch (Exception ex) {
+                        }
+                    }
+                    c.close();
+                    continue;
+                }
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(ObservationContract.MyObservationEntry.COLUMN_NAME_PHOTO_LOCAL_URI, object.photoLocalUri);
+                writableDatabase.update(ObservationContract.MyObservationEntry.TABLE_NAME, contentValues, whereCause, whereArgs);
+            }
+            readableDatabase.close();
+            writableDatabase.close();
+        }
     }
 }

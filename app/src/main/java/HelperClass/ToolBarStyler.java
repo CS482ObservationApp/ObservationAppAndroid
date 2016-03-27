@@ -14,7 +14,7 @@ public class ToolBarStyler {
     public static void styleToolBar(AppCompatActivity context, Toolbar toolbar,String title){
         toolbar.setTitle(""); //The reason why set it empty first, see here: http://stackoverflow.com/questions/26486730/in-android-app-toolbar-settitle-method-has-no-effect-application-name-is-shown
         context.setSupportActionBar(toolbar);
-        toolbar.setNavigationIcon(R.drawable.icon_app);
+        toolbar.setNavigationIcon(R.drawable.icon_app_medium);
         toolbar.setTitle(title);
     }
 }

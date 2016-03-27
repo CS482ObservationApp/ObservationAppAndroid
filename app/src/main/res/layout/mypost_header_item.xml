@@ -29,27 +29,46 @@
                 android:layout_marginTop="50dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="This guy is so lazy!" />
+                android:visibility="invisible"
+                />
 
         </RelativeLayout>
 
-        <LinearLayout
+    <!-- layout_marginBottom must be half of layout_height-->
+    <LinearLayout
             android:id="@+id/ll_overlapImage_MyPostHeader"
             android:layout_width="wrap_content"
-            android:layout_height="104dp"
+            android:layout_height="100dp"
             android:layout_above="@id/content_rl_MyPostHeader"
             android:layout_marginBottom="-50dp"
             android:layout_marginLeft="30dp"
-            android:background="#FFFFFF">
+            android:orientation="horizontal"
+            >
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF">
+                <ImageView
+                    android:id="@+id/userImage_MyPostHeader"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"
+                    android:layout_margin="2dp"
+                    android:src="@drawable/splash" />
+            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/userName_MyPostHeader"
+                android:text="Normal User"
+                android:layout_marginLeft="10dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="30dp"
+                android:textColor="#FFFFFF"
+                />
 
-            <ImageView
-                android:id="@+id/userImage_MyPostHeader"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:scaleType="centerCrop"
-                android:adjustViewBounds="true"
-                android:layout_margin="2dp"
-                android:src="@drawable/splash" />
         </LinearLayout>
 
     </RelativeLayout>
