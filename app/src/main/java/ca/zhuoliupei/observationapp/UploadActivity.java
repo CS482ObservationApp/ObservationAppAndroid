@@ -1,8 +1,6 @@
 package ca.zhuoliupei.observationapp;
 
 import android.app.AlertDialog;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,8 +9,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -37,7 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.PropertyResourceBundle;
 
 import Adapter.RecordAutoCompleteAdapter;
 import Const.AppConst;
@@ -46,15 +41,12 @@ import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesFile;
 import DrupalForAndroidSDK.DrupalServicesNode;
-import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.GeoUtil;
 import HelperClass.NotificationUtil;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
-import HelperClass.RegexValidator;
 import HelperClass.UploadUtil;
 import Interface.DatePickerCaller;
-import Interface.TimePickerCaller;
 import ViewAndFragmentClass.DatePickerFragment;
 import ViewAndFragmentClass.DelayAutoCompleteTextView;
 
@@ -75,7 +67,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     public static final int PICK_PHOTO_REQUEST =1;
     public static final int  CHOOSE_UPLOAD_PHOTO_METHOD_REQUEST=2;
     public static final int MAX_UPLOAD_SIZE=1600*1600;
-    private final int THRESHOLD=2;
+    private final int THRESHOLD=2;//Autocomplete only when user input more than 2 chars
     DelayAutoCompleteTextView txtRecord;
     ImageView imgView;
     TextView txtName;
@@ -111,7 +103,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload);
         initializeVariables();
-        initializeView();
+        initializeUI();
         setWidgetListeners();
     }
 
@@ -161,11 +153,8 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         txtName=(EditText)findViewById(R.id.txtName_UploadActivity);
         txtDescription=(TextView)findViewById(R.id.txtDescription_UploadActivity);
     }
-    private void initializeView(){
-        txtRecord.setThreshold(THRESHOLD);
-        txtRecord.setAdapter(autoCompleteAdapter);
-        txtRecord.setLoadingIndicator((android.widget.ProgressBar) findViewById(R.id.pb_loading_indicator));
-        txtRecord.setTag(-1);//Initial tag which would be invalid to upload
+    private void initializeUI(){
+       initializeRecordAutoComplete();
     }
     private void setWidgetListeners(){
         setImageViewOnClick();
@@ -175,6 +164,14 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         setSubmitBtnOnClick();
         setCancelBtnOnClick();
         setTxtRecordOnTextChanged();
+    }
+
+    //Wrapped in initializeUI()
+    private void initializeRecordAutoComplete(){
+        txtRecord.setThreshold(THRESHOLD);
+        txtRecord.setAdapter(autoCompleteAdapter);
+        txtRecord.setLoadingIndicator((android.widget.ProgressBar) findViewById(R.id.pb_loading_indicator_UploadActivity));
+        txtRecord.setTag(-1);//Initial tag which would be invalid to upload
     }
 
     //Widgets Listeners,wrapped in setWidgetListeners()

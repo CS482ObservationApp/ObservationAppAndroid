@@ -122,4 +122,28 @@
     <string name="write_something_myPostActivity">Write Something!</string>
     <string name="no_more_myPostActivity">No More Observations</string>
 
+    <!-- Search Activity-->
+    <string name="category_label_searchObservationActivity">Category</string>
+    <string name="record_label_searchObservationActivity">Record</string>
+    <string name="location_label_searchObservationActivity">Location</string>
+    <string name="date_label_searchObservationActivity">Date</string>
+    <string name="from_label_searchObservationActivity">From</string>
+    <string name="to_label_searchObservationActivity">To</string>
+    <string name="search_btn_searchObservationActivity">Search</string>
+    <string name="reset_btn_searchObservationActivity">Reset</string>
+    <string name="hint_record_searchObservationActivity">Enter a record here</string>
+    <string name="hint_location_searchObservationActivity">Search in an area</string>
+    <string name="hint_date_searchObservationActivity">Choose a date</string>
+    <string name="search_tool_bar_title_searchObservationActivity">Search</string>
+    <string-array name="category_array">
+        <item>Unknown</item>
+        <item>Agriculture</item>
+        <item>Amphibians/ Reptiles</item>
+        <item>Birds</item>
+        <item>Fish</item>
+        <item>Weather</item>
+        <item>Plants</item>
+        <item>Mammals</item>
+        <item>Insects</item>
+    </string-array>
 </resources>

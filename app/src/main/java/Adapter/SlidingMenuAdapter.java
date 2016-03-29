@@ -88,7 +88,8 @@ public class SlidingMenuAdapter extends BaseAdapter{
                 str=str.substring(0,str.length()-1);
             address= address+str+",";
         }
-        address=address.substring(0,address.length()-1);
+        if (address.length()>0)
+            address=address.substring(0,address.length()-1);
         locationTV.setText(address);
 
         return rowView;
