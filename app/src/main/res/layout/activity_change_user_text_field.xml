@@ -16,12 +16,22 @@
         android:orientation="horizontal"
         >
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
         <EditText
             android:id="@+id/input_ChangeTextFieldActivity"
             android:layout_width="161dp"
             android:layout_height="wrap_content"
             android:textColor="@color/black_overlay" />
-
+            <TextView
+                android:id="@+id/hintTxt_ChangeTextFieldActivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#4444FF"
+                />
+</LinearLayout>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

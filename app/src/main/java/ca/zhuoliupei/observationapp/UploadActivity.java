@@ -319,7 +319,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             latLng = params[0];
             double lat = latLng.latitude;
             double lon = latLng.longitude;
-            List<Address> addresses = null;
+            List<Address> addresses;
             try {
                 addresses = geocoder.getFromLocation(lat, lon, 1);
                 if (addresses == null || addresses.size() == 0) {
@@ -504,7 +504,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         this.year=year;
         this.month=month+1;//Jan is month 0
         this.day=day;
-        txtDateTime .setText(String.format("%s-%d-%d", String.valueOf(year), month+1, day));
+        txtDateTime .setText(String.format("%d-%d-%d", year, month+1, day));
         txtDateTime.setError(null);
     }
 

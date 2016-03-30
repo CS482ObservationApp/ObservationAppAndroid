@@ -14,6 +14,7 @@
     <!-- Client side validation error message-->
     <string name="field_empty_error">This field cannot be empty</string>
     <string name="username_contains_illeagle_char">User name can only contains digits or letters</string>
+    <string name="invalid_number">Invalid number</string>
     <string name="email_format_error">The email format is not correct</string>
 
     <!-- Server side validation error message-->
@@ -26,6 +27,7 @@
     <string name="hint_password_confirm">Confirm Password</string>
     <string name="hint_username">User Name</string>
     <string name="hint_reset_password">User name or email</string>
+    <string name="hint_radius">Radius in Kilometer</string>
 
     <string name="reset_password_link_loginActivity">Try <a href="com.package.reset_password://">Reset Password</a></string>
     <!-- Register Activity-->
@@ -136,7 +138,7 @@
     <string name="hint_date_searchObservationActivity">Choose a date</string>
     <string name="search_tool_bar_title_searchObservationActivity">Search</string>
     <string-array name="category_array">
-        <item>Unknown</item>
+        <item>None</item>
         <item>Agriculture</item>
         <item>Amphibians/ Reptiles</item>
         <item>Birds</item>
@@ -146,4 +148,7 @@
         <item>Mammals</item>
         <item>Insects</item>
     </string-array>
+
+    <!-- Change Text Field Activity-->
+    <string name="defalut_radius_changeTextFieldActivity">The default radius is 100km</string>
 </resources>

@@ -81,7 +81,7 @@
                         android:textColor="#4444ff" />
 
                     <ViewAndFragmentClass.DelayAutoCompleteTextView
-                        android:id="@+id/txtCategory_SearchObservationActivity"
+                        android:id="@+id/txtRecord_SearchObservationActivity"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
@@ -152,6 +152,8 @@
                         <EditText
                             android:id="@+id/txtFromDate_SearchObservationActivity"
                             android:layout_width="0dp"
+                            android:editable="false"
+                            android:focusable="false"
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
                             android:background="@android:color/white"
@@ -173,6 +175,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
+                            android:editable="false"
+                            android:focusable="false"
                             android:background="@android:color/white"
                             android:hint="yyyy-mm-dd"
                             android:imeOptions="flagNoExtractUi|actionSearch"

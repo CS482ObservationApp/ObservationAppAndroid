@@ -127,6 +127,8 @@ public class UserProfileActivity extends AppCompatActivity {
         findViewById(R.id.ll_name_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent=new Intent(UserProfileActivity.this, ChangeTextFieldActivity.class);
+                intent.putExtra(ChangeTextFieldActivity.INTENT_TYPE,ChangeTextFieldActivity.Type.USER_NAME);
                 startActivityForResult(new Intent((v.getContext()), ChangeTextFieldActivity.class), CHANGE_USER_NAME_REQUEST);
             }
         });
