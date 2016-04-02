@@ -80,7 +80,7 @@
         <activity
             android:name=".SearchObservationActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar" >
         </activity>
         <activity
             android:name=".ChooseUploadPhotoMethodActivity"
@@ -94,9 +94,15 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Transparent" >
         </activity>
-        <activity android:name=".MyPostActivity"
+        <activity
+            android:name=".MyPostActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+        <activity android:name=".SearchResultActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="portrait"
+            >
         </activity>
     </application>
 

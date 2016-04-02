@@ -39,7 +39,7 @@ public class ObservationRecordFinder {
         BasicNameValuePair[] params=new BasicNameValuePair[1];
         params[0]=new BasicNameValuePair("name",name);
         try {
-            HashMap<String,String> responseMap= drupalServicesView.retrive(DrupalServicesView.View.OBSERVATION_RECORD_AUTOCOMPLETE, params);
+            HashMap<String,String> responseMap= drupalServicesView.retrieve(DrupalServicesView.ViewType.OBSERVATION_RECORD_AUTOCOMPLETE, params);
             if (responseMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)){
                 return getNameListFromJson(responseMap.get(DrupalServicesFieldKeysConst.RESPONSE_BODY));
             }else {

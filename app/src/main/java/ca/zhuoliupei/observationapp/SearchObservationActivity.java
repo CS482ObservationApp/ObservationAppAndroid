@@ -5,7 +5,11 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -16,15 +20,35 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.apache.http.message.BasicNameValuePair;
+
+import java.util.ArrayList;
 import java.util.Date;
 
 import Adapter.RecordAutoCompleteAdapter;
+import DrupalForAndroidSDK.DrupalAuthSession;
+import DrupalForAndroidSDK.DrupalServicesView;
+import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Interface.DatePickerCaller;
+import Model.SerializableNameValuePair;
 import ViewAndFragmentClass.DatePickerFragment;
 import ViewAndFragmentClass.DelayAutoCompleteTextView;
 
 public class SearchObservationActivity extends AppCompatActivity implements DatePickerCaller {
+
+    //Http params const
+    private final String FIELD_CATEGORY="field_category_value";
+    private final String FIELD_RECORD="field_climate_diary_record_target_id";
+    private final String FIELD_RADIUS="field_geofield_distance[distance]";
+    private final String FIELD_LAT="field_geofield_distance[origin][lat]";
+    private final String FIELD_LNG="field_geofield_distance[origin][lon]";
+    private final String FIELD_MIN_YEAR="field_date_observed_value[min][year]";
+    private final String FIELD_MIN_MONTH="field_date_observed_value[min][month]";
+    private final String FIELD_MIN_DAY="field_date_observed_value[min][day]";
+    private final String FIELD_MAX_YEAR="field_date_observed_value[max][year]";
+    private final String FIELD_MAX_MONTH="field_date_observed_value[max][month]";
+    private final String FIELD_MAX_DAY="field_date_observed_value[max][day]";
 
     //User input variables
     private String category;
@@ -35,6 +59,8 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     private final int INVALID = -1;
     private String address;
     private final double DEFAULT_RADIUS = 100;
+    boolean recordSelected=true; //Flag to detect if the user pick an item from the autocomplete list, true by default because it could be empty
+
     //Views
     Toolbar toolbar;
     Spinner categorySpinner;
@@ -51,6 +77,10 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     private final int PICK_ENTRY_LOCATION_REQUEST = 0;
     private final int SELECT_RADIUS_REQUEST = 1;
 
+    //Http services object
+    String baseUrl,endpoint;
+    DrupalServicesView drupalServicesView;
+    DrupalAuthSession drupalAuthSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +137,12 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
 
         autoCompleteAdapter = new RecordAutoCompleteAdapter(this);
 
+        baseUrl= getText(R.string.drupal_site_url).toString();
+        endpoint=getText(R.string.drupal_server_endpoint).toString();
+        drupalServicesView=new DrupalServicesView(baseUrl,endpoint);
+        drupalAuthSession=new DrupalAuthSession();
+        drupalAuthSession.setSession(PreferenceUtil.getCookie(this));
+        drupalServicesView.setAuth(drupalAuthSession);
     }
 
     private void initializeUI() {
@@ -116,9 +152,13 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     }
 
     private void setWidgetListeners() {
-        setLocationTextOnClick();
-        setToDateTextOnClick();
-        setFromDateTextOnClick();
+        setLocationTextOnTouch();
+        setToDateTextOnTouch();
+        setFromDateTextOnTouch();
+        setTxtRecordOnTextChanged();
+        setRecordItemOnClick();
+        setResetButtonOnClick();
+        setSearchButtonOncClick();
     }
 
 
@@ -145,42 +185,124 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     /**********
      * Wrapped in setWidgetListeners()
      **************/
-    private void setLocationTextOnClick() {
-        locationEditText.setOnClickListener(new View.OnClickListener() {
+    private void setLocationTextOnTouch() {
+        locationEditText.setOnTouchListener(new View.OnTouchListener() {
+                                                @Override
+                                                public boolean onTouch(View v, MotionEvent event) {
+                                                    if (MotionEvent.ACTION_UP == event.getAction()) {
+                                                        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                                                        try {
+                                                            startActivityForResult(builder.build(SearchObservationActivity.this), PICK_ENTRY_LOCATION_REQUEST);
+                                                        } catch (Exception ex) {
+                                                            Toast.makeText(v.getContext(), R.string.network_error, Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    }
+                                                    return false;
+                                                }
+                                            }
+
+        );
+        }
+
+    private void setTxtRecordOnTextChanged(){
+        recordTxt.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
-                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-                try {
-                    startActivityForResult(builder.build(SearchObservationActivity.this), PICK_ENTRY_LOCATION_REQUEST);
-                } catch (Exception ex) {
-                    Toast.makeText(v.getContext(), R.string.network_error, Toast.LENGTH_SHORT).show();
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                //if recordID text is empty after changed, it's fine
+                if (recordTxt.getText() == null || recordTxt.getText().toString().trim().isEmpty()) {
+                    recordSelected = true;
+                } else {
+                    recordSelected = false;
                 }
             }
         });
     }
-
-    private void setFromDateTextOnClick() {
-        fromDateEditText.setOnClickListener(new View.OnClickListener() {
+    private void setFromDateTextOnTouch() {
+        fromDateEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                clickedDateEditText = fromDateEditText;
-                DialogFragment newFragment = new DatePickerFragment();
-                newFragment.show(getSupportFragmentManager(), "datePicker");
+            public boolean onTouch(View v, MotionEvent event) {
+                if (MotionEvent.ACTION_UP == event.getAction()) {
+                    clickedDateEditText = fromDateEditText;
+                    DialogFragment newFragment = new DatePickerFragment();
+                    newFragment.show(getSupportFragmentManager(), "datePicker");
+                }
+                return false;
             }
         });
     }
 
-    private void setToDateTextOnClick() {
-        toDateEditText.setOnClickListener(new View.OnClickListener() {
+    private void setToDateTextOnTouch() {
+        toDateEditText.setOnTouchListener(new View.OnTouchListener() {
+                                              @Override
+                                              public boolean onTouch(View v, MotionEvent event) {
+                                                  if (MotionEvent.ACTION_UP == event.getAction()) {
+                                                      clickedDateEditText = toDateEditText;
+                                                      DialogFragment newFragment = new DatePickerFragment();
+                                                      newFragment.show(getSupportFragmentManager(), "datePicker");
+                                                  }
+                                                  return false;
+                                              }
+                                          }
+            );
+        }
+
+    private void setRecordItemOnClick(){
+        recordTxt.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
-                clickedDateEditText = toDateEditText;
-                DialogFragment newFragment = new DatePickerFragment();
-                newFragment.show(getSupportFragmentManager(), "datePicker");
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                String record = (String) adapterView.getItemAtPosition(position);
+                String nid = autoCompleteAdapter.getItemNodeID(position);
+                recordID=Integer.parseInt(nid);
+                recordTxt.setText(record);
+                recordSelected = true;
             }
         });
     }
-
+    private void setResetButtonOnClick(){
+        findViewById(R.id.btnReset_SearchObservationActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Clear views
+                categorySpinner.setSelection(0);
+                recordTxt.setText("");
+                locationEditText.setText("");
+                fromDateEditText.setText("");
+                toDateEditText.setText("");
+                //Clear value stored in variables
+                category = null;
+                recordID = INVALID;
+                rangeRadius = INVALID;
+                locationLatLng = null;
+                fromDate = null;
+                toDate = null;
+                recordSelected = true;
+            }
+        });
+    }
+    private void setSearchButtonOncClick(){
+        findViewById(R.id.btnSearch_SearchObservationActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (validateInputOnClient()){
+                    fillVariableFromInput();
+                    ArrayList<SerializableNameValuePair> params=buildHttpParams();
+                    Intent intent=new Intent(SearchObservationActivity.this,SearchResultActivity.class);
+                    Bundle extra = new Bundle();
+                    extra.putSerializable("params",  params);// cast to array and put
+                    intent .putExtras(extra);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
     /******************** Start Activity Result Handler***************************/
     private void handlePickLocationRequestResult(int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
@@ -214,5 +336,62 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             areaStr = "";
         }
         locationEditText.setText(areaStr);
+    }
+
+    //Helper Methods
+    private boolean validateInputOnClient(){
+        //If recordID edittext not empty but user did not select any autocomplete recordID, show error
+        boolean recordTxtNotEmpty=recordTxt.getText()!=null&&!recordTxt.getText().toString().trim().isEmpty();
+        if (recordTxtNotEmpty&&!recordSelected){
+            recordTxt.setError(getString(R.string.record_not_exist_searchObservationActivity));
+            recordTxt.requestFocus();
+            return  false;
+        }
+
+        //If the from date is larger than to date, show error
+        boolean fromDateTextNotEmpty=fromDateEditText.getText()!=null&&!fromDateEditText.getText().toString().trim().isEmpty();
+        boolean toDateTextNotEmpty=toDateEditText.getText()!=null&&!toDateEditText.getText().toString().trim().isEmpty();
+        if (fromDateTextNotEmpty&&toDateTextNotEmpty){
+            if (fromDate.compareTo(toDate)<0){
+                fromDateEditText.setError(getString(R.string.start_date_larger_than_end_searchObservationActivity));
+                fromDateEditText.requestFocus();
+                return false;
+            }
+        }
+
+
+        return true;
+    }
+    private void fillVariableFromInput(){
+        // LatLng,search radius, fromDate and toDate are filled in handlePickLocationRequestResult() handleSelectRadiusRequestResult() and handleDatePickerSetData()
+        // So we only need to set recordID and category here
+        if (categorySpinner.getSelectedItemPosition()>=0){
+            category = (String)categorySpinner.getSelectedItem();
+        }
+    }
+    private ArrayList<SerializableNameValuePair> buildHttpParams(){
+        ArrayList<SerializableNameValuePair> pairs=new ArrayList<>();
+        if (category!=null&&!category.trim().isEmpty()){
+            pairs.add(new SerializableNameValuePair(FIELD_CATEGORY,category));
+        }
+        if (recordID !=INVALID){
+            pairs.add(new SerializableNameValuePair(FIELD_RECORD, String.valueOf(recordID)));
+        }
+        if (locationLatLng!=null){
+            pairs.add(new SerializableNameValuePair(FIELD_LAT,String.valueOf(locationLatLng.latitude)));
+            pairs.add(new SerializableNameValuePair(FIELD_LNG,String.valueOf(locationLatLng.longitude)));
+            pairs.add(new SerializableNameValuePair(FIELD_RADIUS,String.valueOf(rangeRadius)));
+        }
+        if (toDate!=null){
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_YEAR,String.valueOf(toDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_MONTH,String.valueOf(toDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_DAY,String.valueOf(toDate.getDate())));
+        }
+        if (fromDate!=null){
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_YEAR,String.valueOf(fromDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_MONTH,String.valueOf(fromDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_DAY,String.valueOf(fromDate.getDate())));
+        }
+        return pairs;
     }
 }

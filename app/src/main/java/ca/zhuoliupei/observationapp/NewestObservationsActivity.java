@@ -727,7 +727,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
             BasicNameValuePair[] pairs = getParamsFromDate(date);
 
             try {
-                HashMap<String, String> responseMap = newestObservationView.retrive(DrupalServicesView.View.NEWEST_OBSERVATION, pairs);
+                HashMap<String, String> responseMap = newestObservationView.retrieve(DrupalServicesView.ViewType.NEWEST_OBSERVATION, pairs);
                 return getObservationObjectsFromResponse(responseMap);
             } catch (Exception e) {
                 return new ObservationEntryObject[0];

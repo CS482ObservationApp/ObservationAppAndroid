@@ -64,6 +64,8 @@
     <string name="hint_location_uploadActivity">Add a location</string>
     <string name="image_description_uploadActivity">Upload an image</string>
     <string name="record_not_exist">Record Not Exist</string>
+    <string name="cannot_be_empty">Type "unknown" for unknown record</string>
+    <string name="hint_date_uploadActivity">Click to add date&#8230;</string>
 
     <!-- User Profile Activity-->
     <string name="my_observations_userProfileActivity">My Observations</string>
@@ -79,7 +81,6 @@
     <string name="logout_title_userProfileActivity">Logout</string>
     <string name="logout_msg_userProfileActivity">Are you sure to logout current account?</string>
     <string name="cannot_change_email_userProfileActivity">Cannot change email</string>
-
     <string name="title_activity_choose_photo_upload_method">ChoosePhotoUploadMethodActivity
     </string>
 
@@ -137,6 +138,8 @@
     <string name="hint_location_searchObservationActivity">Search in an area</string>
     <string name="hint_date_searchObservationActivity">Choose a date</string>
     <string name="search_tool_bar_title_searchObservationActivity">Search</string>
+    <string name="record_not_exist_searchObservationActivity">Record not exist</string>
+    <string name="start_date_larger_than_end_searchObservationActivity">Should be less than end date</string>
     <string-array name="category_array">
         <item>None</item>
         <item>Agriculture</item>

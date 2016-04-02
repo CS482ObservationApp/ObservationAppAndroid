@@ -111,7 +111,7 @@
                         android:layout_height="wrap_content"
                         android:background="@android:color/white"
                         android:clickable="true"
-                        android:drawableLeft="@drawable/icon_watch_small"
+                        android:drawableLeft="@drawable/icon_calendar_small"
                         android:editable="false"
                         android:focusable="false"
                         android:inputType="none"

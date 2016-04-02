@@ -89,7 +89,8 @@
                         android:hint="@string/hint_record_searchObservationActivity"
                         android:imeOptions="flagNoExtractUi|actionSearch"
                         android:inputType="textCapSentences"
-                        android:padding="10dp" />
+                        android:padding="10dp"
+                        android:drawableLeft="@drawable/pencil_icon_small"/>
 
                     <ProgressBar
                         android:id="@+id/pb_loading_indicator_SearchObservationActivity"
@@ -160,7 +161,9 @@
                             android:hint="yyyy-mm-dd"
                             android:imeOptions="flagNoExtractUi|actionSearch"
                             android:inputType="textCapSentences"
-                            android:padding="10dp" />
+                            android:padding="10dp"
+                            android:textSize="15dp"
+                            android:drawableLeft="@drawable/icon_calendar_small"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -181,7 +184,9 @@
                             android:hint="yyyy-mm-dd"
                             android:imeOptions="flagNoExtractUi|actionSearch"
                             android:inputType="textCapSentences"
-                            android:padding="10dp" />
+                            android:padding="10dp"
+                            android:textSize="15dp"
+                            android:drawableLeft="@drawable/icon_calendar_small"/>
 
                     </LinearLayout>
                 </LinearLayout>
@@ -195,7 +200,7 @@
             android:weightSum="2">
 
             <Button
-                android:id="@+id/btnCancel_UploadActivity"
+                android:id="@+id/btnReset_SearchObservationActivity"
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
@@ -203,7 +208,7 @@
                 android:text="@string/reset_btn_searchObservationActivity" />
 
             <Button
-                android:id="@+id/btnSubmit_UploadActivity"
+                android:id="@+id/btnSearch_SearchObservationActivity"
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"

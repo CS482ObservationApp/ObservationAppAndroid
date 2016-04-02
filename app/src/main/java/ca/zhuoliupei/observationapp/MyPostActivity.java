@@ -35,7 +35,6 @@ import java.util.HashMap;
 import Adapter.MyObservationAdapter;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
-import Const.ObservationModelConst;
 import DBHelper.NewestObservationDBHelper;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesView;
@@ -318,7 +317,7 @@ public class MyPostActivity extends AppCompatActivity {
             BasicNameValuePair[] pairs = getParams(date);
 
             try {
-                HashMap<String, String> responseMap = myObservationView.retrive(DrupalServicesView.View.PERSONAL_OBSERVATION, pairs);
+                HashMap<String, String> responseMap = myObservationView.retrieve(DrupalServicesView.ViewType.PERSONAL_OBSERVATION, pairs);
                 return getObservationObjectsFromResponse(responseMap);
             } catch (Exception e) {
                 return new ObservationEntryObject[0];

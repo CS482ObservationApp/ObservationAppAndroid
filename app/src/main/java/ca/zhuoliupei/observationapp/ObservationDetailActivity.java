@@ -205,7 +205,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
             try {
                 BasicNameValuePair[] params=new BasicNameValuePair[1];
                 params[0]=new BasicNameValuePair(NID,String.valueOf(nid));
-                return drupalServicesView.retrive(DrupalServicesView.View.SINGLE_NODE_DETAIL, params);
+                return drupalServicesView.retrieve(DrupalServicesView.ViewType.SINGLE_NODE_DETAIL, params);
             }catch (Exception ex){
                 return null;
             }

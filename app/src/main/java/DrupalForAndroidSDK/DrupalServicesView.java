@@ -8,7 +8,7 @@ import java.util.HashMap;
  * Created by zhuol on 2/25/2016.
  */
 public class DrupalServicesView extends DrupalServicesBase  {
-    public enum View{
+    public enum ViewType {
         OBSERVATION_SEARCH,
         NEWEST_OBSERVATION,
         OBSERVATION_RECORD_AUTOCOMPLETE,
@@ -20,8 +20,8 @@ public class DrupalServicesView extends DrupalServicesBase  {
         super(baseURI, endpoint);
     }
 
-    public HashMap<String,String> retrive(View view,BasicNameValuePair... params) throws Exception{
-        switch (view){
+    public HashMap<String,String> retrieve(ViewType viewType, BasicNameValuePair... params) throws Exception{
+        switch (viewType){
             case OBSERVATION_SEARCH: setResource("observation-search-mobile");break;
             case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
             case OBSERVATION_RECORD_AUTOCOMPLETE: setResource("observation-record-autocomplete-mobile");break;

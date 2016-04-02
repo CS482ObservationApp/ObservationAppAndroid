@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -158,9 +159,9 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     }
     private void setWidgetListeners(){
         setImageViewOnClick();
-        setDateTimeTextOnClick();
+        setDateTimeTextOnTouch();
         setRecordItemOnClick();
-        setLocationTextOnClick();
+        setLocationTextOnTouch();
         setSubmitBtnOnClick();
         setCancelBtnOnClick();
         setTxtRecordOnTextChanged();
@@ -183,25 +184,34 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             }
         });
     }
-    private void setDateTimeTextOnClick(){
-        txtDateTime.setOnClickListener(new View.OnClickListener() {
+    private void setDateTimeTextOnTouch(){
+        txtDateTime.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                DialogFragment newFragment = new DatePickerFragment();
+            public boolean onTouch(View v, MotionEvent event) {
+                if (MotionEvent.ACTION_UP == event.getAction()){
+                    DialogFragment newFragment = new DatePickerFragment();
                 newFragment.show(getSupportFragmentManager(), "datePicker");
             }
-        });
+                return false;
+        }
     }
-    private void setLocationTextOnClick(){
-        txtLocation.setOnClickListener(new View.OnClickListener() {
+
+    );
+}
+
+    private void setLocationTextOnTouch(){
+        txtLocation.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-                try {
-                    startActivityForResult(builder.build(UploadActivity.this), PICK_ENTRY_LCATION_REQUEST);
-                } catch (Exception ex) {
-                    Toast.makeText(v.getContext(), R.string.network_error, Toast.LENGTH_SHORT).show();
+            public boolean onTouch(View v, MotionEvent event) {
+                if(MotionEvent.ACTION_UP == event.getAction()){
+                    PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                    try {
+                        startActivityForResult(builder.build(UploadActivity.this), PICK_ENTRY_LCATION_REQUEST);
+                    } catch (Exception ex) {
+                        Toast.makeText(v.getContext(), R.string.network_error, Toast.LENGTH_SHORT).show();
+                    }
                 }
+                return false;
             }
         });
     }
@@ -222,14 +232,15 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (txtRecord.getText()==null || txtRecord.getText().toString().trim().isEmpty()){
-                    recordSelected=true;
-                }
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
-                recordSelected=false;
+                //if record text is empty after changed, it's fine
+                if (txtRecord.getText()==null || txtRecord.getText().toString().trim().isEmpty()){
+                    recordSelected=true;
+                }else {
+                    recordSelected = false;
+                }
             }
         });
     }
@@ -289,6 +300,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     }
     private void handlePickLocationRequestResult(int resultCode, Intent data){
         if (resultCode == RESULT_OK) {
+            txtLocation.setError(null);
             Place place = PlacePicker.getPlace(data, this);
             LatLng latLng = place.getLatLng();
             this.locationLatLng=latLng;
@@ -389,23 +401,34 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
 
     //Helper Methods
     private boolean validateInputOnClient(){
-        String name=txtName.getText().toString();
-        if (!recordSelected){
-            txtRecord.setError(getText(R.string.record_not_exist));
+        String record=txtRecord.getText().toString();
+        if (record.isEmpty()){
+            txtRecord.setError(getText(R.string.cannot_be_empty));
+            txtRecord.requestFocus();
             return false;
         }
+        if (!recordSelected){
+            txtRecord.setError(getText(R.string.record_not_exist));
+            txtRecord.requestFocus();
+            return false;
+        }
+
+        String name=txtName.getText().toString();
         if ( name.isEmpty()){
             txtName.setError(getText(R.string.field_empty_error));
+            txtName.requestFocus();
             return false;
         }
         String datetime=txtDateTime.getText().toString();
         if (datetime.isEmpty()){
             txtDateTime.setError(getText(R.string.field_empty_error));
+            txtDateTime.requestFocus();
             return false;
         }
         String location=txtLocation.getText().toString();
         if (locationLatLng==null||location.isEmpty()){
             txtLocation.setError(getText(R.string.field_empty_error));
+            txtLocation.requestFocus();
             return false;
         }
         return true;
@@ -504,7 +527,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         this.year=year;
         this.month=month+1;//Jan is month 0
         this.day=day;
-        txtDateTime .setText(String.format("%d-%d-%d", year, month+1, day));
+        txtDateTime .setText(String.format("%d-%d-%d", year, month + 1, day));
         txtDateTime.setError(null);
     }
 
