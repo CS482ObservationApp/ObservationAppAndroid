@@ -77,10 +77,7 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     private final int PICK_ENTRY_LOCATION_REQUEST = 0;
     private final int SELECT_RADIUS_REQUEST = 1;
 
-    //Http services object
-    String baseUrl,endpoint;
-    DrupalServicesView drupalServicesView;
-    DrupalAuthSession drupalAuthSession;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,13 +133,6 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
         toDateEditText = (EditText) findViewById(R.id.txtToDate_SearchObservationActivity);
 
         autoCompleteAdapter = new RecordAutoCompleteAdapter(this);
-
-        baseUrl= getText(R.string.drupal_site_url).toString();
-        endpoint=getText(R.string.drupal_server_endpoint).toString();
-        drupalServicesView=new DrupalServicesView(baseUrl,endpoint);
-        drupalAuthSession=new DrupalAuthSession();
-        drupalAuthSession.setSession(PreferenceUtil.getCookie(this));
-        drupalServicesView.setAuth(drupalAuthSession);
     }
 
     private void initializeUI() {
@@ -316,7 +306,6 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             startActivityForResult(intent, SELECT_RADIUS_REQUEST);
         }
     }
-
     private void handleSelectRadiusRequestResult(int resultCode, Intent data) {
         String areaStr = "";
         if (resultCode == RESULT_OK) {
@@ -365,7 +354,7 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     private void fillVariableFromInput(){
         // LatLng,search radius, fromDate and toDate are filled in handlePickLocationRequestResult() handleSelectRadiusRequestResult() and handleDatePickerSetData()
         // So we only need to set recordID and category here
-        if (categorySpinner.getSelectedItemPosition()>=0){
+        if (categorySpinner.getSelectedItemPosition()>0){
             category = (String)categorySpinner.getSelectedItem();
         }
     }

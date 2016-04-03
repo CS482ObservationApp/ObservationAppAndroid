@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -169,11 +170,11 @@ public class ObservationDetailActivity extends AppCompatActivity {
         rootLinearLayout.setVisibility(View.GONE);
         swipeRefreshLayout.setVisibility(View.VISIBLE);
         swipeRefreshLayout.post(new Runnable() {
-           @Override
-           public void run() {
-               swipeRefreshLayout.setRefreshing(true);
-           }
-       });
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
     }
 
     private void hideLoadingView(){
@@ -189,7 +190,11 @@ public class ObservationDetailActivity extends AppCompatActivity {
 
     private void beginDownloadObservationDetail(){
         downloadObservationDetailTask=new DownloadObservationDetailTask(this);
-        downloadObservationDetailTask.execute();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            downloadObservationDetailTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+            downloadObservationDetailTask.execute();
+        }
     }
 
     private class DownloadObservationDetailTask extends AsyncTask<Void,Void,HashMap<String, String>>{
@@ -283,7 +288,11 @@ public class ObservationDetailActivity extends AppCompatActivity {
             if (observationEntryObject.photoServerUri!=null && !observationEntryObject.photoServerUri.isEmpty()){
                 ImageView imageView=(ImageView)findViewById(R.id.img_photo_ObservationDetailActivity);
                 downloadObservationImageTask=new DownloadObservationImageTask(imageView);
-                downloadObservationImageTask.execute(observationEntryObject.photoServerUri);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    downloadObservationImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,observationEntryObject.photoServerUri);
+                } else {
+                    downloadObservationImageTask.execute(observationEntryObject.photoServerUri);
+                }
             }
         }catch (Exception ex){
             showNetworkErrorView();

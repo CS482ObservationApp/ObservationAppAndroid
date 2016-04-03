@@ -22,7 +22,7 @@ public class DrupalServicesView extends DrupalServicesBase  {
 
     public HashMap<String,String> retrieve(ViewType viewType, BasicNameValuePair... params) throws Exception{
         switch (viewType){
-            case OBSERVATION_SEARCH: setResource("observation-search-mobile");break;
+            case OBSERVATION_SEARCH: setResource("search-mobile");break;
             case NEWEST_OBSERVATION: setResource("newest-observations-mobile");break;
             case OBSERVATION_RECORD_AUTOCOMPLETE: setResource("observation-record-autocomplete-mobile");break;
             case SINGLE_NODE_DETAIL: setResource("single-node-detail-mobile");break;

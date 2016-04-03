@@ -103,7 +103,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private long toolbarTitleClickedTimeStamp=0;
     private int prevFirstVisibleItem;
     private double scrollingSpeed;
-    private final double speedThreadshold = 1;
+    private final double SPEED_THREASHOLD = 1;
 
     @Override
     public void onBackPressed() {
@@ -261,7 +261,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING)
                     userScrolled = true;
                 else
                     userScrolled=false;
@@ -393,6 +393,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
         HashMap<String, String> sessionInfoMap = new HashMap<>();
         sessionInfoMap.put(COOKIE, cookie);
         sessionInfoMap.put(ACTION, Action.REFRESH.toString());
+        if (downloadObservationObjectTask!=null)
+            downloadObservationObjectTask.cancel(true);
         downloadObservationObjectTask = new DownloadObservationObjectTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
@@ -407,9 +409,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
         sessionInfoMap.put(ACTION, Action.REFRESH.toString());
         detectPictureExistTask = new DetectPictureExistTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
-            detectPictureExistTask.execute(sessionInfoMap);
+            detectPictureExistTask.execute();
         }
     }
 
@@ -838,7 +840,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     /* This task runs in the back ground until the activity destroyed
     *  It scans through the visible items in GridView to see if the local picture file exits
     *  If not, download the file, and update the location in the database,refresh Gridview adapter*/
-    private class DetectPictureExistTask extends AsyncTask<HashMap<String, String>, Void, Void> {
+    private class DetectPictureExistTask extends AsyncTask<Void, Void, Void> {
         Activity context;
         ArrayList<ObservationEntryObject> visibleObjects;
         ArrayList<ObservationEntryObject> objectsLackPicture;
@@ -868,7 +870,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
         }
 
         @Override
-        protected Void doInBackground(HashMap<String, String>... params) {
+        protected Void doInBackground(Void... voids) {
             while (!this.isCancelled()) {
                 try {
                     Thread.sleep(1000);
@@ -876,7 +878,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                     Log.e("DETECT_LACK_PICTURE", "Detect Picture Task Sleep interrupted");
                 }
                 //If the user scroll too fast, don't download until it slows down
-                if (scrollingSpeed > speedThreadshold)
+                if (scrollingSpeed > SPEED_THREASHOLD)
                     continue;
 
                 /* Lock the gridview dataset
@@ -884,6 +886,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 synchronized (gvDataset) {
                     visibleObjects.clear();
                     if (contentGVAdapter != null&&gvDataset.size()>0) {
+                        //TODO: Getting UI element would not matter, but better to change to use Handler
                         int firstVisiblePosition = contentGV.getFirstVisiblePosition();
                         int lastVisiblePosition = contentGV.getLastVisiblePosition();
                         if (lastVisiblePosition >= gvDataset.size())

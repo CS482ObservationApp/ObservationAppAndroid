@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -251,7 +252,11 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
                 if (validateInputOnClient()) {
                     NotificationUtil.showNotification(v.getContext(), AppConst.UPLOADING_NOTIFICATION_ID);
                     uploadObservationTask = new UploadObservationTask(v.getContext());
-                    uploadObservationTask.execute();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        uploadObservationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    } else {
+                        uploadObservationTask.execute();
+                    }
                     finish();
                 }
             }
@@ -291,7 +296,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
                 photo = (Bitmap) bundle.get("data");
                 //If photo comes from gallary,photo would be null,use the helper method
             else
-                photo = PhotoUtil.getBitmapFromUri(data.getData(),this);
+                photo = PhotoUtil.getBitmapFromLocalUri(data.getData(), this);
 
             this.selectedPicture=PhotoUtil.reduceBitMapSize(photo,MAX_UPLOAD_SIZE);
             imgView.setImageBitmap(photo);
@@ -305,7 +310,11 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             LatLng latLng = place.getLatLng();
             this.locationLatLng=latLng;
             reverseGeoCodeTask = new ReverseGeoCodeTask(this);
-            reverseGeoCodeTask.execute(latLng);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                reverseGeoCodeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,latLng);
+            } else {
+                reverseGeoCodeTask.execute(latLng);
+            }
         }
     }
     private void handleChooseUploadMethodRequestResult(int resultCode, Intent data) {

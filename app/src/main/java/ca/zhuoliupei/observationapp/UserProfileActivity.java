@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -189,7 +190,11 @@ public class UserProfileActivity extends AppCompatActivity {
                         boolean result=deleteLocalUserSessionInfo(context);
                         if (result){
                             logoutUserTask=new LogoutUserTask(context,drupalServicesUser);
-                            logoutUserTask.execute();
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                                logoutUserTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                            } else {
+                                logoutUserTask.execute();
+                            }
                             //Start a whole new activity without back stack
                             Intent intent=new Intent(UserProfileActivity.this, NewestObservationsActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -211,7 +216,7 @@ public class UserProfileActivity extends AppCompatActivity {
         findViewById(R.id.ll_myObservations_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(UserProfileActivity.this,MyPostActivity.class));
+                startActivity(new Intent(UserProfileActivity.this, MyPostActivity.class));
             }
         });
     }
@@ -264,10 +269,14 @@ public class UserProfileActivity extends AppCompatActivity {
                 photo = (Bitmap) bundle.get("data");
                 //If photo comes from gallary,photo would be null,use the helper method
             else
-                photo = PhotoUtil.getBitmapFromUri(data.getData(), this);
+                photo = PhotoUtil.getBitmapFromLocalUri(data.getData(), this);
             photo=PhotoUtil.reduceBitMapSize(photo,MAX_USER_IMAGE_UPLOAD_SIZE);
             updateServerUserProfileImageTask=new UpdateServerUserProfileImageTask(this);
-            updateServerUserProfileImageTask.execute(photo);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                updateServerUserProfileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,photo);
+            } else {
+                updateServerUserProfileImageTask.execute(photo);
+            }
         }
     }
     private void handleChangeUserNameRequestResult(int resultCode, Intent data) {
@@ -275,9 +284,14 @@ public class UserProfileActivity extends AppCompatActivity {
             if (data == null)
                 return;
             String newName = data.getExtras().getString("result");
-            if (newName != null && !newName.isEmpty())
-                updateServerUserProfileNameTask=new UpdateServerUserProfileNameTask(this);
-                updateServerUserProfileNameTask.execute(newName);
+            if (newName != null && !newName.isEmpty()) {
+                updateServerUserProfileNameTask = new UpdateServerUserProfileNameTask(this);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    updateServerUserProfileNameTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,newName);
+                } else {
+                    updateServerUserProfileNameTask.execute(newName);
+                }
+            }
         }
     }
     private void handleChangeAddress1RequestResult(int resultCode, Intent data) {
@@ -285,7 +299,11 @@ public class UserProfileActivity extends AppCompatActivity {
             Place place = PlacePicker.getPlace(data, this);
             LatLng latLng = place.getLatLng();
             reverseGeoCodeTask = new ReverseGeoCodeTask(this,PROFILE_ADDRESS1_PICKER_REQUEST);
-            reverseGeoCodeTask.execute(latLng);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                reverseGeoCodeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,latLng);
+            } else {
+                reverseGeoCodeTask.execute(latLng);
+            }
         }
     }
     private void handleChangeAddress2RequestResult(int resultCode, Intent data) {
@@ -293,7 +311,11 @@ public class UserProfileActivity extends AppCompatActivity {
             Place place = PlacePicker.getPlace(data, this);
             LatLng latLng = place.getLatLng();
             reverseGeoCodeTask = new ReverseGeoCodeTask(this,PROFILE_ADDRESS2_PICKER_REQUEST);
-            reverseGeoCodeTask.execute(latLng);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                reverseGeoCodeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,latLng);
+            } else {
+                reverseGeoCodeTask.execute(latLng);
+            }
         }
     }
 
@@ -414,7 +436,11 @@ public class UserProfileActivity extends AppCompatActivity {
                 dialog.show();
             } else {
                 updateServerUserLocationTask = new UpdateServerUserLocationTask(context, latLng, address,requestCode);
-                updateServerUserLocationTask.execute();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    updateServerUserLocationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                } else {
+                    updateServerUserLocationTask.execute();
+                }
             }
         }
     }

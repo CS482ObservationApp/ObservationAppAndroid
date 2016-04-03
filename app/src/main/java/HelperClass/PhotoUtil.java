@@ -10,7 +10,10 @@ import android.net.Uri;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import ca.zhuoliupei.observationapp.ChooseUploadPhotoMethodActivity;
 
@@ -31,7 +34,7 @@ public class PhotoUtil {
         context.startActivityForResult(cameraIntent, requestID);
     }
 
-    public static Bitmap getBitmapFromUri(Uri uri,Context context) {
+    public static Bitmap getBitmapFromLocalUri(Uri uri, Context context) {
         try {
             // Let's read picked image path using content resolver
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
@@ -54,6 +57,20 @@ public class PhotoUtil {
             return BitmapFactory.decodeStream(new FileInputStream(file),null,o2);
         }catch (FileNotFoundException e){}
         return  null;
+    }
+    public static Bitmap getBitmapFromServerURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
     }
     public static void startPickingPhoto(Activity context,int result,int requestID) {
         switch (result) {

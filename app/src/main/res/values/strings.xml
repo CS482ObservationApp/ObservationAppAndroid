@@ -154,4 +154,11 @@
 
     <!-- Change Text Field Activity-->
     <string name="defalut_radius_changeTextFieldActivity">The default radius is 100km</string>
+
+    <!-- Search result activity-->
+    <string name="no_search_result_searchResultActivity">No search result</string>
+    <string name="my_post_toolbar_title_searchResultActivity">Search Result</string>
+    <string name="view_more_on_web_searchResultActivity">Click Me To View More On Web</string>
+    <string name="no_more_searchResultActivity">No More Result</string>
+
 </resources>

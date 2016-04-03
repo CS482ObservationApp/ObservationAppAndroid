@@ -250,7 +250,11 @@ public class MyPostActivity extends AppCompatActivity {
                         if (lastobject != null) {
                             sessionInfoMap.put(DATE, lastobject.date);
                             downloadObservationObjectTask = new DownloadObservationObjectTask((Activity) view.getContext());
-                            downloadObservationObjectTask.execute(sessionInfoMap);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                                downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+                            } else {
+                                downloadObservationObjectTask.execute(sessionInfoMap);
+                            }
                             flag_loading = true;
                         }
                     }
@@ -470,6 +474,7 @@ public class MyPostActivity extends AppCompatActivity {
                 synchronized (lvDataSet) {
                     visibleObjects.clear();
                     if (myObservationAdapter != null && lvDataSet.size()>0) {
+                        //TODO: Getting UI element would not matter, but better to change to use Handler
                         int firstVisiblePosition = contentLV.getFirstVisiblePosition();
                         int lastVisiblePosition = contentLV.getLastVisiblePosition();
                         if (firstVisiblePosition<=0)
