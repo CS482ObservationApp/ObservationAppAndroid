@@ -122,7 +122,6 @@
                         android:background="@android:color/white"
                         android:drawableLeft="@drawable/icon_position"
                         android:editable="false"
-                        android:focusable="false"
                         android:hint="@string/hint_location_searchObservationActivity"
                         android:inputType="none"
                         android:padding="10dp" />
@@ -151,16 +150,14 @@
 
 
                         <EditText
-                            android:id="@+id/txtFromDate_SearchObservationActivity"
+                            android:id="@+id/txtStartDate_SearchObservationActivity"
                             android:layout_width="0dp"
                             android:editable="false"
-                            android:focusable="false"
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
                             android:background="@android:color/white"
-                            android:hint="yyyy-mm-dd"
+                            android:hint="@string/post_after_searchObservationActivity"
                             android:imeOptions="flagNoExtractUi|actionSearch"
-                            android:inputType="textCapSentences"
                             android:padding="10dp"
                             android:textSize="15dp"
                             android:drawableLeft="@drawable/icon_calendar_small"/>
@@ -174,16 +171,14 @@
                             android:textColor="#4444ff" />
 
                         <EditText
-                            android:id="@+id/txtToDate_SearchObservationActivity"
+                            android:id="@+id/txtEndDate_SearchObservationActivity"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
                             android:editable="false"
-                            android:focusable="false"
                             android:background="@android:color/white"
-                            android:hint="yyyy-mm-dd"
+                            android:hint="@string/post_before_searchObservationActivity"
                             android:imeOptions="flagNoExtractUi|actionSearch"
-                            android:inputType="textCapSentences"
                             android:padding="10dp"
                             android:textSize="15dp"
                             android:drawableLeft="@drawable/icon_calendar_small"/>

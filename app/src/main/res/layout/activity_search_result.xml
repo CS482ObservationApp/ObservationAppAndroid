@@ -48,7 +48,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/content_lv_SearchResultActivity"
                 android:dividerHeight="0.5dp"
-                android:divider="@android:color/darker_gray"/>
+                android:divider="@android:color/darker_gray"
+                />
         </android.support.v4.widget.SwipeRefreshLayout>
 
 

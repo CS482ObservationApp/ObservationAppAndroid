@@ -27,7 +27,7 @@
     <string name="hint_password_confirm">Confirm Password</string>
     <string name="hint_username">User Name</string>
     <string name="hint_reset_password">User name or email</string>
-    <string name="hint_radius">Radius in Kilometer</string>
+    <string name="hint_radius">Radius in km</string>
 
     <string name="reset_password_link_loginActivity">Try <a href="com.package.reset_password://">Reset Password</a></string>
     <!-- Register Activity-->
@@ -118,6 +118,7 @@
     <string name="upload_slidingMenuItem">Upload</string>
     <string name="search_slidingMenuItem">Search</string>
     <string name="guide_slidingMenuItem">User Guide</string>
+    <string name="myPost_slidingMenuItem">My Posts</string>
 
     <!-- My Post Activity-->
     <string name="my_post_toolbar_title_myPostActivity">My Posts</string>
@@ -140,6 +141,8 @@
     <string name="search_tool_bar_title_searchObservationActivity">Search</string>
     <string name="record_not_exist_searchObservationActivity">Record not exist</string>
     <string name="start_date_larger_than_end_searchObservationActivity">Should be less than end date</string>
+    <string name="post_before_searchObservationActivity">Posts before&#8230;</string>
+    <string name="post_after_searchObservationActivity">Posts after&#8230;</string>
     <string-array name="category_array">
         <item>None</item>
         <item>Agriculture</item>
@@ -158,7 +161,7 @@
     <!-- Search result activity-->
     <string name="no_search_result_searchResultActivity">No search result</string>
     <string name="my_post_toolbar_title_searchResultActivity">Search Result</string>
-    <string name="view_more_on_web_searchResultActivity">Click Me To View More On Web</string>
     <string name="no_more_searchResultActivity">No More Result</string>
+    <string name="click_to_load_more_searchResultActivity">Click To Load More</string>
 
 </resources>

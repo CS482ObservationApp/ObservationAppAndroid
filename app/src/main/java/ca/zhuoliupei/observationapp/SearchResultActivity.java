@@ -3,7 +3,6 @@ package ca.zhuoliupei.observationapp;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
@@ -42,11 +41,12 @@ import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Model.SerializableNameValuePair;
 
-public class SearchResultActivity extends AppCompatActivity {
+public class SearchResultActivity extends AppCompatActivity{
 
     private final String NID="nid";
     private final String PAGE_INDEX="page";
-    private final int MAX_RESULT_COUNT=1000;
+    private final int MAX_RESULT_COUNT=500;// MAX_RESULT_COUNT should be integral multiple of ITEM_PER_PAGE
+    private final int ITEM_PER_PAGE =10;
     private final double SPEED_THREADSHOLD=1;
     private final String JSON_IMAGE="Image";
     private final String JSON_NID="Nid";
@@ -54,8 +54,7 @@ public class SearchResultActivity extends AppCompatActivity {
     private final String JSON_OBSERVATION_DATE="Date Observed";
     private final String JSON_CATEGORY="Category";
     private final String JSON_RECORD="Climate Diary Record";
-    private int loadedPage=0;
-    private final int itemPerPage=10;
+    private int lastLoadedPageIndex =0; //The last loaded page with full ITEM_PER_PAGE items loaded, beginning from 0
 
     //View control variables
     boolean userScrolled;
@@ -113,6 +112,8 @@ public class SearchResultActivity extends AppCompatActivity {
         beginDownloadObservation();
         beginDetectImage();
     }
+
+
     private void acceptIntentExtras(){
         Bundle extras = getIntent().getExtras();
         ArrayList<SerializableNameValuePair> paramList  =  (ArrayList<SerializableNameValuePair>) extras.getSerializable("params");
@@ -137,7 +138,7 @@ public class SearchResultActivity extends AppCompatActivity {
 
         //Init other variables
         lvDataSet=new ArrayList<>();
-        searchResultAdapter=new SearchResultAdapter(lvDataSet,this);
+        searchResultAdapter=new SearchResultAdapter(lvDataSet,this,MAX_RESULT_COUNT);
         imagePool=new ArrayList<>();
     }
     private void initializeUI() {
@@ -200,7 +201,7 @@ public class SearchResultActivity extends AppCompatActivity {
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING || scrollState == SCROLL_STATE_TOUCH_SCROLL) {
                     userScrolled = true;
                 } else {
                     userScrolled = false;
@@ -221,23 +222,26 @@ public class SearchResultActivity extends AppCompatActivity {
                 }
 
 
-                if (userScrolled && totalItemCount < MAX_RESULT_COUNT && firstVisibleItem + visibleItemCount >= totalItemCount) {
+                //totalItemCount includes footer
+                if (userScrolled  && firstVisibleItem + visibleItemCount >= totalItemCount) {
+                    if (totalItemCount - 1 < MAX_RESULT_COUNT) {
                     /* If the user scrolled to bottom back and forth many times
                      * Don't start a new task to download new data until the old one is done
                      * If there's an old task running, the flag_loading is true;
                     */
-                    if (!flag_loading) {
-                        showLoadingMoreView();
-                        downloadObservationObjectTask = new DownloadObservationObjectTask();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                            downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, Action.APPEND);
-                        } else {
-                            downloadObservationObjectTask.execute(Action.APPEND);
+                        if (!flag_loading) {
+                            showLoadingMoreView();
+                            downloadObservationObjectTask = new DownloadObservationObjectTask();
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                                downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, Action.APPEND);
+                            } else {
+                                downloadObservationObjectTask.execute(Action.APPEND);
+                            }
+                            flag_loading = true;
                         }
-                        flag_loading = true;
+                    }else {
+                        showLoadMoreView();
                     }
-                } else if (totalItemCount >= MAX_RESULT_COUNT) {
-                    showSeeMoreOnWebView();
                 }
             }
         });
@@ -274,42 +278,8 @@ public class SearchResultActivity extends AppCompatActivity {
     }
 
 
-    private void showSeeMoreOnWebView() {
-        if (listViewFooterImageView == null)
-            listViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
-        if (listViewFooterTextView == null)
-            listViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
-        if (listViewFooterImageView != null) {
-            listViewFooterImageView.setAnimation(null);
-            listViewFooterImageView.setVisibility(View.GONE);
-        }
-        if (listViewFooterTextView != null) {
-            listViewFooterTextView.setText(R.string.view_more_on_web_searchResultActivity);
-        }
-    }
-    private void showNoMoreObservationView() {
-        if (scrollviewFooterView == null)
-            scrollviewFooterView=(RelativeLayout)findViewById(R.id.scrollview_footer);
-        if (listViewFooterImageView == null)
-            listViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
-        if (listViewFooterTextView == null)
-            listViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
 
-        if ( scrollviewFooterView !=null){
-            if (scrollviewFooterView.getVisibility()!=View.VISIBLE)
-                scrollviewFooterView.setVisibility(View.VISIBLE);
-        }
-        if (listViewFooterImageView != null) {
-            if (listViewFooterImageView.getAnimation()!=null)
-                listViewFooterImageView.setAnimation(null);
-            if (listViewFooterImageView.getVisibility()!=View.GONE)
-                listViewFooterImageView.setVisibility(View.GONE);
-        }
-        if (listViewFooterTextView != null) {
-            listViewFooterTextView.setText(R.string.no_more_searchResultActivity);
-        }
-    }
     private void scrollListViewToTop(){
         if (contentLV!=null)
             contentLV.smoothScrollToPosition(0);
@@ -335,16 +305,16 @@ public class SearchResultActivity extends AppCompatActivity {
     }
     private void showNoResultView(){
         if (spaceHolderTxt==null)
-            spaceHolderTxt=(TextView)findViewById(R.id.txtSpaceHolder_MyPostHeader);
-        if (contentLV==null)
-            contentLV=(ListView)findViewById(R.id.content_lv_MyPostActivity);
+            spaceHolderTxt=(TextView)findViewById(R.id.txtSpaceHolder_SearchResultActivity);
+        if (swipeRefreshLayout==null)
+            swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_SearchResultActivity);
         if (spaceHolderRL==null)
             spaceHolderRL=(RelativeLayout)findViewById(R.id.spaceHolder_SearchResultActivity);
 
         if (spaceHolderRL!=null)
             spaceHolderRL.setVisibility(View.VISIBLE);
-        if (contentLV!=null)
-            contentLV.setVisibility(View.GONE);
+        if (swipeRefreshLayout!=null)
+            swipeRefreshLayout.setVisibility(View.GONE);
         if (spaceHolderTxt!=null) {
             spaceHolderTxt.setText(R.string.no_search_result_searchResultActivity);
             spaceHolderTxt.setVisibility(View.VISIBLE);
@@ -352,14 +322,16 @@ public class SearchResultActivity extends AppCompatActivity {
     }
     private void hideNoResultView(){
         if (spaceHolderTxt==null)
-            spaceHolderTxt=(TextView)findViewById(R.id.txtSpaceHolder_MyPostHeader);
-        if (contentLV==null)
-            contentLV=(ListView)findViewById(R.id.content_lv_MyPostActivity);
+            spaceHolderTxt=(TextView)findViewById(R.id.txtSpaceHolder_SearchResultActivity);
+        if (swipeRefreshLayout==null)
+            swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_SearchResultActivity);
         if (spaceHolderRL==null)
             spaceHolderRL=(RelativeLayout)findViewById(R.id.spaceHolder_SearchResultActivity);
 
         if (spaceHolderRL!=null)
             spaceHolderRL.setVisibility(View.GONE);
+        if (swipeRefreshLayout!=null)
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
     }
     private void showLoadingMoreView() {
         if (scrollviewFooterView == null)
@@ -372,6 +344,7 @@ public class SearchResultActivity extends AppCompatActivity {
         if ( scrollviewFooterView !=null){
             if (scrollviewFooterView.getVisibility()!=View.VISIBLE)
                 scrollviewFooterView.setVisibility(View.VISIBLE);
+            scrollviewFooterView.setOnClickListener(null);
         }
         if (listViewFooterImageView != null) {
             if (listViewFooterImageView.getVisibility() != View.VISIBLE)
@@ -387,6 +360,75 @@ public class SearchResultActivity extends AppCompatActivity {
             listViewFooterTextView.setText(R.string.loading_newestObservationActivity);
         }
     }
+    private void showNoMoreObservationView() {
+        if (scrollviewFooterView == null)
+            scrollviewFooterView=(RelativeLayout)findViewById(R.id.scrollview_footer);
+        if (listViewFooterImageView == null)
+            listViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
+        if (listViewFooterTextView == null)
+            listViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
+
+        if ( scrollviewFooterView !=null){
+            if (scrollviewFooterView.getVisibility()!=View.VISIBLE)
+                scrollviewFooterView.setVisibility(View.VISIBLE);
+            scrollviewFooterView.setOnClickListener(null);
+        }
+        if (listViewFooterImageView != null) {
+            if (listViewFooterImageView.getAnimation()!=null)
+                listViewFooterImageView.setAnimation(null);
+            if (listViewFooterImageView.getVisibility()!=View.GONE)
+                listViewFooterImageView.setVisibility(View.GONE);
+        }
+        if (listViewFooterTextView != null) {
+            listViewFooterTextView.setText(R.string.no_more_searchResultActivity);
+        }
+    }
+    private void showLoadMoreView(){
+        if (scrollviewFooterView == null)
+            scrollviewFooterView=(RelativeLayout)findViewById(R.id.scrollview_footer);
+        if (listViewFooterImageView == null)
+            listViewFooterImageView = (ImageView) findViewById(R.id.imgLoading_ScrollViewFooterLoading);
+        if (listViewFooterTextView == null)
+            listViewFooterTextView = (TextView) findViewById(R.id.txtLoading_ScrollViewFooterLoading);
+
+        if ( scrollviewFooterView !=null){
+            if (scrollviewFooterView.getVisibility()!=View.VISIBLE)
+                scrollviewFooterView.setVisibility(View.VISIBLE);
+            scrollviewFooterView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    loadNextPage();
+                }
+            });
+        }
+        if (listViewFooterImageView != null) {
+            if (listViewFooterImageView.getAnimation()!=null)
+                listViewFooterImageView.setAnimation(null);
+            if (listViewFooterImageView.getVisibility()!=View.GONE)
+                listViewFooterImageView.setVisibility(View.GONE);
+        }
+        if (listViewFooterTextView != null) {
+            listViewFooterTextView.setText(R.string.click_to_load_more_searchResultActivity);
+        }
+
+    }
+    public void loadNextPage() {
+        synchronized (lvDataSet) {
+            lvDataSet.clear();
+            searchResultAdapter.notifyDataSetChanged();
+            showRefreshView();
+        }
+        /**If the activity is downloading something, it must be refreshing
+         * Because inside listview onscroll, if the totalItemSize is >=  Max
+         * it won't start another task to load more.
+         * Since refresh has higher priority, don't do anything if it's refreshing
+         * If it's not refreshing, start to download more
+         * */
+        if (!flag_loading){
+            downloadObservationObjectTask=new DownloadObservationObjectTask();
+            downloadObservationObjectTask.execute(Action.APPEND);
+        }
+    }
 
     private class DownloadObservationObjectTask extends AsyncTask<Action,Void, SearchResultObservationEntryObject[]>{
         Action action;
@@ -399,12 +441,12 @@ public class SearchResultActivity extends AppCompatActivity {
                     params[i]=searchParams[i];
 
                 if (action==Action.REFRESH) {
-                    loadedPage = 0;
-                    params[searchParams.length] = new BasicNameValuePair(PAGE_INDEX, String.valueOf(loadedPage));
+                    lastLoadedPageIndex = 0;
+                    params[searchParams.length] = new BasicNameValuePair(PAGE_INDEX, String.valueOf(lastLoadedPageIndex));
                 }else {
-                    params[searchParams.length]=new BasicNameValuePair(PAGE_INDEX, String.valueOf(loadedPage+1));
+                    params[searchParams.length]=new BasicNameValuePair(PAGE_INDEX, String.valueOf(lastLoadedPageIndex +1));
                 }
-                HashMap<String,String> resultMap = drupalServicesView.retrieve(DrupalServicesView.ViewType.OBSERVATION_SEARCH, searchParams);
+                HashMap<String,String> resultMap = drupalServicesView.retrieve(DrupalServicesView.ViewType.OBSERVATION_SEARCH, params);
                 return getObservationObjectsFromResponse(resultMap);
             }catch (Exception ex){
                 return new SearchResultObservationEntryObject[0];
@@ -412,42 +454,61 @@ public class SearchResultActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(SearchResultObservationEntryObject[] objects) {
+        protected void onPostExecute(SearchResultObservationEntryObject[] downloadedObjects) {
             hideRefreshView();
-            if (action==Action.REFRESH){
-                if (objects.length==0){
-                    showNoResultView();
-                    return;
-                }
-                lvDataSet.clear();
-                flag_loading=false;
-                loadedPage=0;
-                for (SearchResultObservationEntryObject downloadedObject :objects) {
-                    lvDataSet.add(downloadedObject);
-                }
-                hideNoResultView();
-                if (lvDataSet.size()<itemPerPage){
-                    showNoMoreObservationView();
-                }
-            }
-            else {
-                hideNoResultView();
-                if (objects.length==0){
-                    showNoMoreObservationView();
-                    return;
-                }
-                //Checked if object already exist in the original dataset
-                for (SearchResultObservationEntryObject downloadedObject :objects) {
-                    boolean objectExist=false;
-                    for (SearchResultObservationEntryObject dataSetObject:lvDataSet) {
-                        if (downloadedObject.nid.equals(dataSetObject.nid)){
-                            objectExist=true;
-                            break;
+            /**If refresh, it would clear all existing result
+             * We need to consider when the count of object we downloaded is :
+             * 1. Zero, no object downloaded, maybe network error, then show no result view
+             * 2. NonZero but less than ITEM_PER_PAGE, then show no more result view
+             * 3. Equals to ITEM_PER_PAGE is downloaded, then do nothing
+             *
+             * If append, add the downloaded objects to data set if it's not existing
+             * If the downloaded objects count is less than ITEM_PER_PAGE, then show no result view
+             * If the size of dataset exceeded the maximum, show LoadMore view,
+             * when user click the footer it would load more but clear the dataset first**/
+            synchronized (lvDataSet) {
+                if (action == Action.REFRESH) {
+                    if (downloadedObjects.length == 0) {
+                        showNoResultView();
+                    } else {
+                        lvDataSet.clear();
+                        lastLoadedPageIndex = 0;
+                        for (SearchResultObservationEntryObject downloadedObject : downloadedObjects) {
+                            lvDataSet.add(downloadedObject);
+                        }
+                        searchResultAdapter.notifyDataSetChanged();
+                        hideNoResultView();
+                        if (lvDataSet.size() < ITEM_PER_PAGE) {
+                            showNoMoreObservationView();
                         }
                     }
-                    if (!objectExist)
-                        lvDataSet.add(downloadedObject);
+                } else {
+                    hideNoResultView();
+                    //Checked if object already exist in the original dataset
+                    for (SearchResultObservationEntryObject downloadedObject : downloadedObjects) {
+                        boolean objectExist = false;
+                        for (SearchResultObservationEntryObject dataSetObject : lvDataSet) {
+                            if (downloadedObject.nid.equals(dataSetObject.nid)) {
+                                objectExist = true;
+                                break;
+                            }
+                        }
+                        if (!objectExist&&lvDataSet.size()<MAX_RESULT_COUNT)
+                            lvDataSet.add(downloadedObject);
+                    }
+                    searchResultAdapter.notifyDataSetChanged();
+                    boolean fullDataSet=lvDataSet.size()>=MAX_RESULT_COUNT;
+                    boolean endOfResult=downloadedObjects.length < ITEM_PER_PAGE;
+
+                    if (endOfResult)
+                        showNoMoreObservationView();
+                    else
+                        lastLoadedPageIndex++;
+
+                    if (fullDataSet)
+                        showLoadMoreView();
                 }
+                flag_loading = false;
             }
         }
     }
@@ -501,9 +562,11 @@ public class SearchResultActivity extends AppCompatActivity {
                     if (serverUri == null || serverUri.isEmpty())
                         continue;
                     Bitmap image= PhotoUtil.getBitmapFromServerURL(serverUri);
-                    object.imgaeBitmap=image;
-                    imagePool.add(image);
-                    publishProgress();
+                    if (image!=null) {
+                        object.imgaeBitmap = image;
+                        imagePool.add(image);
+                        publishProgress();
+                    }
                 }
 
             }

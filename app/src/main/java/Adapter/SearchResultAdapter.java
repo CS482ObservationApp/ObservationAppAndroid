@@ -12,6 +12,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.zip.Inflater;
 
+import Interface.MultipagesActivity;
 import Model.ObservationEntryObject;
 import Model.SerializableNameValuePair;
 import ca.zhuoliupei.observationapp.R;
@@ -22,20 +23,20 @@ import ca.zhuoliupei.observationapp.R;
 public class SearchResultAdapter extends BaseAdapter {
     private final int TYPE_RESULT_ITEM=0;
     private final int TYPE_FOOTER_ITEM=1;
-    private int maxResultCount=1000;//By Default 1000
+    private final int maxResultCount;
     private ArrayList<SearchResultObservationEntryObject> observationEntryObjects;
     private Context context;
-    public void setMaxResultCount(int maxResultCount) {
-        this.maxResultCount = maxResultCount;
-    }
 
-    public SearchResultAdapter(ArrayList<SearchResultObservationEntryObject>observationEntryObjects, Context context){
+    public SearchResultAdapter(ArrayList<SearchResultObservationEntryObject>observationEntryObjects, Context context,int maxResultCount){
         this.observationEntryObjects=observationEntryObjects;
         this.context=context;
+        this.maxResultCount=maxResultCount;
     }
     @Override
     public int getCount() {
-        return observationEntryObjects.size()+1;
+        synchronized (observationEntryObjects) {
+            return observationEntryObjects.size() + 1;
+        }
     }
 
     @Override
@@ -45,17 +46,21 @@ public class SearchResultAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        if (position>=observationEntryObjects.size())
-            return TYPE_FOOTER_ITEM;
-        return TYPE_RESULT_ITEM;
+        synchronized (observationEntryObjects) {
+            if (position >= observationEntryObjects.size())
+                return TYPE_FOOTER_ITEM;
+            return TYPE_RESULT_ITEM;
+        }
     }
 
     @Override
     public Object getItem(int position) {
-        if (position<observationEntryObjects.size())
-             return observationEntryObjects.get(position);
-        else
-            return null;
+        synchronized (observationEntryObjects) {
+            if (position < observationEntryObjects.size())
+                return observationEntryObjects.get(position);
+            else
+                return null;
+        }
     }
 
     @Override
@@ -64,7 +69,9 @@ public class SearchResultAdapter extends BaseAdapter {
     }
 
     public long getItemNodeId(int position){
-        return Integer.parseInt(observationEntryObjects.get(position).nid);
+        synchronized (observationEntryObjects) {
+            return Integer.parseInt(observationEntryObjects.get(position).nid);
+        }
     }
 
     static class ResultViewHolder{
@@ -88,45 +95,48 @@ public class SearchResultAdapter extends BaseAdapter {
     }
 
     private View buildResultItemView(int position, View convertView, ViewGroup parent){
-        ResultViewHolder viewHolder;
-        if (convertView==null){
-            convertView= LayoutInflater.from(context).inflate(R.layout.search_result_item,parent,false);
-            viewHolder=new ResultViewHolder();
-            viewHolder.categoryTextView=(TextView)convertView.findViewById(R.id.txtCategory_SearchResultItem);
-            viewHolder.recordTextView=(TextView)convertView.findViewById(R.id.txtRecord_SearchResultItem);
-            viewHolder.dateTextView=(TextView)convertView.findViewById(R.id.txtDate_SearchResultItem);
-            viewHolder.titleTextView=(TextView)convertView.findViewById(R.id.txtTitle_SearchResultItem);
-            viewHolder.imageView=(ImageView)convertView.findViewById(R.id.image_SearchResultActivity);
-            convertView.setTag(viewHolder);
-        }else {
-            viewHolder = (ResultViewHolder) convertView.getTag();
-        }
-        SearchResultObservationEntryObject object=observationEntryObjects.get(position);
-        viewHolder.categoryTextView.setText(object.category);
-        viewHolder.recordTextView.setText(object.record);
-        viewHolder.titleTextView.setText(object.title);
-        viewHolder.dateTextView.setText(object.date);
-        if (object.imgaeBitmap!=null){
+        synchronized (observationEntryObjects) {
+            ResultViewHolder viewHolder;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(context).inflate(R.layout.search_result_item, parent, false);
+                viewHolder = new ResultViewHolder();
+                viewHolder.categoryTextView = (TextView) convertView.findViewById(R.id.txtCategory_SearchResultItem);
+                viewHolder.recordTextView = (TextView) convertView.findViewById(R.id.txtRecord_SearchResultItem);
+                viewHolder.dateTextView = (TextView) convertView.findViewById(R.id.txtDate_SearchResultItem);
+                viewHolder.titleTextView = (TextView) convertView.findViewById(R.id.txtTitle_SearchResultItem);
+                viewHolder.imageView = (ImageView) convertView.findViewById(R.id.image_SearchResultActivity);
+                convertView.setTag(viewHolder);
+            } else {
+                viewHolder = (ResultViewHolder) convertView.getTag();
+            }
+            SearchResultObservationEntryObject object = observationEntryObjects.get(position);
+            viewHolder.categoryTextView.setText(object.category);
+            viewHolder.recordTextView.setText(object.record);
+            viewHolder.titleTextView.setText(object.title);
+            viewHolder.dateTextView.setText(object.date);
             viewHolder.imageView.setImageBitmap(object.imgaeBitmap);
+            return convertView;
         }
-        return convertView;
     }
     private View buildFooterItemView(int position, View convertView, ViewGroup parent){
-        FooterViewHolder viewHolder;
-        if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(R.layout.scrollview_footer_loading, parent, false);
-            viewHolder = new FooterViewHolder();
-            viewHolder.relativeLayout=(RelativeLayout) convertView.findViewById(R.id.scrollview_footer);
-            viewHolder.imageView = (ImageView) convertView.findViewById(R.id.imgLoading_ScrollViewFooterLoading);
-            viewHolder.textView = (TextView) convertView.findViewById(R.id.txtLoading_ScrollViewFooterLoading);
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (FooterViewHolder) convertView.getTag();
+        synchronized (observationEntryObjects) {
+            FooterViewHolder viewHolder;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(context).inflate(R.layout.scrollview_footer_loading, parent, false);
+                viewHolder = new FooterViewHolder();
+                viewHolder.relativeLayout = (RelativeLayout) convertView.findViewById(R.id.scrollview_footer);
+                viewHolder.imageView = (ImageView) convertView.findViewById(R.id.imgLoading_ScrollViewFooterLoading);
+                viewHolder.textView = (TextView) convertView.findViewById(R.id.txtLoading_ScrollViewFooterLoading);
+                convertView.setTag(viewHolder);
+            } else {
+                viewHolder = (FooterViewHolder) convertView.getTag();
+            }
+            if (observationEntryObjects.size() <= 0)
+                viewHolder.relativeLayout.setVisibility(View.INVISIBLE);
+            else
+                viewHolder.relativeLayout.setVisibility(View.VISIBLE);
+
+            return convertView;
         }
-        if (observationEntryObjects.size()<=0)
-            viewHolder.relativeLayout.setVisibility(View.INVISIBLE);
-        else
-            viewHolder.relativeLayout.setVisibility(View.VISIBLE);
-        return convertView;
     }
 }

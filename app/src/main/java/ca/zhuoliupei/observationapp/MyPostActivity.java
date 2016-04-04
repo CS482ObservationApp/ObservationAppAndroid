@@ -277,7 +277,7 @@ public class MyPostActivity extends AppCompatActivity {
             toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
         }
         if (toolbar!=null) {
-            //Double clicke the tool bar to scroll to top and refresh
+            //Double click the tool bar to scroll to top and refresh
             toolbar.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

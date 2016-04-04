@@ -51,7 +51,7 @@ public class SlidingMenuAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         switch (items.get(position).itemType){
-            case UPLOAD_ITEM:case USER_GUIDE_ITEM:case SEARCH_ITEM:
+            case UPLOAD_ITEM:case MY_POST_ITEM:case SEARCH_ITEM:
                 return constructNormalItemView(items.get(position));
             case USER_ACCOUNT_ITEM: return constructUserAccountItemView(items.get(position));
             case LOGIN_ITEM:return constructLoginItemView(items.get(position));

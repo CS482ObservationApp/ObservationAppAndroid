@@ -194,24 +194,23 @@ public class NewestObservationsActivity extends AppCompatActivity{
         if (PreferenceUtil.getCurrentUserStatus(this)) {
             SlidingMenuItem accountItem = new SlidingMenuItem(SlidingMenuItem.ItemType.USER_ACCOUNT_ITEM);
             items.add(accountItem);
+
             SlidingMenuItem uploadItem = new SlidingMenuItem(SlidingMenuItem.ItemType.UPLOAD_ITEM);
             uploadItem.text = getString(R.string.upload_slidingMenuItem);
             items.add(uploadItem);
+
+            SlidingMenuItem myPostItem = new SlidingMenuItem(SlidingMenuItem.ItemType.MY_POST_ITEM);
+            myPostItem.text = getString(R.string.myPost_slidingMenuItem);
+            items.add(myPostItem);
         } else {
             SlidingMenuItem loginItem = new SlidingMenuItem(SlidingMenuItem.ItemType.LOGIN_ITEM);
             items.add(loginItem);
         }
-
         SlidingMenuItem searchItem = new SlidingMenuItem(SlidingMenuItem.ItemType.SEARCH_ITEM);
         searchItem.text = getString(R.string.search_slidingMenuItem);
-        SlidingMenuItem userGuideItem = new SlidingMenuItem(SlidingMenuItem.ItemType.USER_GUIDE_ITEM);
-        userGuideItem.text = getString(R.string.guide_slidingMenuItem);
-
         items.add(searchItem);
-        items.add(userGuideItem);
 
         slidingMenuAdapter = new SlidingMenuAdapter(items, this);
-
         slidingMenuList.setAdapter(slidingMenuAdapter);
     }
 
@@ -244,10 +243,15 @@ public class NewestObservationsActivity extends AppCompatActivity{
         contentGV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ObservationEntryObject selectedObject = (ObservationEntryObject) contentGVAdapter.getItem(position);
-                Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
-                intent.putExtra(NID, selectedObject.nid);
-                startActivity(intent);
+                /** Jump to observation detail only when item is clicked
+                 * If footer is clicked, do nothing
+                 */
+                if (position<gvDataset.size()) {
+                    ObservationEntryObject selectedObject = (ObservationEntryObject) contentGVAdapter.getItem(position);
+                    Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
+                    intent.putExtra(NID, selectedObject.nid);
+                    startActivity(intent);
+                }
             }
         });
     }
@@ -338,6 +342,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
                         break;
                     case LOGIN_ITEM:
                         startActivity(new Intent(NewestObservationsActivity.this, LoginActivity.class));
+                        break;
+                    case MY_POST_ITEM:
+                        startActivity(new Intent(NewestObservationsActivity.this, MyPostActivity.class));
                         break;
                 }
             }

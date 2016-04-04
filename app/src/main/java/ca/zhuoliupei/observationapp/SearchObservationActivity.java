@@ -20,15 +20,10 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.apache.http.message.BasicNameValuePair;
-
 import java.util.ArrayList;
 import java.util.Date;
 
 import Adapter.RecordAutoCompleteAdapter;
-import DrupalForAndroidSDK.DrupalAuthSession;
-import DrupalForAndroidSDK.DrupalServicesView;
-import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Interface.DatePickerCaller;
 import Model.SerializableNameValuePair;
@@ -49,10 +44,14 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     private final String FIELD_MAX_YEAR="field_date_observed_value[max][year]";
     private final String FIELD_MAX_MONTH="field_date_observed_value[max][month]";
     private final String FIELD_MAX_DAY="field_date_observed_value[max][day]";
+    private final String FIELD_DATE_OPTION="field_date_observed_value_op";
+    private final String FIELD_DATE_YEAR="field_date_observed_value[value][year]";
+    private final String FIELD_DATE_MONTH="field_date_observed_value[value][month]";
+    private final String FIELD_DATE_DAY="field_date_observed_value[value][day]";
 
     //User input variables
     private String category;
-    private Date fromDate, toDate;
+    private Date startDate, endDate;
     private int recordID;
     private LatLng locationLatLng;
     private double rangeRadius;
@@ -66,7 +65,7 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
     Spinner categorySpinner;
     DelayAutoCompleteTextView recordTxt;
     EditText locationEditText;
-    EditText fromDateEditText, toDateEditText;
+    EditText startDateEditText, endDateEditText;
     EditText clickedDateEditText;
 
     //Autocomplete field variables
@@ -102,14 +101,14 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
 
     @Override
     public void handleDatePickerSetData(DatePicker view, int year, int month, int day) {
-        if (fromDateEditText != null && toDateEditText != null) {
-            if (clickedDateEditText.equals(fromDateEditText)) {
-                fromDate = new Date(year, month, day);
-                fromDateEditText.setText(String.format("%d-%02d-%02d", year, month+1, day));
+        if (startDateEditText != null && endDateEditText != null) {
+            if (clickedDateEditText.equals(startDateEditText)) {
+                startDate = new Date(year, month, day);
+                startDateEditText.setText(String.format("%d-%02d-%02d", year, month+1, day));
             }
-            if (clickedDateEditText.equals(toDateEditText)) {
-                toDate = new Date(year, month, day);
-                toDateEditText.setText(String.format("%d-%02d-%02d", year, month+1, day));
+            if (clickedDateEditText.equals(endDateEditText)) {
+                endDate = new Date(year, month, day);
+                endDateEditText.setText(String.format("%d-%02d-%02d", year, month+1, day));
             }
         }
     }
@@ -129,8 +128,8 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
         categorySpinner = (Spinner) findViewById(R.id.spinnerCategory_SearchObservationActivity);
         recordTxt = (DelayAutoCompleteTextView) findViewById(R.id.txtRecord_SearchObservationActivity);
         locationEditText = (EditText) findViewById(R.id.txtLocation_SearchObservationActivity);
-        fromDateEditText = (EditText) findViewById(R.id.txtFromDate_SearchObservationActivity);
-        toDateEditText = (EditText) findViewById(R.id.txtToDate_SearchObservationActivity);
+        startDateEditText = (EditText) findViewById(R.id.txtStartDate_SearchObservationActivity);
+        endDateEditText = (EditText) findViewById(R.id.txtEndDate_SearchObservationActivity);
 
         autoCompleteAdapter = new RecordAutoCompleteAdapter(this);
     }
@@ -143,8 +142,8 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
 
     private void setWidgetListeners() {
         setLocationTextOnTouch();
-        setToDateTextOnTouch();
-        setFromDateTextOnTouch();
+        setEndDateTextOnTouch();
+        setStartDateTextOnTouch();
         setTxtRecordOnTextChanged();
         setRecordItemOnClick();
         setResetButtonOnClick();
@@ -215,12 +214,12 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             }
         });
     }
-    private void setFromDateTextOnTouch() {
-        fromDateEditText.setOnTouchListener(new View.OnTouchListener() {
+    private void setStartDateTextOnTouch() {
+        startDateEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (MotionEvent.ACTION_UP == event.getAction()) {
-                    clickedDateEditText = fromDateEditText;
+                    clickedDateEditText = startDateEditText;
                     DialogFragment newFragment = new DatePickerFragment();
                     newFragment.show(getSupportFragmentManager(), "datePicker");
                 }
@@ -228,20 +227,19 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             }
         });
     }
-
-    private void setToDateTextOnTouch() {
-        toDateEditText.setOnTouchListener(new View.OnTouchListener() {
+    private void setEndDateTextOnTouch() {
+        endDateEditText.setOnTouchListener(new View.OnTouchListener() {
                                               @Override
                                               public boolean onTouch(View v, MotionEvent event) {
                                                   if (MotionEvent.ACTION_UP == event.getAction()) {
-                                                      clickedDateEditText = toDateEditText;
+                                                      clickedDateEditText = endDateEditText;
                                                       DialogFragment newFragment = new DatePickerFragment();
                                                       newFragment.show(getSupportFragmentManager(), "datePicker");
                                                   }
                                                   return false;
                                               }
                                           }
-            );
+        );
         }
 
     private void setRecordItemOnClick(){
@@ -264,15 +262,15 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
                 categorySpinner.setSelection(0);
                 recordTxt.setText("");
                 locationEditText.setText("");
-                fromDateEditText.setText("");
-                toDateEditText.setText("");
+                startDateEditText.setText("");
+                endDateEditText.setText("");
                 //Clear value stored in variables
                 category = null;
                 recordID = INVALID;
                 rangeRadius = INVALID;
                 locationLatLng = null;
-                fromDate = null;
-                toDate = null;
+                startDate = null;
+                endDate = null;
                 recordSelected = true;
             }
         });
@@ -286,7 +284,7 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
                     ArrayList<SerializableNameValuePair> params=buildHttpParams();
                     Intent intent=new Intent(SearchObservationActivity.this,SearchResultActivity.class);
                     Bundle extra = new Bundle();
-                    extra.putSerializable("params",  params);// cast to array and put
+                    extra.putSerializable("params", params);// cast to array and put
                     intent .putExtras(extra);
                     startActivity(intent);
                 }
@@ -337,13 +335,13 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             return  false;
         }
 
-        //If the from date is larger than to date, show error
-        boolean fromDateTextNotEmpty=fromDateEditText.getText()!=null&&!fromDateEditText.getText().toString().trim().isEmpty();
-        boolean toDateTextNotEmpty=toDateEditText.getText()!=null&&!toDateEditText.getText().toString().trim().isEmpty();
-        if (fromDateTextNotEmpty&&toDateTextNotEmpty){
-            if (fromDate.compareTo(toDate)<0){
-                fromDateEditText.setError(getString(R.string.start_date_larger_than_end_searchObservationActivity));
-                fromDateEditText.requestFocus();
+        //If the start date is larger than end date, show error
+        boolean startDateTextNotEmpty= startDateEditText.getText()!=null&&!startDateEditText.getText().toString().trim().isEmpty();
+        boolean endDateTextNotEmpty= endDateEditText.getText()!=null&&!endDateEditText.getText().toString().trim().isEmpty();
+        if (startDateTextNotEmpty&&endDateTextNotEmpty){
+            if (startDate.compareTo(endDate)>0){
+                startDateEditText.setError(getString(R.string.start_date_larger_than_end_searchObservationActivity));
+                startDateEditText.requestFocus();
                 return false;
             }
         }
@@ -352,10 +350,12 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
         return true;
     }
     private void fillVariableFromInput(){
-        // LatLng,search radius, fromDate and toDate are filled in handlePickLocationRequestResult() handleSelectRadiusRequestResult() and handleDatePickerSetData()
+        // LatLng,search radius, startDate and endDate are filled in handlePickLocationRequestResult() handleSelectRadiusRequestResult() and handleDatePickerSetData()
         // So we only need to set recordID and category here
         if (categorySpinner.getSelectedItemPosition()>0){
             category = (String)categorySpinner.getSelectedItem();
+        }else {
+            category="";
         }
     }
     private ArrayList<SerializableNameValuePair> buildHttpParams(){
@@ -371,15 +371,31 @@ public class SearchObservationActivity extends AppCompatActivity implements Date
             pairs.add(new SerializableNameValuePair(FIELD_LNG,String.valueOf(locationLatLng.longitude)));
             pairs.add(new SerializableNameValuePair(FIELD_RADIUS,String.valueOf(rangeRadius)));
         }
-        if (toDate!=null){
-            pairs.add(new SerializableNameValuePair(FIELD_MAX_YEAR,String.valueOf(toDate.getYear())));
-            pairs.add(new SerializableNameValuePair(FIELD_MAX_MONTH,String.valueOf(toDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
-            pairs.add(new SerializableNameValuePair(FIELD_MAX_DAY,String.valueOf(toDate.getDate())));
+        //Fill Date Filter Option
+        if (startDate!=null&&endDate!=null){
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_OPTION,"between"));
+
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_YEAR,String.valueOf(endDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_MONTH,String.valueOf(endDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_MAX_DAY,String.valueOf(endDate.getDate())));
+
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_YEAR,String.valueOf(startDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_MONTH,String.valueOf(startDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_MIN_DAY,String.valueOf(startDate.getDate())));
         }
-        if (fromDate!=null){
-            pairs.add(new SerializableNameValuePair(FIELD_MIN_YEAR,String.valueOf(fromDate.getYear())));
-            pairs.add(new SerializableNameValuePair(FIELD_MIN_MONTH,String.valueOf(fromDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
-            pairs.add(new SerializableNameValuePair(FIELD_MIN_DAY,String.valueOf(fromDate.getDate())));
+        if (startDate!=null&&endDate==null){
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_OPTION,">="));
+
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_YEAR,String.valueOf(startDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_MONTH,String.valueOf(startDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_DAY,String.valueOf(startDate.getDate())));
+        }
+        if (startDate==null&&endDate!=null){
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_OPTION,"<="));
+
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_YEAR,String.valueOf(endDate.getYear())));
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_MONTH,String.valueOf(endDate.getMonth()+1)));//Server accept month from 1-12 while getMonth() return 0-11
+            pairs.add(new SerializableNameValuePair(FIELD_DATE_DAY,String.valueOf(endDate.getDate())));
         }
         return pairs;
     }
