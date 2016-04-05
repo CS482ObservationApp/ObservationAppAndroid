@@ -44,9 +44,10 @@ public class DrupalServicesUser extends DrupalServicesBase{
 
     public HashMap<String,String> register(String username,String email) throws Exception{
         setResource("user/register");
-        BasicNameValuePair[] params=new BasicNameValuePair[2];
+        BasicNameValuePair[] params=new BasicNameValuePair[3];
         params[0]=new BasicNameValuePair("name",username);
         params[1]=new BasicNameValuePair("mail",email);
+        params[2]=new BasicNameValuePair("legal_accept","Accept");
         return httpPostRequest(getURI(),params);
     }
 

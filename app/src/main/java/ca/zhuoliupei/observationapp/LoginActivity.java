@@ -9,10 +9,9 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +26,6 @@ import Const.HTTPConst;
 import Const.SharedPreferencesConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesUser;
-import HelperClass.AnimationUtil;
 import HelperClass.DownLoadUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.RegexValidator;
@@ -62,18 +60,19 @@ public class LoginActivity extends AppCompatActivity {
         findViewById(R.id.txtPassword_LoginActivity).setEnabled(true);
         findViewById(R.id.txtUserName_LoginActivity).setEnabled(true);
         findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(true);
-        findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(true);
-        findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(true);
+        findViewById(R.id.btnLogin_LoginActivity).setEnabled(true);
+        findViewById(R.id.btnRegister__LoginActivity).setEnabled(true);
 
         final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
+        swipeRefreshLayout.setRefreshing(false);
         swipeRefreshLayout.setVisibility(View.GONE);
     }
     private void showTransitionView(){
         findViewById(R.id.txtPassword_LoginActivity).setEnabled(false);
         findViewById(R.id.txtUserName_LoginActivity).setEnabled(false);
         findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(false);
-        findViewById(R.id.imgBtnLogin_LoginActivity).setEnabled(false);
-        findViewById(R.id.imgBtnRegister__LoginActivity).setEnabled(false);
+        findViewById(R.id.btnLogin_LoginActivity).setEnabled(false);
+        findViewById(R.id.btnRegister__LoginActivity).setEnabled(false);
 
         final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
         swipeRefreshLayout.setVisibility(View.VISIBLE);
@@ -112,8 +111,7 @@ public class LoginActivity extends AppCompatActivity {
     //Widgets Listeners, wrapped in setWidgetListeners()
     private void setRegisterBtnOnClick(){
         //When register button is clicked, start a register activity
-        ImageButton registerBtn=(ImageButton)findViewById(R.id.imgBtnRegister__LoginActivity);
-        registerBtn.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnRegister__LoginActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
@@ -124,8 +122,7 @@ public class LoginActivity extends AppCompatActivity {
     private void setLoginBtnOnClick(){
 
         //When login button is clicked, validate input and log user in
-        ImageButton loginBtn=(ImageButton)findViewById(R.id.imgBtnLogin_LoginActivity);
-        loginBtn.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnLogin_LoginActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 loginTask = new LoginTask(v.getContext());
@@ -187,6 +184,7 @@ public class LoginActivity extends AppCompatActivity {
             /*If login successfully, store the return seesion info as well as user info into
               Shared Preferences for further usage, and direct to Newest Observations Activity
             */
+
             if (statusCode.equals(HTTPConst.HTTP_OK_200)) {
                 if (!storeSessionInfoToSharedPreferences(responseBody))
                     return;

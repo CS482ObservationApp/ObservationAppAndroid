@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,18 +19,20 @@ import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesUser;
 import HelperClass.RegexValidator;
+import HelperClass.ToolBarStyler;
 
 public class ResetPasswordActivity extends AppCompatActivity {
 
     EditText inputField;
     String inputText;
     String baseUrl,endpoint;
+    Toolbar toolbar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
         initializeVariables();
-
+        initializeUI();
         findViewById(R.id.imgBtnSubmit_ResetPasswordActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -42,8 +45,16 @@ public class ResetPasswordActivity extends AppCompatActivity {
     private void initializeVariables() {
         baseUrl=getResources().getString(R.string.drupal_site_url);
         endpoint=getResources().getString(R.string.drupal_server_endpoint);
+        toolbar=(Toolbar)findViewById(R.id.toolbar_ResetPassword);
     }
 
+    private void initializeUI(){
+        initializeToolBar();
+    }
+    private void initializeToolBar(){
+        if (toolbar!=null)
+            ToolBarStyler.styleToolBar(this, toolbar, "Reset Password");
+    }
     private boolean validateInput(){
         inputField=(EditText)findViewById(R.id.txtUsernameEmail_ResetPasswordActivity);
         inputText=inputField.getText().toString().trim();
@@ -95,8 +106,4 @@ public class ResetPasswordActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    public void onBackPressed() {
-        startActivity(new Intent(this,LoginActivity.class));
-    }
 }

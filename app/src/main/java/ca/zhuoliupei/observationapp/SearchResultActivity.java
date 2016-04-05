@@ -144,6 +144,7 @@ public class SearchResultActivity extends AppCompatActivity{
     private void initializeUI() {
         initializeContentView();
         initializeToolBar();
+        initializeFloatingButton();
         setWidgetListeners();
     }
 
@@ -163,7 +164,12 @@ public class SearchResultActivity extends AppCompatActivity{
         setSwipeRefreshOnRefresh();
         setToolbarOnClick();
     }
-
+    private void initializeFloatingButton() {
+        if (!PreferenceUtil.getCurrentUserStatus(this)) {
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_SearchResultActivity);
+            fab.setVisibility(View.GONE);
+        }
+    }
     //Contained in setWidgetListeners()
     private void setFloatingButtonOnClick() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_SearchResultActivity);

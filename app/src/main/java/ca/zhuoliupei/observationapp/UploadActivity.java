@@ -12,6 +12,7 @@ import android.os.Build;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MotionEvent;
@@ -37,7 +38,6 @@ import java.util.List;
 import java.util.Locale;
 
 import Adapter.RecordAutoCompleteAdapter;
-import Const.AppConst;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
@@ -47,6 +47,8 @@ import HelperClass.GeoUtil;
 import HelperClass.NotificationUtil;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
+import HelperClass.NotificationUtil.NotificationID;
+import HelperClass.ToolBarStyler;
 import HelperClass.UploadUtil;
 import Interface.DatePickerCaller;
 import ViewAndFragmentClass.DatePickerFragment;
@@ -78,6 +80,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
     TextView txtDescription;
     Button btnCancel;
     Button btnSubmit;
+    Toolbar toolbar;
 
     ReverseGeoCodeTask reverseGeoCodeTask;
     UploadObservationTask uploadObservationTask;
@@ -154,9 +157,11 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         btnSubmit=(Button)findViewById(R.id.btnSubmit_UploadActivity);
         txtName=(EditText)findViewById(R.id.txtName_UploadActivity);
         txtDescription=(TextView)findViewById(R.id.txtDescription_UploadActivity);
+        toolbar=(Toolbar)findViewById(R.id.toolbar_UploadActivity);
     }
     private void initializeUI(){
        initializeRecordAutoComplete();
+        initializeToolBar();
     }
     private void setWidgetListeners(){
         setImageViewOnClick();
@@ -174,6 +179,10 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
         txtRecord.setAdapter(autoCompleteAdapter);
         txtRecord.setLoadingIndicator((android.widget.ProgressBar) findViewById(R.id.pb_loading_indicator_UploadActivity));
         txtRecord.setTag(-1);//Initial tag which would be invalid to upload
+    }
+    private void initializeToolBar() {
+        if (toolbar!=null)
+            ToolBarStyler.styleToolBar(this, toolbar, "Upload");
     }
 
     //Widgets Listeners,wrapped in setWidgetListeners()
@@ -250,7 +259,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             @Override
             public void onClick(View v) {
                 if (validateInputOnClient()) {
-                    NotificationUtil.showNotification(v.getContext(), AppConst.UPLOADING_NOTIFICATION_ID);
+                    NotificationUtil.showNotification(v.getContext(), NotificationID.UPLOADING_NOTIFICATION_ID);
                     uploadObservationTask = new UploadObservationTask(v.getContext());
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                         uploadObservationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -398,10 +407,10 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             } catch (Exception ex) {}
 
             //Remove the uploading notification
-            NotificationUtil.removeNotification(context,AppConst.UPLOADING_NOTIFICATION_ID);
+            NotificationUtil.removeNotification(context, NotificationID.UPLOADING_NOTIFICATION_ID);
             if (resultMap==null||!resultMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
                 //Show the Upload Failed Notification
-                NotificationUtil.showNotification(context,AppConst.UPLOAD_FAILED_NOTIFICATION_ID);
+                NotificationUtil.showNotification(context, NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
             }
             return null;
         }

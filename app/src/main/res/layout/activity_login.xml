@@ -25,84 +25,91 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <FrameLayout
+    <RelativeLayout
+        android:gravity="center"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="fill_parent">
 
 
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:orientation="vertical"
-            android:id="@+id/root_ll_LoginActivity">
+            android:layout_margin="20dp"
+            android:id="@+id/root_ll_LoginActivity"
+            >
 
-            <EditText
-                android:id="@+id/txtUserName_LoginActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="120dp"
-                android:ems="10"
-                android:hint="@string/hint_email"
-                android:inputType="textPersonName"
-                android:text="NormalUser" />
+                <EditText
+                    android:id="@+id/txtUserName_LoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="120dp"
+                    android:ems="10"
+                    android:hint="@string/hint_email"
+                    android:inputType="textPersonName"
+                    android:text="NormalUser" />
 
-            <EditText
-                android:id="@+id/txtPassword_LoginActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:ems="10"
-                android:hint="@string/hint_password"
-                android:inputType="textPassword"
-                android:text="kentlee1993" />
+                <EditText
+                    android:id="@+id/txtPassword_LoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:ems="10"
+                    android:hint="@string/hint_password"
+                    android:inputType="textPassword"
+                    android:text="kentlee1993" />
 
-            <TextView
-                android:id="@+id/txtMessage_LoginActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:lines="2"
-                android:maxLines="2" />
+                <TextView
+                    android:id="@+id/txtMessage_LoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:lines="2"
+                    android:maxLines="2" />
 
-            <TextView
-                android:id="@+id/reset_link_LoginActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:lines="1"
-                android:maxLines="1" />
+                <TextView
+                    android:id="@+id/reset_link_LoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:layout_gravity="center_horizontal"
+                    android:maxLines="1" />
 
-            <ImageButton
-                android:id="@+id/imgBtnLogin_LoginActivity"
-                android:layout_width="243dp"
-                android:layout_height="81dp"
-                android:layout_gravity="center_horizontal"
-                android:adjustViewBounds="true"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@drawable/login_button" />
+                <Button
+                    android:id="@+id/btnLogin_LoginActivity"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/rounded_corner_blue_button"
+                    android:text="@string/btn_login_loginActivity"
+                     />
 
-            <ImageButton
-                android:id="@+id/imgBtnRegister__LoginActivity"
-                android:layout_width="200dp"
-                android:layout_height="100dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="36dp"
-                android:adjustViewBounds="true"
-                android:background="@android:color/transparent"
-                android:padding="20dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/register_button_enabled" />
+                <Button
+                    android:id="@+id/btnRegister__LoginActivity"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/rounded_corner_yellow_button"
+                    android:text="@string/btn_register_loginActivity"
+                     />
 
-            <TextView
-                android:id="@+id/txtLoginLater_LoginActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/login_later_loginActivity"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="#04B431"
-                android:textSize="20dp" />
-        </LinearLayout>
+                <TextView
+                    android:layout_margin="15dp"
+                    android:id="@+id/txtLoginLater_LoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/login_later_loginActivity"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="#04B431"
+                    android:textSize="20dp" />
+            </LinearLayout>
+        </ScrollView>
         <android.support.v4.widget.SwipeRefreshLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
@@ -113,5 +120,5 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"></ListView>
         </android.support.v4.widget.SwipeRefreshLayout>
-    </FrameLayout>
+    </RelativeLayout>
 </LinearLayout>

@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -59,27 +60,24 @@ public class RegisterActivity extends AppCompatActivity {
         agreeTermChkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                ImageButton registerBtn=(ImageButton)findViewById(R.id.imgBtnRegister_RegisterActivity);
-                if (isChecked){
+                Button registerBtn = (Button) findViewById(R.id.btnRegister_RegisterActivity);
+                if (isChecked) {
                     registerBtn.setEnabled(true);
-                    registerBtn.setImageResource(R.drawable.register_button_enabled);
-                }else{
+                } else {
                     registerBtn.setEnabled(false);
-                    registerBtn.setImageResource(R.drawable.register_button_disabled);
                 }
             }
         });
     }
     private void setRegisterBtnOnClick(){
         //Register Button onclick
-        ImageButton registerBtn=(ImageButton)findViewById(R.id.imgBtnRegister_RegisterActivity);
-        registerBtn.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnRegister_RegisterActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 userNameEditText = (EditText) findViewById(R.id.txtUserName_RegisterActivity);
                 emailEditText = (EditText) findViewById(R.id.txtEmail_RegisterActivity);
-                userNameStr=userNameEditText.getText().toString().trim();
-                emailStr=emailEditText.getText().toString().trim();
+                userNameStr = userNameEditText.getText().toString().trim();
+                emailStr = emailEditText.getText().toString().trim();
 
                 validateAndRegister();
             }
@@ -173,13 +171,27 @@ public class RegisterActivity extends AppCompatActivity {
     private void showServerValidationError(String responseStr) throws JSONException {
         JSONObject responseJsonObject = new JSONObject(responseStr);
         JSONObject errorJsonObject = responseJsonObject.getJSONObject("form_errors");
-        String userNameError = errorJsonObject.getString("name");
-        String emailError = errorJsonObject.getString("mail");
-        if (!userNameError.isEmpty()) {
-            ((EditText) findViewById(R.id.txtUserName_RegisterActivity)).setError(Jsoup.parse(userNameError).text());
+        String userNameError=null;
+        String emailError=null;
+        try {
+            userNameError = errorJsonObject.getString("name");
+        }catch (Exception ex){}
+        try {
+            emailError = errorJsonObject.getString("mail");
+        }catch (Exception ex){}
+        if (emailError!=null) {
+            if (!emailError.isEmpty()) {
+                EditText userNameTxt=(EditText)findViewById(R.id.txtEmail_RegisterActivity);
+                userNameTxt.setError(Jsoup.parse(emailError).text());
+                userNameTxt.requestFocus();
+            }
         }
-        if (!emailError.isEmpty()) {
-            ((EditText) findViewById(R.id.txtEmail_RegisterActivity)).setError(Jsoup.parse(emailError).text());
+        if (userNameError!=null) {
+            if (!userNameError.isEmpty()) {
+                EditText userNameTxt=(EditText)findViewById(R.id.txtUserName_RegisterActivity);
+                userNameTxt.setError(Jsoup.parse(userNameError).text());
+                userNameTxt.requestFocus();
+            }
         }
     }
 

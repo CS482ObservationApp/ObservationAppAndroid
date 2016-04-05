@@ -7,7 +7,7 @@
     <string name="google_app_id">midyear-forest-124421</string>
 
     <string name="title_activity_splash">SplashActivity</string>
-    <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://www.cleverfinger.com.au/user-guide/">Term of Use</a></string>
+    <string name="agree_term_of_use">By clicking the button \n below,I agree to the <a href="http://137.149.157.10/cs482/content/terms-conditions">Term of Use</a></string>
 
 
 
@@ -33,24 +33,32 @@
     <!-- Register Activity-->
     <string name="register_successful">Your registration request is sent, please wait for administrator\'s approval.\n An activation email with your initial password would be sent to your email after approval.</string>
     <string name="network_error">Network error,try again later</string>
+    <string name="btn_register_registerActivity">Register</string>
 
     <!-- Reset Password Activity-->
     <string name="reset_password_restActivity">Please enter your user name or email to reset password:</string>
     <string name="non_valid_name_email">The input is not a valid user name or email</string>
     <string name="reset_successful">An email is sent to your email.</string>
+    <string name="btn_submit_restActivity">Submit</string>
 
-    <!--Notification-->
+    <!--Notification Util-->
     <string name="sessionExpiredNotificationTitle">Session Expired</string>
     <string name="sessionExpiredNotificationText">Click to login</string>
     <string name="uploadingNotificationTitle">Uploading…</string>
     <string name="uploadingNotificationText">Uploading new observation entry</string>
     <string name="uploadFailedNotificationTitle">Upload Failed</string>
     <string name="uploadFailedNotificationText">Upload Failed,try again later…</string>
+    <string name="updatingNotificationTitle">Updating…</string>
+    <string name="updatingUserImageNotificationText">Updating user profile image…</string>
+    <string name="updatingUserNameNotificationText">Updating user profile name…</string>
+    <string name="updatingUserAddressNotificationText">Updating user profile address…</string>
     <!-- Sliding Menu-->
     <string name="login_SlidingMenu">Login</string>
 
     <!-- Login Activity-->
     <string name="login_later_loginActivity">Login Later</string>
+    <string name="btn_login_loginActivity">Login</string>
+    <string name="btn_register_loginActivity">Register</string>
     <!-- Upload Activities-->
     <string name="observation_record_uploadActivity">Record</string>
     <string name="name_uploadActivity">Name</string>

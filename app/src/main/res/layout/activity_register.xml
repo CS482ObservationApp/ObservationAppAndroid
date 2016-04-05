@@ -57,17 +57,17 @@
         android:layout_gravity="center_horizontal"
         android:maxLines="3"
         android:lines="3"/>
-    <ImageButton
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/imgBtnRegister_RegisterActivity"
-        android:background="@android:color/transparent"
-        android:src="@drawable/register_button_disabled"
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnRegister_RegisterActivity"
+        android:background="@drawable/rounded_corner_blue_button"
         android:adjustViewBounds="true"
-        android:padding="20dp"
         android:scaleType="fitCenter"
         android:layout_marginTop="40dp"
         android:clickable="false"
+        android:enabled="false"
+        android:text="@string/btn_register_registerActivity"
         android:layout_gravity="center_horizontal"
         />
 

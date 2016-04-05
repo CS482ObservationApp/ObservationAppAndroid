@@ -55,7 +55,8 @@
         </activity>
         <activity
             android:name=".ResetPasswordActivity"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
 
@@ -71,11 +72,13 @@
         </activity>
         <activity
             android:name=".UploadActivity"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
             android:name=".UserProfileActivity"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
             android:name=".SearchObservationActivity"

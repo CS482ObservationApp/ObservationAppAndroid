@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -40,9 +41,12 @@ import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesFile;
 import DrupalForAndroidSDK.DrupalServicesUser;
 import HelperClass.GeoUtil;
+import HelperClass.NotificationUtil;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
+import HelperClass.ToolBarStyler;
 import HelperClass.UploadUtil;
+import HelperClass.NotificationUtil.NotificationID;
 
 public class UserProfileActivity extends AppCompatActivity {
     private static final int INVALID=-1;
@@ -67,12 +71,14 @@ public class UserProfileActivity extends AppCompatActivity {
     LogoutUserTask logoutUserTask;
     ReverseGeoCodeTask reverseGeoCodeTask;
 
+    Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_profile);
         initializeVariables();
-        initializeView();
+        initializeUI();
         setWidgetListeners();
     }
 
@@ -85,9 +91,15 @@ public class UserProfileActivity extends AppCompatActivity {
         drupalServicesFile = new DrupalServicesFile(baseUrl, endpoint);
         drupalServicesUser.setAuth(authSession);
         drupalServicesFile.setAuth(authSession);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_UserProfileActivity);
     }
 
-    private void initializeView() {
+    private void initializeUI() {
+        initializeView();
+        initializeToolbar();
+    }
+
+    private void initializeView(){
         ImageView profileImageIV = (ImageView) findViewById(R.id.imgUserImage_UserProfileActivity);
         TextView userNameTV = (TextView) findViewById(R.id.txtUserName_UserProfileActivity);
         TextView emailTV = (TextView) findViewById(R.id.txtEmail_UserProfileActivity);
@@ -111,7 +123,11 @@ public class UserProfileActivity extends AppCompatActivity {
         address1TV.setText(address1);
         address2TV.setText(address2);
     }
-
+    private void initializeToolbar(){
+        if (toolbar!=null){
+            ToolBarStyler.styleToolBar(this,toolbar,"Profile");
+        }
+    }
     /*
     * setWidgetListeners contains the other setOnClickListener Methods
     */
@@ -123,14 +139,15 @@ public class UserProfileActivity extends AppCompatActivity {
         setAddress2OnClickListener();
         setLogoutOnClickListener();
         setMyPostOnClickListener();
+        setChangePasswordOnClick();
     }
     private void setUserNameOnClickListener() {
         findViewById(R.id.ll_name_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent=new Intent(UserProfileActivity.this, ChangeTextFieldActivity.class);
-                intent.putExtra(ChangeTextFieldActivity.INTENT_TYPE,ChangeTextFieldActivity.Type.USER_NAME);
-                startActivityForResult(new Intent((v.getContext()), ChangeTextFieldActivity.class), CHANGE_USER_NAME_REQUEST);
+                Intent intent = new Intent(UserProfileActivity.this, ChangeTextFieldActivity.class);
+                intent.putExtra(ChangeTextFieldActivity.INTENT_TYPE, ChangeTextFieldActivity.Type.USER_NAME);
+                startActivityForResult(intent, CHANGE_USER_NAME_REQUEST);
             }
         });
     }
@@ -217,6 +234,14 @@ public class UserProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(UserProfileActivity.this, MyPostActivity.class));
+            }
+        });
+    }
+    private void setChangePasswordOnClick(){
+        findViewById(R.id.ll_changePassword_UserProfileActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(UserProfileActivity.this,ResetPasswordActivity.class));
             }
         });
     }
@@ -333,6 +358,7 @@ public class UserProfileActivity extends AppCompatActivity {
         protected Boolean doInBackground(Bitmap... params) {
             photo = params[0];
             try {
+                NotificationUtil.showNotification(context, NotificationID.UPDATE_USER_PROFILE_IMAGE_NOTIFICATION_ID);
                 return updateServerUserProfileImage(photo);
             } catch (Exception ex) {
                 return false;
@@ -341,6 +367,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean updateResult) {
+            NotificationUtil.removeNotification(context,NotificationID.UPDATE_USER_PROFILE_IMAGE_NOTIFICATION_ID);
             if (updateResult) {
                 boolean saveResult = updateLocalUserProfileImage(photo, context);
                 if (saveResult) {
@@ -351,6 +378,7 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             }
             else{
+                NotificationUtil.showNotification(context,NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
                 Toast.makeText(context,R.string.network_error,Toast.LENGTH_SHORT).show();
             }
         }
@@ -365,6 +393,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(String... names) {
+            NotificationUtil.showNotification(context, NotificationID.UPDATE_USER_PROFILE_NAME_NOTIFICATION_ID);
             newUserName = names[0];
             BasicNameValuePair[] params = new BasicNameValuePair[1];
             params[0] = new BasicNameValuePair(DrupalServicesFieldKeysConst.USER_NAME, newUserName);
@@ -381,8 +410,11 @@ public class UserProfileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean result) {
+            NotificationUtil.removeNotification(context,NotificationID.UPDATE_USER_PROFILE_NAME_NOTIFICATION_ID);
             if (result) {
                 updateLocalUserName(newUserName, context);
+            }else {
+                NotificationUtil.showNotification(context, NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
             }
         }
     }
@@ -458,16 +490,18 @@ public class UserProfileActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
+            NotificationUtil.showNotification(context, NotificationID.UPDATE_USER_PROFILE_NAME_NOTIFICATION_ID);
             boolean updateResult = updateServerUserLocation(latLng, address, requestCode);
             return updateResult;
         }
 
-
         @Override
         protected void onPostExecute(Boolean result) {
+            NotificationUtil.removeNotification(context,NotificationID.UPDATE_USER_PROFILE_ADDRESS_NOTIFICATION_ID);
             if (result) {
                 updateLocalUserLocation(context,address,requestCode);
             }else {
+                NotificationUtil.showNotification(context, NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
                 Toast.makeText(context,R.string.failed_update_address,Toast.LENGTH_SHORT).show();
             }
         }

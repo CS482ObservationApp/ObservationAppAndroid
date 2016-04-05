@@ -211,7 +211,7 @@ public class MyPostActivity extends AppCompatActivity {
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING|| scrollState == SCROLL_STATE_TOUCH_SCROLL) {
                     userScrolled = true;
                 } else {
                     userScrolled = false;
@@ -317,9 +317,7 @@ public class MyPostActivity extends AppCompatActivity {
             //Get date parameter
             String date = params[0].get(DATE);
 
-
             BasicNameValuePair[] pairs = getParams(date);
-
             try {
                 HashMap<String, String> responseMap = myObservationView.retrieve(DrupalServicesView.ViewType.PERSONAL_OBSERVATION, pairs);
                 return getObservationObjectsFromResponse(responseMap);

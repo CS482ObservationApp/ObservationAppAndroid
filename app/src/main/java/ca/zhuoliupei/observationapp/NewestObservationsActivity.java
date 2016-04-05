@@ -46,7 +46,6 @@ import java.util.Iterator;
 
 import Adapter.NewestObservationAdapter;
 import Adapter.SlidingMenuAdapter;
-import Const.AppConst;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import Const.ObservationModelConst;
@@ -58,6 +57,8 @@ import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.AnimationUtil;
 import HelperClass.DownLoadUtil;
 import HelperClass.NewestObservationCacheManager;
+import HelperClass.NotificationUtil;
+import HelperClass.NotificationUtil.NotificationID;
 import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Model.ObservationEntryObject;
@@ -265,7 +266,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING)
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING|| scrollState == SCROLL_STATE_TOUCH_SCROLL)
                     userScrolled = true;
                 else
                     userScrolled=false;
@@ -673,25 +674,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                     //if it's anonymous, session expired
                     if (!rolesStr.isEmpty() && rolesStr.contains(DrupalServicesFieldKeysConst.LOGIN_ROLE_ANONYMOUS)) {
                         PreferenceUtil.saveBoolean(context, SharedPreferencesConst.K_SESSION_EXPIRED, true);
-                        NotificationCompat.Builder mBuilder =
-                                new NotificationCompat.Builder(context).
-                                        setSmallIcon(R.drawable.refresh_icon).
-                                        setContentTitle(getText(R.string.sessionExpiredNotificationTitle)).
-                                        setContentText(getText(R.string.sessionExpiredNotificationText));
-                        Intent resultIntent = new Intent(context, LoginActivity.class);
-                        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-// Adds the back stack for the Intent (but not the Intent itself)
-                        //  stackBuilder.addParentStack(ResultActivity.class);
-// Adds the Intent that starts the Activity to the top of the stack
-                        stackBuilder.addNextIntent(resultIntent);
-                        PendingIntent resultPendingIntent =
-                                stackBuilder.getPendingIntent(
-                                        0,
-                                        PendingIntent.FLAG_UPDATE_CURRENT
-                                );
-                        mBuilder.setContentIntent(resultPendingIntent);
-                        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        notificationManager.notify(AppConst.SESSION_EXPIRED_NOTIFICATION_ID, mBuilder.build());
+                        NotificationUtil.showNotification(context,NotificationID.SESSION_EXPIRED_NOTIFICATION_ID);
                     } else {
                         PreferenceUtil.saveBoolean(context, SharedPreferencesConst.K_SESSION_EXPIRED, false);
                     }

@@ -7,13 +7,17 @@
     >
 <ImageView
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_height="96dp"
     android:id="@+id/imgLogin_SlidingMenu"
-    android:src="@drawable/login_icon"
+    android:src="@drawable/icon_login_small"
     />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/login_SlidingMenu"
-        android:textColor="#FFFFFF"/>
+        android:textSize="25dp"
+        android:textStyle="bold"
+        android:layout_margin="10dp"
+        android:textColor="#ffffff"
+        />
 </LinearLayout>
