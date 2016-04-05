@@ -2,8 +2,11 @@ package HelperClass;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Window;
+import android.view.WindowManager;
 
 import ca.zhuoliupei.observationapp.R;
 

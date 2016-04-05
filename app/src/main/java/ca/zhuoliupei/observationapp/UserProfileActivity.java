@@ -490,7 +490,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            NotificationUtil.showNotification(context, NotificationID.UPDATE_USER_PROFILE_NAME_NOTIFICATION_ID);
+            NotificationUtil.showNotification(context, NotificationID.UPDATE_USER_PROFILE_ADDRESS_NOTIFICATION_ID);
             boolean updateResult = updateServerUserLocation(latLng, address, requestCode);
             return updateResult;
         }
@@ -617,12 +617,13 @@ public class UserProfileActivity extends AppCompatActivity {
         String locality=address.getLocality();
         String thoroughfare=address.getThoroughfare();
         String postalCode=address.getPostalCode();
+        String feature=address.getFeatureName();
         if (countryCode!=null)
             paramList.add(new BasicNameValuePair(addressField+"[und][0][country]",countryCode));
         if (locality!=null)
             paramList.add(new BasicNameValuePair(addressField+"[und][0][locality]",locality));
         if (thoroughfare!=null)
-            paramList.add(new BasicNameValuePair(addressField+"[und][0][thoroughfare]",thoroughfare));
+            paramList.add(new BasicNameValuePair(addressField+"[und][0][thoroughfare]", String.format("%s,%s", feature, thoroughfare)));
         if (postalCode!=null)
             paramList.add(new BasicNameValuePair(addressField+"[und][0][postal_code]",postalCode));
 

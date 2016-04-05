@@ -18,7 +18,7 @@
             android:id="@+id/toolbar_UserProfileActivity"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/holo_blue_dark"
+            android:background="@color/toolbar_color"
             android:elevation="4dp"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
@@ -173,15 +173,18 @@
         android:layout_height="0dp"
         android:background="@color/white"
         android:orientation="horizontal"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:layout_weight="1"  android:gravity="center"
         android:id="@+id/ll_myObservations_UserProfileActivity">
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:src="@drawable/icon_camera_small" />
 
         <TextView
+            android:layout_marginLeft="10dp"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" android:textColor="#000000"
             android:text="@string/my_observations_userProfileActivity" />
@@ -192,14 +195,17 @@
         android:background="@color/white"
         android:orientation="horizontal"
         android:layout_weight="1"  android:gravity="center"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:id="@+id/ll_changePassword_UserProfileActivity">
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:src="@drawable/icon_password_reset" />
 
         <TextView
+            android:layout_marginLeft="10dp"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" android:textColor="#000000"
             android:text="@string/change_password_userProfileActivity" />
@@ -210,14 +216,17 @@
         android:layout_height="0dp"
         android:background="@color/white"
         android:orientation="horizontal" android:gravity="center"
-        android:id="@+id/ll_logout_UserProfileActivity">
+        android:id="@+id/ll_logout_UserProfileActivity"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:src="@drawable/icon_logout" />
 
         <TextView
+            android:layout_marginLeft="10dp"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" android:textColor="#000000"
             android:text="@string/logout_userProfileActivity" />
