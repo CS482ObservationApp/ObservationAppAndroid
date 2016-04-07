@@ -44,6 +44,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onDestroy();
         if (loginTask!=null)
             loginTask.cancel(true);
+        //No need to cancel downloadUserImageTask
     }
 
     @Override

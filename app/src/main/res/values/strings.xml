@@ -49,9 +49,11 @@
     <string name="uploadFailedNotificationTitle">Upload Failed</string>
     <string name="uploadFailedNotificationText">Upload Failed,try again later…</string>
     <string name="updatingNotificationTitle">Updating…</string>
+    <string name="deletingNotificationTitle">Deleting…</string>
     <string name="updatingUserImageNotificationText">Updating user profile image…</string>
     <string name="updatingUserNameNotificationText">Updating user profile name…</string>
     <string name="updatingUserAddressNotificationText">Updating user profile address…</string>
+    <string name="deletingUserPostNotificationText">Deleting observation…</string>
     <!-- Sliding Menu-->
     <string name="login_SlidingMenu">Login</string>
 
@@ -116,6 +118,9 @@
 
     <!-- Observation Detail Activity-->
     <string name="node_not_found_observationDetailActivity">The record may be deleted</string>
+    <string name="delete_post_msg_observationDetailActivity">Are you sure to delete this post?</string>
+    <string name="delete_post_title_observationDetailActivity">Delete Observation</string>
+    <string name="failed_delete_observationDetailActivity">Failed to delete observation</string>
 
     <!-- Newest Observation Activity-->
     <string name="loading_newestObservationActivity">Loading&#8230;</string>
@@ -130,8 +135,8 @@
 
     <!-- My Post Activity-->
     <string name="my_post_toolbar_title_myPostActivity">My Posts</string>
-    <string name="view_more_on_web_myPostActivity">Click Me To View More On Web</string>
-    <string name="write_something_myPostActivity">Write Something!</string>
+    <string name="view_more_on_web_myPostActivity">View More On Web</string>
+    <string name="write_something_myPostActivity">Let\'s Write Something!</string>
     <string name="no_more_myPostActivity">No More Observations</string>
 
     <!-- Search Activity-->
@@ -171,5 +176,8 @@
     <string name="my_post_toolbar_title_searchResultActivity">Search Result</string>
     <string name="no_more_searchResultActivity">No More Result</string>
     <string name="click_to_load_more_searchResultActivity">Click To Load More</string>
+    
+    <!-- Actions -->
+    <string name="action_delete">Delete</string>
 
 </resources>

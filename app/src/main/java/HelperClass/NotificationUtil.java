@@ -20,7 +20,8 @@ public class NotificationUtil {
         UPLOAD_FAILED_NOTIFICATION_ID(2),
         UPDATE_USER_PROFILE_IMAGE_NOTIFICATION_ID(3),
         UPDATE_USER_PROFILE_NAME_NOTIFICATION_ID(4),
-        UPDATE_USER_PROFILE_ADDRESS_NOTIFICATION_ID(5);
+        UPDATE_USER_PROFILE_ADDRESS_NOTIFICATION_ID(5),
+        DELETE_USER_POST_NOTIFICATION_ID(6);
 
         private final int id;
         private NotificationID(int id){
@@ -72,6 +73,11 @@ public class NotificationUtil {
                 title=context.getString(R.string.updatingNotificationTitle);
                 text=context.getString(R.string.updatingUserAddressNotificationText);
                 break;
+            }
+            case DELETE_USER_POST_NOTIFICATION_ID:{
+                iconSrcID=R.drawable.icon_upload;
+                title=context.getString(R.string.deletingNotificationTitle);
+                text=context.getString(R.string.deletingUserPostNotificationText);
             }
         }
         NotificationCompat.Builder mBuilder=

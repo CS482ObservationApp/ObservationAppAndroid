@@ -25,13 +25,11 @@ public class ObservationEntryObject implements Parcelable{
 
         @Override
         public ObservationEntryObject[] newArray(int size) {
-            // TODO Auto-generated method stub
             return new ObservationEntryObject[size];
         }
 
         @Override
         public ObservationEntryObject createFromParcel(Parcel source) {
-            // TODO Auto-generated method stub
             return new ObservationEntryObject(source);
         }
     };
@@ -70,7 +68,6 @@ public class ObservationEntryObject implements Parcelable{
 
     @Override
     public int describeContents() {
-        // TODO Auto-generated method stub
         return 0;
     }
 

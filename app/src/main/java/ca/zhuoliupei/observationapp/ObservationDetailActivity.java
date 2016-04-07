@@ -1,6 +1,8 @@
 package ca.zhuoliupei.observationapp;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,6 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -41,8 +45,11 @@ import java.util.Locale;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
+import DrupalForAndroidSDK.DrupalServicesNode;
 import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.GeoUtil;
+import HelperClass.MyObservationCacheManager;
+import HelperClass.NotificationUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Model.ObservationEntryObject;
@@ -50,6 +57,7 @@ import Model.ObservationEntryObject;
 public class ObservationDetailActivity extends AppCompatActivity {
     private static final String TITLE="title";
     private static final String NID="nid";
+    private static final String AUTHOR="author_name";
     private static final String IMAGE ="Image";
     private static final String DESCRIPTION="Description";
     private static final String DIARY_RECORD="Climate Diary Record";
@@ -76,6 +84,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
     private DrupalServicesView drupalServicesView;
     private DrupalAuthSession drupalAuthSession;
     private ObservationEntryObject observationEntryObject;
+    private boolean userIsAuthor=false;
 
     @Override
     protected void onDestroy() {
@@ -84,6 +93,33 @@ public class ObservationDetailActivity extends AppCompatActivity {
             downloadObservationDetailTask.cancel(true);
         if (downloadObservationImageTask!=null)
             downloadObservationImageTask.cancel(true);
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_observation_detail, menu);
+        menu.findItem(R.id.action_delete).setVisible(userIsAuthor);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_delete: {
+                handleDeleteAction();
+                return true;
+            }
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    private void handleDeleteAction(){
+
+        if (observationEntryObject!=null) {
+            showConfirmDeletePostDialog(this);
+        }
     }
 
     @Override
@@ -227,13 +263,18 @@ public class ObservationDetailActivity extends AppCompatActivity {
             if (statusCode.equals(HTTPConst.HTTP_OK_200))
                 if (responseBody.equals("[]")||responseBody.length()<5)
                     showNodeNotFoundView();
-                else
-                    loadViewWithDetail(responseBody);
+                else {
+                    loadContentViewWithDetail(responseBody);
+                    checkUserIsAuthor();
+                    if (userIsAuthor){
+                        invalidateOptionsMenu();
+                    }
+                }
             else if(statusCode.equals(HTTPConst.HTTP_NOT_FOUND_404))
                 showNodeNotFoundView();
         }
     }
-    private void loadViewWithDetail(String detailJsonStr){
+    private void loadContentViewWithDetail(String detailJsonStr){
         try {
             //Hide the refresh animation
             hideLoadingView();
@@ -324,10 +365,54 @@ public class ObservationDetailActivity extends AppCompatActivity {
         }
     }
 
+    private class DeletePostTask extends AsyncTask<String,Void,Boolean>{
+        Context context;
+        String nid;
+        public DeletePostTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected Boolean doInBackground(String... params) {
+            if (params.length<=0)
+                return false;
+            nid=params[0];
+            if (drupalAuthSession==null)
+                return false;
+            DrupalServicesNode drupalServicesNode=new DrupalServicesNode(baseUrl,endpoint);
+            drupalServicesNode.setAuth(drupalAuthSession);
+            HashMap<String ,String > map;
+            try {
+                map = drupalServicesNode.delete(Integer.parseInt(nid));
+            }catch (Exception ex){
+                return false;
+            }
+            if (!map.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200))
+                return false;
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean succeed) {
+            NotificationUtil.removeNotification(context, NotificationUtil.NotificationID.DELETE_USER_POST_NOTIFICATION_ID);
+            if(succeed)
+                MyObservationCacheManager.getInstance(context).deleteCache(nid);
+            else
+                NotificationUtil.showNotification(context, NotificationUtil.NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
+        }
+    }
 
     //Helper functions
     private ObservationEntryObject constructObservationEntryObject(JSONObject jsonObject){
         ObservationEntryObject object=new ObservationEntryObject();
+        try {
+            String nid = jsonObject.getString(NID);
+            object.nid = nid;
+        }catch (Exception ex){}
+        try {
+            String author = jsonObject.getString(AUTHOR);
+            object.author = author;
+        }catch (Exception ex){}
         try {
             String title = jsonObject.getString(TITLE);
             object.title = title;
@@ -390,8 +475,46 @@ public class ObservationDetailActivity extends AppCompatActivity {
         findViewById(R.id.content_ll_ObservationDetailActivity).setVisibility(View.GONE);
     }
     private void showNetworkErrorView(){
-        Toast.makeText(this,R.string.network_error,Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.network_error, Toast.LENGTH_SHORT).show();
         hideLoadingView();
+    }
+    private void showConfirmDeletePostDialog(final Context context){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage(R.string.delete_post_msg_observationDetailActivity)
+                .setTitle(R.string.delete_post_title_observationDetailActivity);
+        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                String nid="";
+                if (observationEntryObject!=null)
+                    nid=observationEntryObject.nid;
+                if (!nid.isEmpty()) {
+                    new DeletePostTask(context).execute(nid);
+                    NotificationUtil.showNotification(context, NotificationUtil.NotificationID.DELETE_USER_POST_NOTIFICATION_ID);
+                }else {
+                    Toast.makeText(context,R.string.failed_delete_observationDetailActivity,Toast.LENGTH_SHORT).show();
+                }
+                finish();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {/*Do nothing*/}
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void checkUserIsAuthor(){
+        if (observationEntryObject==null)
+        {
+            userIsAuthor=false;
+            return;
+        }
+        try{
+            String author=observationEntryObject.author;
+            if (author.equals(PreferenceUtil.getCurrentUser(this)))
+                userIsAuthor = true;
+            return;
+        }catch (Exception ex){}
+        userIsAuthor = false;
     }
 
 

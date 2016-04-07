@@ -41,6 +41,7 @@ import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesFile;
 import DrupalForAndroidSDK.DrupalServicesUser;
 import HelperClass.GeoUtil;
+import HelperClass.MyObservationCacheManager;
 import HelperClass.NotificationUtil;
 import HelperClass.PhotoUtil;
 import HelperClass.PreferenceUtil;
@@ -519,9 +520,9 @@ public class UserProfileActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             try {
                 drupalServicesUser.logout(context);
-
-            } catch (Exception ex) {
-            }
+                MyObservationCacheManager.getInstance(context).clearCache();
+                deleteLocalUserProfileImage(context);
+            } catch (Exception ex) {}
             return null;
         }
     }
@@ -640,14 +641,10 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
 
-
-
-    /************Update Local Cached User Profile Image********/
+    /************Update Local Cached User Profile Info********/
     private boolean updateLocalUserProfileImage(Bitmap photo, Context context) {
-        String currentProfilePhotoPath = PreferenceUtil.getCurrentUserPictureLocalUri(context);
-        File currentProfilePhoto = new File(currentProfilePhotoPath);
-        if (currentProfilePhoto.exists())
-            currentProfilePhoto.delete();
+        if (!deleteLocalUserProfileImage(context))
+            return false;
         String newFilePath = new File(context.getCacheDir(), "userImage_small_" + PreferenceUtil.getCurrentUser(context) + "_" + System.currentTimeMillis()).getPath();
         try {
             FileOutputStream out = new FileOutputStream(newFilePath);
@@ -690,6 +687,17 @@ public class UserProfileActivity extends AppCompatActivity {
     }
     private boolean deleteLocalUserSessionInfo(Context context){
         PreferenceUtil.deleteKey(context, SharedPreferencesConst.K_SESSION_EXPIRED);
+        return true;
+    }
+    private boolean deleteLocalUserProfileImage(Context context){
+        try {
+            String currentProfilePhotoPath = PreferenceUtil.getCurrentUserPictureLocalUri(context);
+            File currentProfilePhoto = new File(currentProfilePhotoPath);
+            if (currentProfilePhoto.exists())
+                return currentProfilePhoto.delete();
+        }catch (Exception ex){
+            return false;
+        }
         return true;
     }
 }

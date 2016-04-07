@@ -1,6 +1,7 @@
 package ca.zhuoliupei.observationapp;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -20,7 +21,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -37,6 +37,7 @@ import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DBHelper.NewestObservationDBHelper;
 import DrupalForAndroidSDK.DrupalAuthSession;
+import DrupalForAndroidSDK.DrupalServicesNode;
 import DrupalForAndroidSDK.DrupalServicesView;
 import HelperClass.AnimationUtil;
 import HelperClass.DownLoadUtil;
@@ -68,7 +69,6 @@ public class MyPostActivity extends AppCompatActivity {
     private String userName;
     private String cookie;
     private final double speedThreadshold = 1;
-    private int loadedPage = 0;
     private int itemsPerPage = 10;
     private int prevFirstVisibleItem;
     private long timeStamp;
@@ -82,6 +82,7 @@ public class MyPostActivity extends AppCompatActivity {
     private DownloadObservationObjectTask downloadObservationObjectTask;
     private CacheObservationObjectTask cacheObservationObjectTask;
     private RefreshContentViewDataSetTask refreshContentViewDatasetTask;
+    private DetectPostExistTask detectPostExistTask;
 
     private ListView contentLV;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -90,6 +91,7 @@ public class MyPostActivity extends AppCompatActivity {
     private RelativeLayout scrollviewFooterView;
     private TextView spaceHolderTxt;
 
+    DrupalAuthSession authSession;
 
     @Override
     protected void onDestroy() {
@@ -97,6 +99,10 @@ public class MyPostActivity extends AppCompatActivity {
             downloadObservationObjectTask.cancel(true);
         if (detectPictureExistTask != null)
             detectPictureExistTask.cancel(true);
+        if (refreshContentViewDatasetTask != null)
+            refreshContentViewDatasetTask.cancel(true);
+        if (detectPostExistTask!=null)
+            detectPostExistTask.cancel(true);
         super.onDestroy();
     }
 
@@ -109,7 +115,8 @@ public class MyPostActivity extends AppCompatActivity {
         setWidgetListeners();
 
         beginDownloadObservation();
-        beginDetectPicture();
+        beginDetectPictureExist();
+        beginDetectPostExist();
     }
 
     @Override
@@ -129,6 +136,9 @@ public class MyPostActivity extends AppCompatActivity {
         myObservationCacheManager = MyObservationCacheManager.getInstance(this);
         userName = PreferenceUtil.getCurrentUser(this);
         cookie=PreferenceUtil.getCookie(this);
+
+        authSession = new DrupalAuthSession();
+        authSession.setSession(cookie);
     }
     private void initializeUI() {
         initializeContentView();
@@ -142,25 +152,33 @@ public class MyPostActivity extends AppCompatActivity {
         setToolbarOnClick();
     }
     private void beginDownloadObservation() {
-        HashMap<String, String> sessionInfoMap = new HashMap<>();
-        sessionInfoMap.put(COOKIE, cookie);
-        sessionInfoMap.put(ACTION, Action.REFRESH.toString());
+        if (downloadObservationObjectTask!=null)
+            downloadObservationObjectTask.cancel(true);
         downloadObservationObjectTask = new DownloadObservationObjectTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+            downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, Action.REFRESH);
         } else {
-            downloadObservationObjectTask.execute(sessionInfoMap);
+            downloadObservationObjectTask.execute(Action.REFRESH);
         }
     }
-    private void beginDetectPicture() {
-        HashMap<String, String> sessionInfoMap = new HashMap<>();
-        sessionInfoMap.put(COOKIE, cookie);
-        sessionInfoMap.put(ACTION, Action.REFRESH.toString());
+    private void beginDetectPictureExist() {
+        if (detectPostExistTask!=null)
+            detectPostExistTask.cancel(true);
         detectPictureExistTask = new DetectPictureExistTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
+            detectPictureExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
-            detectPictureExistTask.execute(sessionInfoMap);
+            detectPictureExistTask.execute();
+        }
+    }
+    private void beginDetectPostExist(){
+        if (detectPostExistTask!=null)
+            detectPostExistTask.cancel(true);
+        detectPostExistTask=new DetectPostExistTask(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            detectPostExistTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+            detectPostExistTask.execute();
         }
     }
 
@@ -239,24 +257,15 @@ public class MyPostActivity extends AppCompatActivity {
                     */
                     if (!flag_loading) {
                         showLoadingMoreView();
-                        HashMap<String, String> sessionInfoMap = new HashMap<>();
-                        sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
-                        sessionInfoMap.put(ACTION, Action.APPEND.toString());
-                        ObservationEntryObject lastobject = null;
-                        synchronized (lvDataSet) {
-                            if (lvDataSet.size() > 0)
-                                lastobject = lvDataSet.get(lvDataSet.size() - 1);
+
+                        downloadObservationObjectTask = new DownloadObservationObjectTask((Activity) view.getContext());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                            downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, Action.APPEND);
+                        } else {
+                            downloadObservationObjectTask.execute(Action.APPEND);
                         }
-                        if (lastobject != null) {
-                            sessionInfoMap.put(DATE, lastobject.date);
-                            downloadObservationObjectTask = new DownloadObservationObjectTask((Activity) view.getContext());
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                                downloadObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sessionInfoMap);
-                            } else {
-                                downloadObservationObjectTask.execute(sessionInfoMap);
-                            }
-                            flag_loading = true;
-                        }
+
+                        flag_loading = true;
                     }
                 } else if (totalItemCount >= myObservationCacheManager.getMaxCacheAmount()) {
                     showSeeMoreOnWebView();
@@ -269,6 +278,7 @@ public class MyPostActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 beginDownloadObservation();
+                beginDetectPostExist();
             }
         });
     }
@@ -295,7 +305,7 @@ public class MyPostActivity extends AppCompatActivity {
         }
     }
 
-    private class DownloadObservationObjectTask extends AsyncTask<HashMap<String, String>, Void, ObservationEntryObject[]> {
+    private class DownloadObservationObjectTask extends AsyncTask<Action      , Void, ObservationEntryObject[]> {
         Activity context;
         String action;
 
@@ -304,20 +314,15 @@ public class MyPostActivity extends AppCompatActivity {
         }
 
         @Override
-        protected ObservationEntryObject[] doInBackground(HashMap<String, String>... params) {
-            DrupalAuthSession authSession = new DrupalAuthSession();
+        protected ObservationEntryObject[] doInBackground(Action... actions) {
             DrupalServicesView myObservationView = new DrupalServicesView(getText(R.string.drupal_site_url).toString(), getText(R.string.drupal_server_endpoint).toString());
 
-            action = params[0].get(ACTION);
+            action = actions[0].toString();
 
             //Get cookie
-            String cookie = params[0].get(COOKIE);
-            authSession.setSession(cookie);
             myObservationView.setAuth(authSession);
-            //Get date parameter
-            String date = params[0].get(DATE);
 
-            BasicNameValuePair[] pairs = getParams(date);
+            BasicNameValuePair[] pairs = buildHttpParams(action);
             try {
                 HashMap<String, String> responseMap = myObservationView.retrieve(DrupalServicesView.ViewType.PERSONAL_OBSERVATION, pairs);
                 return getObservationObjectsFromResponse(responseMap);
@@ -328,10 +333,6 @@ public class MyPostActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ObservationEntryObject[] observationEntryObjects) {
-            //If download error, only show network unavailable when user wants to refresh
-            if (observationEntryObjects.length == 0 && action.equals(Action.REFRESH.toString()))
-                Toast.makeText(context, R.string.network_error, Toast.LENGTH_SHORT).show();
-
             cacheObservationObjectTask = new CacheObservationObjectTask(context, action);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 cacheObservationObjectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, observationEntryObjects);
@@ -381,8 +382,13 @@ public class MyPostActivity extends AppCompatActivity {
 
         @Override
         protected ArrayList<ObservationEntryObject> doInBackground(Void... params) {
+            int loadedPage;
             if (action.equals(Action.REFRESH.toString())) {
                 loadedPage = 0;
+            }else {
+                synchronized (lvDataSet) {
+                    loadedPage = lvDataSet.size() / itemsPerPage;
+                }
             }
             ArrayList<ObservationEntryObject> newList;
             newList = myObservationCacheManager.getCache((loadedPage + 1) * itemsPerPage);
@@ -401,7 +407,6 @@ public class MyPostActivity extends AppCompatActivity {
                     for (ObservationEntryObject object : newList) {
                         lvDataSet.add(object);
                     }
-                    loadedPage++;
                     myObservationAdapter.notifyDataSetChanged();
                 }
 
@@ -425,7 +430,7 @@ public class MyPostActivity extends AppCompatActivity {
     /* This task runs in the back ground until the activity destroyed
     *  It scans through the visible items in GridView to see if the local picture file exits
     *  If not, download the file, and update the location in the database,refresh Gridview adapter*/
-    private class DetectPictureExistTask extends AsyncTask<HashMap<String, String>, Void, Void> {
+    private class DetectPictureExistTask extends AsyncTask<Void, Void, Void> {
         Activity context;
         ArrayList<ObservationEntryObject> visibleObjects;
         ArrayList<ObservationEntryObject> objectsLackPicture;
@@ -455,7 +460,7 @@ public class MyPostActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Void doInBackground(HashMap<String, String>... params) {
+        protected Void doInBackground(Void... voids) {
             while (!this.isCancelled()) {
                 try {
                     Thread.sleep(1000);
@@ -519,31 +524,52 @@ public class MyPostActivity extends AppCompatActivity {
                 myObservationAdapter.notifyDataSetChanged();
         }
     }
+    
+    private class DetectPostExistTask extends AsyncTask<Void,Void,Void> {
+        Context context;
 
+        public DetectPostExistTask(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if (myObservationCacheManager==null)
+                myObservationCacheManager=MyObservationCacheManager.getInstance(context);
+            ArrayList<ObservationEntryObject> cachedObjects = myObservationCacheManager.getCache(myObservationCacheManager.getMaxCacheAmount());
+            DrupalServicesNode drupalServicesNode=new DrupalServicesNode(getText(R.string.drupal_site_url).toString(), getText(R.string.drupal_server_endpoint).toString());
+            drupalServicesNode.setAuth(authSession);
+
+            for (ObservationEntryObject object:cachedObjects) {
+                String nid=object.nid;
+                try{
+                    HashMap<String,String> map = drupalServicesNode.retrieve(Integer.parseInt(nid));
+                    String responseCode=map.get(DrupalServicesFieldKeysConst.STATUS_CODE);
+                    if (!responseCode.equals(HTTPConst.HTTP_OK_200))
+                        myObservationCacheManager.deleteCache(nid);
+                }catch (Exception ex){}
+            }
+
+            return null;
+        }
+    }
 
     //Helper methods
-    private BasicNameValuePair[] getParams(String dateTime) {
-        if (dateTime != null && !dateTime.isEmpty()) {
-            String date = dateTime.split(" ")[0];
-            String year = date.split("-")[0];
-            String month = date.split("-")[1];
-            String day = date.split("-")[2];
-            year = String.valueOf(Integer.parseInt(year));
-            month = String.valueOf(Integer.parseInt(month));
-            day = String.valueOf(Integer.parseInt(day));
-
-            BasicNameValuePair[] returnPairs = new BasicNameValuePair[4];
-            returnPairs[0] = new BasicNameValuePair("field_date_observed_value[value][year]", year);
-            returnPairs[1] = new BasicNameValuePair("field_date_observed_value[value][month]", month);
-            returnPairs[2] = new BasicNameValuePair("field_date_observed_value[value][day]", day);
-            returnPairs[3] = new BasicNameValuePair("uid", userName);
-
-            return returnPairs;
-        }else {
-            BasicNameValuePair[] returnPairs = new BasicNameValuePair[1];
-            returnPairs[0] = new BasicNameValuePair("uid", userName);
-            return returnPairs;
+    private BasicNameValuePair[] buildHttpParams(String action) {
+        int loadedPage;
+        BasicNameValuePair[] returnPairs = new BasicNameValuePair[2];
+        if (action.equals(Action.REFRESH.toString())) {
+            returnPairs[0] = new BasicNameValuePair("page", String.valueOf(0));
         }
+        else {
+            synchronized (lvDataSet) {
+                loadedPage = lvDataSet.size() / itemsPerPage;
+                returnPairs[0] = new BasicNameValuePair("page", String.valueOf(loadedPage+1));
+            }
+        }
+        returnPairs[1] = new BasicNameValuePair("uid", userName);
+
+        return returnPairs;
     }
     private ObservationEntryObject[] getObservationObjectsFromResponse(HashMap<String, String> responseMap) {
         // Fetch info from json response, store the image url and other info into each observation objects
@@ -647,12 +673,7 @@ public class MyPostActivity extends AppCompatActivity {
     private void showNoPostView(){
         if (spaceHolderTxt==null)
             spaceHolderTxt=(TextView)findViewById(R.id.txtSpaceHolder_MyPostHeader);
-        if (contentLV==null)
-            contentLV=(ListView)findViewById(R.id.content_lv_MyPostActivity);
 
-
-        if (contentLV!=null)
-            contentLV.setVisibility(View.GONE);
         if (spaceHolderTxt!=null) {
             spaceHolderTxt.setText(R.string.write_something_myPostActivity);
             spaceHolderTxt.setVisibility(View.VISIBLE);

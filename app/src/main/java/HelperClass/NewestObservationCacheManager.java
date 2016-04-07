@@ -2,15 +2,12 @@ package HelperClass;
 
 import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.IllegalFormatCodePointException;
-import java.util.concurrent.locks.Lock;
 
 import DBContract.ObservationContract;
 import DBHelper.NewestObservationDBHelper;
@@ -22,7 +19,7 @@ import Model.ObservationEntryObject;
 public class NewestObservationCacheManager {
     static String mCacheDir;
     static Activity mContext;
-    final int maxCacheAmount = 200;//TODO:Change it to 200
+    final int maxCacheAmount = 300;
     static final Object lock = new Object();
 
     protected NewestObservationCacheManager() {
@@ -151,6 +148,14 @@ public class NewestObservationCacheManager {
         return returnList;
     }
 
+    public void clearCache(){
+        NewestObservationDBHelper dbHelper = new NewestObservationDBHelper(mContext);
+        SQLiteDatabase writableDatabase = dbHelper.getWritableDatabase();
+        synchronized (lock){
+            writableDatabase.delete(ObservationContract.NewestObservationEntry.TABLE_NAME,null,null);
+        }
+        writableDatabase.close();
+    }
     public int getMaxCacheAmount() {
         return maxCacheAmount;
     }

@@ -31,14 +31,15 @@
     android:layout_height="match_parent"
     tools:context="ca.zhuoliupei.observationapp.MyPostActivity"
     android:id="@+id/swiperefresh_MyPostActivity"
-    android:background="#EEEEEE">
+    android:background="#EEEEEE"
+    >
 
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/content_lv_MyPostActivity"
-        android:dividerHeight="0dp"
-        android:divider="@android:color/transparent"/>
+        android:dividerHeight="1dp"
+        android:divider="@android:color/darker_gray"/>
 </android.support.v4.widget.SwipeRefreshLayout>
 
 

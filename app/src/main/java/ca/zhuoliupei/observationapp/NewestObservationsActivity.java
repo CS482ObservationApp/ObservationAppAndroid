@@ -247,7 +247,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /** Jump to observation detail only when item is clicked
                  * If footer is clicked, do nothing
                  */
-                if (position<gvDataset.size()) {
+                if (position < gvDataset.size()) {
                     ObservationEntryObject selectedObject = (ObservationEntryObject) contentGVAdapter.getItem(position);
                     Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
                     intent.putExtra(NID, selectedObject.nid);
@@ -266,10 +266,10 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /*Make sure that the user touched and scrolled
                 * See: http://stackoverflow.com/questions/16073368/onscroll-gets-called-when-i-set-listview-onscrolllistenerthis-but-without-any
                 */
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING|| scrollState == SCROLL_STATE_TOUCH_SCROLL)
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING || scrollState == SCROLL_STATE_TOUCH_SCROLL)
                     userScrolled = true;
                 else
-                    userScrolled=false;
+                    userScrolled = false;
             }
 
             @Override
@@ -537,19 +537,14 @@ public class NewestObservationsActivity extends AppCompatActivity{
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_delete) {
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_newest_observations, menu);
-        return true;
-    }
+
 
     /*CacheObservationObjectTask is not canceled because it could complete in a short time
     * The same as RefreshContentViewDataSetTask*/
@@ -562,6 +557,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
             detectPictureExistTask.cancel(true);
         if (validateSessionTask != null)
             validateSessionTask.cancel(true);
+        if (refreshGVDatasetTask!=null)
+            refreshGVDatasetTask.cancel(true);
     }
 
 
