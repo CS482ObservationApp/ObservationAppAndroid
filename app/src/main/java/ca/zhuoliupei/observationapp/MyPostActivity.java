@@ -1,3 +1,26 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 package ca.zhuoliupei.observationapp;
 
 import android.app.Activity;
@@ -35,7 +58,6 @@ import java.util.HashMap;
 import Adapter.MyObservationAdapter;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
-import DBHelper.NewestObservationDBHelper;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesNode;
 import DrupalForAndroidSDK.DrupalServicesView;
@@ -45,7 +67,13 @@ import HelperClass.MyObservationCacheManager;
 import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Model.ObservationEntryObject;
-
+/**This class provides functions:
+ * 1. Fetch user's own posts from network show them and store them locally
+ * 2. If network is not available, fetch from local database and show to user
+ * 3. Detect if the cached post still exists in cloud, if not, delete it
+ * 4. Provide entry to Observation Detail Activity
+ * 5. Monitor when user scroll to bottom, automatically download  more
+ * 6 .Control the amount of observations downloaded,stop load more when amount exceeds a max value.*/
 public class MyPostActivity extends AppCompatActivity {
     private final static String NID = "nid";
     private final static String DATE = "date";
@@ -95,6 +123,7 @@ public class MyPostActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+//        CacheObservationTask is not canceled because it's quick
         if (downloadObservationObjectTask != null)
             downloadObservationObjectTask.cancel(true);
         if (detectPictureExistTask != null)
@@ -124,7 +153,7 @@ public class MyPostActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    //Contained in onCreate()
+    //Wrapped in onCreate()
     private void initializeVariables() {
         flag_loading = false;
         userScrolled=false;
@@ -182,7 +211,7 @@ public class MyPostActivity extends AppCompatActivity {
         }
     }
 
-    //Contained in initialUI()
+    //Wrapped in initialUI()
     private void initializeContentView() {
         showRefreshView();
         contentLV.setAdapter(myObservationAdapter);
@@ -191,7 +220,7 @@ public class MyPostActivity extends AppCompatActivity {
         ToolBarStyler.styleToolBar(this, toolbar, getString(R.string.my_post_toolbar_title_myPostActivity));
     }
 
-    //Contained in setWidgetListeners()
+    //Wrapped in setWidgetListeners()
     private void setFloatingButtonOnClick() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_MyPostActivity);
         if (fab != null) {
@@ -203,7 +232,6 @@ public class MyPostActivity extends AppCompatActivity {
             });
         }
     }
-
     private void setContentLVOnItemClick() {
         contentLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -305,7 +333,15 @@ public class MyPostActivity extends AppCompatActivity {
         }
     }
 
-    private class DownloadObservationObjectTask extends AsyncTask<Action      , Void, ObservationEntryObject[]> {
+
+
+    /***************Asynctasks***********************/
+    /* These 3 classes are called in a consecutive way:
+    * DonwloadObservationObjectTask--->CacheObservationObjectTask--->RefreshContentViewDataSetTask
+    * First fetch observations in Json and construct an array of Observation Objects
+    * Then pass it to Cache Manager to cache them to database
+    * Lastly fetch from database to refresh the gridview (text only without picture)*/
+    private class DownloadObservationObjectTask extends AsyncTask<Action, Void, ObservationEntryObject[]> {
         Activity context;
         String action;
 
@@ -426,7 +462,6 @@ public class MyPostActivity extends AppCompatActivity {
         }
     }
 
-
     /* This task runs in the back ground until the activity destroyed
     *  It scans through the visible items in GridView to see if the local picture file exits
     *  If not, download the file, and update the location in the database,refresh Gridview adapter*/
@@ -434,29 +469,12 @@ public class MyPostActivity extends AppCompatActivity {
         Activity context;
         ArrayList<ObservationEntryObject> visibleObjects;
         ArrayList<ObservationEntryObject> objectsLackPicture;
-        NewestObservationDBHelper dbHelper;
-        SQLiteDatabase writableDatabase;
-        SQLiteDatabase readableDatabase;
-        Cursor c = null;
 
 
         public DetectPictureExistTask(Activity context) {
             this.context = context;
             this.visibleObjects = new ArrayList<>();
             this.objectsLackPicture = new ArrayList<>();
-            this.dbHelper = new NewestObservationDBHelper(context);
-            this.writableDatabase = dbHelper.getWritableDatabase();
-            this.readableDatabase = dbHelper.getReadableDatabase();
-        }
-
-        @Override
-        protected void onCancelled() {
-            if (c != null) {
-                c.close();
-            }
-            readableDatabase.close();
-            writableDatabase.close();
-            super.onCancelled();
         }
 
         @Override
@@ -524,7 +542,10 @@ public class MyPostActivity extends AppCompatActivity {
                 myObservationAdapter.notifyDataSetChanged();
         }
     }
-    
+
+    /*This task runs once when the activity is created until it's destroyed, it scanned through all the cached post in DB
+    * It sends a http request for the node to see if the node exist
+    * If not,delete it from Local DB*/
     private class DetectPostExistTask extends AsyncTask<Void,Void,Void> {
         Context context;
 
@@ -554,7 +575,10 @@ public class MyPostActivity extends AppCompatActivity {
         }
     }
 
-    //Helper methods
+
+
+
+    /**************Helper methods****************/
     private BasicNameValuePair[] buildHttpParams(String action) {
         int loadedPage;
         BasicNameValuePair[] returnPairs = new BasicNameValuePair[2];
@@ -643,7 +667,6 @@ public class MyPostActivity extends AppCompatActivity {
             });
         }
     }
-
     private void showLoadingMoreView() {
         if (scrollviewFooterView == null)
             scrollviewFooterView=(RelativeLayout)findViewById(R.id.scrollview_footer);

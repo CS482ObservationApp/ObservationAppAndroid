@@ -18,7 +18,7 @@
         android:theme="@style/AppTheme" >
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAc9GNpAZRYx0a7mE-rX5bqIn_o-caBeUw" />
+            android:value="input-your-api-key-here" />
 
         <!-- Splash Screen Activity, Main Activity -->
         <!-- Remember to set noHistory to true -->

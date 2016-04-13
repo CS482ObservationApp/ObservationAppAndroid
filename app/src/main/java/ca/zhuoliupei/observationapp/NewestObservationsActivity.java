@@ -1,19 +1,34 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package ca.zhuoliupei.observationapp;
 
 import android.app.Activity;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -23,7 +38,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
@@ -50,7 +64,6 @@ import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import Const.ObservationModelConst;
 import Const.SharedPreferencesConst;
-import DBHelper.NewestObservationDBHelper;
 import DrupalForAndroidSDK.DrupalAuthSession;
 import DrupalForAndroidSDK.DrupalServicesUser;
 import DrupalForAndroidSDK.DrupalServicesView;
@@ -65,6 +78,14 @@ import Model.ObservationEntryObject;
 import Model.SlidingMenuItem;
 import ViewAndFragmentClass.GridViewWithHeaderAndFooter;
 
+/**The class provides functions:
+ * 1. Fetch newest observations from cloud, show them and cache them to local database
+ * 2. If network not available, fetch from local database and show them to user
+ * 3. Start an asynctask to detect if user's session expired, show a notification did
+ * 4. Start an asynctask to detect if the cached observation has an image with it, if not, download it from cloud
+ * 5. Provides entries to other activities includes UserProfile, Search, Upload, My Posts depends on if user login
+ * 6. Monitor when user scroll to bottom, automatically download  more
+ * 7 .Control the amount of observations downloaded,stop load more when amount exceeds a max value.*/
 public class NewestObservationsActivity extends AppCompatActivity{
 
     private final static String NID = "nid";
@@ -78,8 +99,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
     private int loadedPage = 0;
     private int itemsPerPage = 10;
-    private String cacheFolder;
-    private final ArrayList<ObservationEntryObject> gvDataset = new ArrayList<>();
+    private final ArrayList<ObservationEntryObject> gvDataSet = new ArrayList<>();
     private  String cookie ;
     private boolean userScrolled = false;
     private boolean flag_loading = false;
@@ -87,7 +107,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private DetectPictureExistTask detectPictureExistTask;
     private DownloadObservationObjectTask downloadObservationObjectTask;
     private CacheObservationObjectTask cacheObservationObjectTask;
-    private RefreshGVDatasetTask refreshGVDatasetTask;
+    private RefreshGVDataSetTask refreshGVDataSetTask;
     private ValidateSessionTask validateSessionTask;
 
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -106,6 +126,34 @@ public class NewestObservationsActivity extends AppCompatActivity{
     private double scrollingSpeed;
     private final double SPEED_THREASHOLD = 1;
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_delete) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
+    protected void onDestroy() {
+    /*CacheObservationObjectTask is not canceled because it could complete in a short time
+       * The same as RefreshContentViewDataSetTask*/
+        super.onDestroy();
+        if (downloadObservationObjectTask != null)
+            downloadObservationObjectTask.cancel(true);
+        if (detectPictureExistTask != null)
+            detectPictureExistTask.cancel(true);
+        if (validateSessionTask != null)
+            validateSessionTask.cancel(true);
+        if (refreshGVDataSetTask !=null)
+            refreshGVDataSetTask.cancel(true);
+    }
     @Override
     public void onBackPressed() {
         //Hide the sliding menu if it's opened
@@ -142,9 +190,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
         swipeRefreshLayout = ((SwipeRefreshLayout) findViewById(R.id.swiperefresh_NewestObservationActivity));
         contentGV = (GridViewWithHeaderAndFooter) findViewById(R.id.content_gridview_NewestObsrvationActivity);
         toolbar = (Toolbar) findViewById(R.id.toolbar_NewestActivity);
-        cacheFolder = getCacheDir() + "//Newest_Observation";
         cookie= PreferenceUtil.getCookie(this);
-        contentGVAdapter = new NewestObservationAdapter(gvDataset, this);
+        contentGVAdapter = new NewestObservationAdapter(gvDataSet, this);
         newestObservationCacheManager = NewestObservationCacheManager.getInstance(this);
     }
 
@@ -180,7 +227,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
         if (parcelables != null && parcelables.length > 0) {
             //Fill GridView content
             for (int i = 0; i < parcelables.length; i++) {
-                gvDataset.add((ObservationEntryObject) parcelables[i]);
+                gvDataSet.add((ObservationEntryObject) parcelables[i]);
             }
             contentGVAdapter.notifyDataSetChanged();
         } else {
@@ -247,7 +294,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
                 /** Jump to observation detail only when item is clicked
                  * If footer is clicked, do nothing
                  */
-                if (position < gvDataset.size()) {
+                if (position < gvDataSet.size()) {
                     ObservationEntryObject selectedObject = (ObservationEntryObject) contentGVAdapter.getItem(position);
                     Intent intent = new Intent(NewestObservationsActivity.this, ObservationDetailActivity.class);
                     intent.putExtra(NID, selectedObject.nid);
@@ -297,9 +344,9 @@ public class NewestObservationsActivity extends AppCompatActivity{
                         sessionInfoMap.put(DrupalServicesFieldKeysConst.LOGIN_COOKIE, cookie);
                         sessionInfoMap.put(ACTION, Action.APPEND.toString());
                         ObservationEntryObject lastobject = null;
-                        synchronized (gvDataset) {
-                            if (gvDataset.size() > 0)
-                                lastobject = (ObservationEntryObject) contentGVAdapter.getItem(gvDataset.size() - 1);
+                        synchronized (gvDataSet) {
+                            if (gvDataSet.size() > 0)
+                                lastobject = (ObservationEntryObject) contentGVAdapter.getItem(gvDataSet.size() - 1);
                         }
                         if (lastobject != null) {
                             sessionInfoMap.put(DATE, lastobject.date);
@@ -382,6 +429,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
         });
     }
 
+
     //Begin AsyncTasks
     private void beginValidateSession() {
         //Start validating if the session is expired or not
@@ -422,6 +470,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
             detectPictureExistTask.execute();
         }
     }
+
 
     //Helper functions
     private void addGridViewFooter() {
@@ -528,40 +577,6 @@ public class NewestObservationsActivity extends AppCompatActivity{
            contentGV.smoothScrollToPosition(0);
     }
 
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_delete) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-
-
-    /*CacheObservationObjectTask is not canceled because it could complete in a short time
-    * The same as RefreshContentViewDataSetTask*/
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (downloadObservationObjectTask != null)
-            downloadObservationObjectTask.cancel(true);
-        if (detectPictureExistTask != null)
-            detectPictureExistTask.cancel(true);
-        if (validateSessionTask != null)
-            validateSessionTask.cancel(true);
-        if (refreshGVDatasetTask!=null)
-            refreshGVDatasetTask.cancel(true);
-    }
-
-
     private ObservationEntryObject[] getObservationObjectsFromResponse(HashMap<String, String> responseMap) {
         // Fetch info from json response, store the image url and other info into each observation objects
         if (responseMap.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)) {
@@ -617,6 +632,8 @@ public class NewestObservationsActivity extends AppCompatActivity{
         }
         return new BasicNameValuePair[0];
     }
+
+
 
     /*****************************
      * AsyncTasks
@@ -737,7 +754,6 @@ public class NewestObservationsActivity extends AppCompatActivity{
             }
         }
     }
-
     private class CacheObservationObjectTask extends AsyncTask<ObservationEntryObject[], Void, Void> {
         Activity context;
         String action;
@@ -759,21 +775,20 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            refreshGVDatasetTask = new RefreshGVDatasetTask(context, action);
+            refreshGVDataSetTask = new RefreshGVDataSetTask(context, action);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                refreshGVDatasetTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                refreshGVDataSetTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             } else {
-                refreshGVDatasetTask.execute();
+                refreshGVDataSetTask.execute();
             }
         }
     }
-
-    private class RefreshGVDatasetTask extends AsyncTask<Void, Void, ArrayList<ObservationEntryObject>> {
+    private class RefreshGVDataSetTask extends AsyncTask<Void, Void, ArrayList<ObservationEntryObject>> {
         Activity context;
         String action;
         boolean itemAmountChanged;
 
-        public RefreshGVDatasetTask(Activity context, String action) {
+        public RefreshGVDataSetTask(Activity context, String action) {
             this.context = context;
             this.action = action;
         }
@@ -801,19 +816,19 @@ public class NewestObservationsActivity extends AppCompatActivity{
             if (contentGV == null)
                 return;
 
-            synchronized (gvDataset) {
-                itemAmountChanged = (newList.size() != gvDataset.size());
+            synchronized (gvDataSet) {
+                itemAmountChanged = (newList.size() != gvDataSet.size());
                 if (itemAmountChanged || action.equals(Action.REFRESH.toString())) {
-                    gvDataset.clear();
+                    gvDataSet.clear();
                     for (ObservationEntryObject object : newList) {
-                        gvDataset.add(object);
+                        gvDataSet.add(object);
                     }
                     loadedPage++;
                     contentGVAdapter.notifyDataSetChanged();
                 }
                 if (contentGV.getVisibility() != View.VISIBLE)
                     contentGV.setVisibility(View.VISIBLE);
-                if (gvDataset.size() <= 0||(action.equals(Action.APPEND.toString())&&!itemAmountChanged))
+                if (gvDataSet.size() <= 0||(action.equals(Action.APPEND.toString())&&!itemAmountChanged))
                     showNoMoreObservationView();
                 else if (action.equals(Action.REFRESH.toString()))
                     scrollGridViewToTop();
@@ -824,6 +839,7 @@ public class NewestObservationsActivity extends AppCompatActivity{
     }
 
 
+
     /* This task runs in the back ground until the activity destroyed
     *  It scans through the visible items in GridView to see if the local picture file exits
     *  If not, download the file, and update the location in the database,refresh Gridview adapter*/
@@ -831,29 +847,12 @@ public class NewestObservationsActivity extends AppCompatActivity{
         Activity context;
         ArrayList<ObservationEntryObject> visibleObjects;
         ArrayList<ObservationEntryObject> objectsLackPicture;
-        NewestObservationDBHelper dbHelper;
-        SQLiteDatabase writableDatabase;
-        SQLiteDatabase readableDatabase;
-        Cursor c = null;
 
 
         public DetectPictureExistTask(Activity context) {
             this.context = context;
             this.visibleObjects = new ArrayList<>();
             this.objectsLackPicture = new ArrayList<>();
-            this.dbHelper = new NewestObservationDBHelper(context);
-            this.writableDatabase = dbHelper.getWritableDatabase();
-            this.readableDatabase = dbHelper.getReadableDatabase();
-        }
-
-        @Override
-        protected void onCancelled() {
-            if (c != null) {
-                c.close();
-            }
-            readableDatabase.close();
-            writableDatabase.close();
-            super.onCancelled();
         }
 
         @Override
@@ -870,16 +869,16 @@ public class NewestObservationsActivity extends AppCompatActivity{
 
                 /* Lock the gridview dataset
                  * Get all visible objects */
-                synchronized (gvDataset) {
+                synchronized (gvDataSet) {
                     visibleObjects.clear();
-                    if (contentGVAdapter != null&&gvDataset.size()>0) {
+                    if (contentGVAdapter != null&& gvDataSet.size()>0) {
                         //TODO: Getting UI element would not matter, but better to change to use Handler
                         int firstVisiblePosition = contentGV.getFirstVisiblePosition();
                         int lastVisiblePosition = contentGV.getLastVisiblePosition();
-                        if (lastVisiblePosition >= gvDataset.size())
-                            lastVisiblePosition = gvDataset.size() - 1;
+                        if (lastVisiblePosition >= gvDataSet.size())
+                            lastVisiblePosition = gvDataSet.size() - 1;
                         for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++)
-                            visibleObjects.add(gvDataset.get(i));
+                            visibleObjects.add(gvDataSet.get(i));
                     }
                 }
 

@@ -1,3 +1,25 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package ca.zhuoliupei.observationapp;
 
 import android.content.Context;
@@ -9,9 +31,7 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +50,12 @@ import HelperClass.DownLoadUtil;
 import HelperClass.PreferenceUtil;
 import HelperClass.RegexValidator;
 import HelperClass.ToolBarStyler;
+/**
+ * This Activity class has the following functions:
+ * 1. provide a UI for getting user name and password to login
+ * 2. provide entry to Register Activity and Newest Observation Activity
+ * 3. login and store user profile info to local
+ */
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -54,36 +80,9 @@ public class LoginActivity extends AppCompatActivity {
         initializeVariables();
         initializeUI();
         setWidgetListeners();
-        //TODO:delete the default login name and password
     }
 
-    private void hideTransitionView(){
-        findViewById(R.id.txtPassword_LoginActivity).setEnabled(true);
-        findViewById(R.id.txtUserName_LoginActivity).setEnabled(true);
-        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(true);
-        findViewById(R.id.btnLogin_LoginActivity).setEnabled(true);
-        findViewById(R.id.btnRegister__LoginActivity).setEnabled(true);
 
-        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
-        swipeRefreshLayout.setRefreshing(false);
-        swipeRefreshLayout.setVisibility(View.GONE);
-    }
-    private void showTransitionView(){
-        findViewById(R.id.txtPassword_LoginActivity).setEnabled(false);
-        findViewById(R.id.txtUserName_LoginActivity).setEnabled(false);
-        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(false);
-        findViewById(R.id.btnLogin_LoginActivity).setEnabled(false);
-        findViewById(R.id.btnRegister__LoginActivity).setEnabled(false);
-
-        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
-        swipeRefreshLayout.setVisibility(View.VISIBLE);
-        swipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(true);
-            }
-        });
-    }
     //Initialization Wrappers
     private void initializeVariables(){
         baseUrl=getResources().getString(R.string.drupal_site_url);
@@ -102,14 +101,13 @@ public class LoginActivity extends AppCompatActivity {
         setLoginLaterOnClick();
     }
 
-    //Initialize UI Methods
+    //Wrapped in initializeUI()
     private void initializeActionBar(){
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_LoginActivity);
         ToolBarStyler.styleToolBar(this, myToolbar, "Login");
     }
 
-
-    //Widgets Listeners, wrapped in setWidgetListeners()
+    //Wrapped in setWidgetListeners()
     private void setRegisterBtnOnClick(){
         //When register button is clicked, start a register activity
         findViewById(R.id.btnRegister__LoginActivity).setOnClickListener(new View.OnClickListener() {
@@ -134,7 +132,7 @@ public class LoginActivity extends AppCompatActivity {
                 passwordStr = passwordEditText.getText().toString().trim();
 
                 //Validate input
-                if (validateLoginInfo()) {
+                if (validateInputOnClient()) {
                     loginTask.execute();
                     showTransitionView();
                 }
@@ -150,7 +148,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
-    //Worker Tasks Classes
+
+    // Asyntasks
     private class LoginTask extends AsyncTask<Void,Void,HashMap<String,String>>{
         Context context;
 
@@ -232,8 +231,9 @@ public class LoginActivity extends AppCompatActivity {
             return null;
         }
     }
+
     //Helper Methods
-    private boolean validateLoginInfo(){
+    private boolean validateInputOnClient(){
         boolean validate=true;
 
         if (userNameStr.isEmpty()){
@@ -253,13 +253,13 @@ public class LoginActivity extends AppCompatActivity {
         return validate;
     }
     private boolean storeSessionInfoToSharedPreferences(String responseBody) {
-        JSONObject responseJsonObjcet;
+        JSONObject responseJsonObject;
         String sessionID,sessionName,cookie;
         try {
             //Fetch session info and store it
-            responseJsonObjcet = new JSONObject(responseBody);
-            sessionID = responseJsonObjcet.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_ID);
-            sessionName = responseJsonObjcet.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_NAME);
+            responseJsonObject = new JSONObject(responseBody);
+            sessionID = responseJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_ID);
+            sessionName = responseJsonObject.getString(DrupalServicesFieldKeysConst.LOGIN_SESSION_NAME);
             cookie=sessionName+"="+ sessionID;
         }catch (Exception e) {
             Toast.makeText(this, R.string.network_error, Toast.LENGTH_LONG).show();
@@ -353,6 +353,33 @@ public class LoginActivity extends AppCompatActivity {
             return "";
         }
 
+    }
+    private void hideTransitionView(){
+        findViewById(R.id.txtPassword_LoginActivity).setEnabled(true);
+        findViewById(R.id.txtUserName_LoginActivity).setEnabled(true);
+        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(true);
+        findViewById(R.id.btnLogin_LoginActivity).setEnabled(true);
+        findViewById(R.id.btnRegister__LoginActivity).setEnabled(true);
+
+        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
+        swipeRefreshLayout.setRefreshing(false);
+        swipeRefreshLayout.setVisibility(View.GONE);
+    }
+    private void showTransitionView(){
+        findViewById(R.id.txtPassword_LoginActivity).setEnabled(false);
+        findViewById(R.id.txtUserName_LoginActivity).setEnabled(false);
+        findViewById(R.id.txtLoginLater_LoginActivity).setEnabled(false);
+        findViewById(R.id.btnLogin_LoginActivity).setEnabled(false);
+        findViewById(R.id.btnRegister__LoginActivity).setEnabled(false);
+
+        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)findViewById(R.id.swiperefresh_LoginActivity);
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
     }
 
 }

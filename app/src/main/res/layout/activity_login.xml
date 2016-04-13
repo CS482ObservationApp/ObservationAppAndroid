@@ -51,7 +51,7 @@
                     android:ems="10"
                     android:hint="@string/hint_email"
                     android:inputType="textPersonName"
-                    android:text="NormalUser" />
+                     />
 
                 <EditText
                     android:id="@+id/txtPassword_LoginActivity"
@@ -61,7 +61,7 @@
                     android:ems="10"
                     android:hint="@string/hint_password"
                     android:inputType="textPassword"
-                    android:text="kentlee1993" />
+                     />
 
                 <TextView
                     android:id="@+id/txtMessage_LoginActivity"

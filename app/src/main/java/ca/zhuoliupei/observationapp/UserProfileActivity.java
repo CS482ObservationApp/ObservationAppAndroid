@@ -1,3 +1,25 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package ca.zhuoliupei.observationapp;
 
 import android.app.Activity;
@@ -49,6 +71,11 @@ import HelperClass.ToolBarStyler;
 import HelperClass.UploadUtil;
 import HelperClass.NotificationUtil.NotificationID;
 
+/** This class provides functions:
+ * 1. Showing user profile
+ * 2. Editing user profile includes image,username,address 1 and 2
+ * 3. Provide entries to MyPost Activity, Reset Password Activity, Logout
+ */
 public class UserProfileActivity extends AppCompatActivity {
     private static final int INVALID=-1;
     private static final int CANCEL_UPLOAD=-1;
@@ -62,6 +89,18 @@ public class UserProfileActivity extends AppCompatActivity {
     private final int MAX_USER_IMAGE_UPLOAD_SIZE=300*300;
     private final int MAX_USER_IMAGE_VIEW_SIZE=50*50;
 
+    private final String USER_NAME="name";
+    private final String EMAIL="mail";
+    private final String PICTURE="picture";
+    private final String PICTURE_URL="url";
+    private final String ADDRESS1="field_l1_address";
+    private final String ADDRESS2="field_l2_address";
+    private final String COUNTRY="country";
+    private final String LOCALITY="locality";
+    private final String ADMIN_AREA="administrative_area";
+    private final String THOROUGHFARE ="thoroughfare";
+    private final String UND="und";
+
     String baseUrl, endpoint;
     DrupalAuthSession authSession;
     DrupalServicesUser drupalServicesUser;
@@ -69,9 +108,9 @@ public class UserProfileActivity extends AppCompatActivity {
     UpdateServerUserProfileImageTask updateServerUserProfileImageTask;
     UpdateServerUserProfileNameTask updateServerUserProfileNameTask;
     UpdateServerUserLocationTask updateServerUserLocationTask;
+    DetectUserInfoChangesTask detectUserInfoChangesTask;
     LogoutUserTask logoutUserTask;
     ReverseGeoCodeTask reverseGeoCodeTask;
-
     Toolbar toolbar;
 
     @Override
@@ -81,6 +120,8 @@ public class UserProfileActivity extends AppCompatActivity {
         initializeVariables();
         initializeUI();
         setWidgetListeners();
+
+        beginDetectUserInfoChanges();
     }
 
     private void initializeVariables() {
@@ -128,6 +169,13 @@ public class UserProfileActivity extends AppCompatActivity {
         if (toolbar!=null){
             ToolBarStyler.styleToolBar(this,toolbar,"Profile");
         }
+    }
+
+    private void beginDetectUserInfoChanges(){
+        if (detectUserInfoChangesTask!=null)
+            detectUserInfoChangesTask.cancel(true);
+        detectUserInfoChangesTask=new DetectUserInfoChangesTask(this);
+        detectUserInfoChangesTask.execute();
     }
     /*
     * setWidgetListeners contains the other setOnClickListener Methods
@@ -521,10 +569,81 @@ public class UserProfileActivity extends AppCompatActivity {
             try {
                 drupalServicesUser.logout(context);
                 MyObservationCacheManager.getInstance(context).clearCache();
-                deleteLocalUserProfileImage(context);
+                deleteLocalUserInfo(context);
             } catch (Exception ex) {}
             return null;
         }
+    }
+    private class DetectUserInfoChangesTask extends AsyncTask<Void,Void,Void>{
+        Context context;
+        public DetectUserInfoChangesTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                HashMap<String,String> map= drupalServicesUser.getUser(Integer.parseInt(PreferenceUtil.getCurrentUserID(context)));
+                if (map.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200)){
+                    updateLocalUserProfile(map.get(DrupalServicesFieldKeysConst.RESPONSE_BODY));
+                }
+            }catch ( Exception ex){}
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            initializeView();
+        }
+    }
+    private void updateLocalUserProfile(String jsonStr){
+        try{
+            JSONObject jsonObject=new JSONObject(jsonStr);
+            try{
+                String username=jsonObject.getString(USER_NAME);
+                PreferenceUtil.saveString(this,SharedPreferencesConst.K_USER_NAME,username);
+            }catch (Exception ex){}
+            try {
+                String email = jsonObject.getString(EMAIL);
+                PreferenceUtil.saveString(this, SharedPreferencesConst.K_USER_EMAIL, email);
+            }catch (Exception ex){}
+            try {
+                JSONObject pictureObject = jsonObject.getJSONObject(PICTURE);
+                String pictureUrl=pictureObject.getString(PICTURE_URL);
+                if (pictureUrl==null||pictureUrl.isEmpty()) {
+                    deleteLocalUserProfileImage(this);
+                }else {
+                    if (!pictureUrl.equals(PreferenceUtil.getCurrentUserPictureServerUri(this))) {
+                        Bitmap photo = PhotoUtil.getBitmapFromServerURL(pictureUrl);
+                        updateLocalUserProfileImage(photo, this);
+                        PreferenceUtil.saveString(this,SharedPreferencesConst.K_USER_IMAGE_SERVER_URI,pictureUrl);
+                    }
+                }
+            }catch (Exception ex){}
+            try{
+                Address address=new Address(Locale.getDefault());
+                JSONObject address1Object = jsonObject.getJSONObject(ADDRESS1).getJSONArray(UND).getJSONObject(0);
+                address.setCountryName(address1Object.getString(COUNTRY));
+                address.setAdminArea(address1Object.getString(ADMIN_AREA));
+                address.setLocality(address1Object.getString(LOCALITY));
+                address.setThoroughfare(address1Object.getString(THOROUGHFARE));
+                PreferenceUtil.saveString(this, SharedPreferencesConst.K_USER_ADDRESS_1, GeoUtil.getFullAddress(address));
+
+            }catch (Exception ex){
+                PreferenceUtil.deleteKey(this, SharedPreferencesConst.K_USER_ADDRESS_1);
+            }
+            try{
+                Address address=new Address(Locale.getDefault());
+                JSONObject address2Object = jsonObject.getJSONObject(ADDRESS2).getJSONArray(UND).getJSONObject(0);
+                address.setCountryName(address2Object.getString(COUNTRY));
+                address.setAdminArea(address2Object.getString(ADMIN_AREA));
+                address.setLocality(address2Object.getString(LOCALITY));
+                address.setThoroughfare(address2Object.getString(THOROUGHFARE));
+                PreferenceUtil.saveString(this, SharedPreferencesConst.K_USER_ADDRESS_2, GeoUtil.getFullAddress(address));
+            }catch (Exception ex){
+                PreferenceUtil.deleteKey(this, SharedPreferencesConst.K_USER_ADDRESS_2);
+            }
+
+        }catch(Exception ex){}
     }
 
     /******** Update Server User Profile Image function group***************/
@@ -700,5 +819,17 @@ public class UserProfileActivity extends AppCompatActivity {
         }
         return true;
     }
+    private boolean deleteLocalUserInfo(Context context){
+        deleteLocalUserProfileImage(context);
+        PreferenceUtil.deleteKey(context, SharedPreferencesConst.K_USER_ID);
+        PreferenceUtil.deleteKey(context,SharedPreferencesConst.K_USER_NAME);
+        PreferenceUtil.deleteKey(context,SharedPreferencesConst.K_USER_IMAGE_SERVER_URI);
+        PreferenceUtil.deleteKey(context,SharedPreferencesConst.K_USER_EMAIL);
+        PreferenceUtil.deleteKey(context,SharedPreferencesConst.K_USER_ADDRESS_1);
+        PreferenceUtil.deleteKey(context,SharedPreferencesConst.K_USER_ADDRESS_2);
+
+        return true;
+    }
+
 }
 

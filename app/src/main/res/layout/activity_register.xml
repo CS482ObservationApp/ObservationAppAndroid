@@ -16,7 +16,6 @@
         android:id="@+id/txtUserName_RegisterActivity"
         android:hint="@string/hint_username"
         android:layout_marginTop="120dp"
-        android:text="Kent"
         android:layout_gravity="center_horizontal"
         />
 
@@ -27,7 +26,6 @@
         android:ems="10"
         android:id="@+id/txtEmail_RegisterActivity"
         android:hint="@string/hint_email"
-        android:text="hello3424@163.com"
         android:layout_gravity="center_horizontal"
         />
 
@@ -55,8 +53,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/txtMessage_RegisterActivity"
         android:layout_gravity="center_horizontal"
-        android:maxLines="3"
-        android:lines="3"/>
+        android:maxLines="8"
+        android:lines="8"/>
     <Button
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

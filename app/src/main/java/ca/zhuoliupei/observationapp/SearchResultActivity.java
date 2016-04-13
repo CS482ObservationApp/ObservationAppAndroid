@@ -1,3 +1,26 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 package ca.zhuoliupei.observationapp;
 
 import android.content.Context;
@@ -30,7 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Adapter.SearchResultAdapter;
-import Adapter.SearchResultObservationEntryObject;
+import Model.SearchResultObservationEntryObject;
 import Const.DrupalServicesFieldKeysConst;
 import Const.HTTPConst;
 import DrupalForAndroidSDK.DrupalAuthSession;
@@ -41,6 +64,11 @@ import HelperClass.PreferenceUtil;
 import HelperClass.ToolBarStyler;
 import Model.SerializableNameValuePair;
 
+/**This activity provides functions:
+ * 1.Get search criteria from intent and send them as params to cloud to download observations
+ * 2.Monitor when user scroll to bottom, automatically download  more
+ * 3.Control the amount of observations downloaded,stop load more when amount exceeds a max value.
+ */
 public class SearchResultActivity extends AppCompatActivity{
 
     private final String NID="nid";

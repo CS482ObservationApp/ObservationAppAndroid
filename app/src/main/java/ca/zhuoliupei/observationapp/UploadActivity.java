@@ -1,3 +1,25 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package ca.zhuoliupei.observationapp;
 
 import android.app.AlertDialog;
@@ -54,6 +76,9 @@ import Interface.DatePickerCaller;
 import ViewAndFragmentClass.DatePickerFragment;
 import ViewAndFragmentClass.DelayAutoCompleteTextView;
 
+/**This class provides functions:
+ * 1. Provide UI for uploading observation
+ */
 public class UploadActivity extends AppCompatActivity implements  DatePickerCaller {
     public static final String FID="fid";
     public static final String RECORD="field_climate_diary_record";
@@ -512,7 +537,7 @@ public class UploadActivity extends AppCompatActivity implements  DatePickerCall
             paramsList.add(new BasicNameValuePair(RECORD+"[und][0][target_id]",record));
         }
         if (description!=null && !description.isEmpty()){
-            paramsList.add(new BasicNameValuePair(DESCRIPTION,description));
+            paramsList.add(new BasicNameValuePair(DESCRIPTION+"[und][0][value]",description));
         }
         if (name!=null && !name.isEmpty()){
             paramsList.add(new BasicNameValuePair(NAME+"[und][0][value]",name));

@@ -1,3 +1,26 @@
+/**	 ObservationApp, Copyright 2016, University of Prince Edward Island,
+ 550 University Avenue, C1A4P3,
+ Charlottetown, PE, Canada
+ *
+ * 	 @author Kent Li <zhuoli@upei.ca>
+ *
+ *   This file is part of ObservationApp.
+ *
+ *   ObservationApp is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   CycleTracks is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with CycleTracks.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 package ca.zhuoliupei.observationapp;
 
 import android.app.AlertDialog;
@@ -79,7 +102,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout rootLinearLayout;
     private int nid;
-    private int mapZoomRate;
+    private int mapZoomRate;//range from 2 to 21 according to GoogleMap api
     private String baseUrl,endpoint;
     private DrupalServicesView drupalServicesView;
     private DrupalAuthSession drupalAuthSession;
@@ -101,7 +124,6 @@ public class ObservationDetailActivity extends AppCompatActivity {
         menu.findItem(R.id.action_delete).setVisible(userIsAuthor);
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -115,12 +137,6 @@ public class ObservationDetailActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-    private void handleDeleteAction(){
-
-        if (observationEntryObject!=null) {
-            showConfirmDeletePostDialog(this);
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,9 +146,11 @@ public class ObservationDetailActivity extends AppCompatActivity {
         initializeUI();
         setWidgetListeners();
     }
+
+    //Wrapped in onCreate()
     private void initializeVariables(){
         Intent intent=getIntent();
-        mapZoomRate=25;
+        mapZoomRate=13;
         nid=Integer.parseInt(intent.getExtras().getString(NID, String.valueOf(INVALID))) ;
         baseUrl=getString(R.string.drupal_site_url);
         endpoint=getString(R.string.drupal_server_endpoint);
@@ -151,7 +169,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
         setTransparentImageViewOnTouch();
     }
 
-    // initializeUI subroutines
+    // initializeUI() subroutines
     private void initializeToolBar(){
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_ObservationDetailActivity);
         ToolBarStyler.styleToolBar(this, myToolbar, "Observation");
@@ -162,7 +180,8 @@ public class ObservationDetailActivity extends AppCompatActivity {
         beginDownloadObservationDetail();
     }
 
-    // setWidgetListeners subroutines
+
+    // setWidgetListeners() subroutines
     private void setTransparentImageViewOnTouch(){
         //http://stackoverflow.com/questions/16974983/google-maps-api-v2-supportmapfragment-inside-scrollview-users-cannot-scroll-th
         final ScrollView mainScrollView = (ScrollView) findViewById(R.id.content_sv_ObservationDetailActivity);
@@ -196,34 +215,8 @@ public class ObservationDetailActivity extends AppCompatActivity {
         });
     }
 
-    // initializeContentView() subroutines
-    private void hideScrollView(){
-        //Hide the grid view
-        ScrollView scrollView=(ScrollView)findViewById(R.id.content_sv_ObservationDetailActivity);
-        scrollView.setVisibility(View.GONE);
-    }
-    private void showLoadingView(){
-        rootLinearLayout.setVisibility(View.GONE);
-        swipeRefreshLayout.setVisibility(View.VISIBLE);
-        swipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(true);
-            }
-        });
-    }
 
-    private void hideLoadingView(){
-        swipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(false);
-            }
-        });
-        swipeRefreshLayout.setVisibility(View.GONE);
-        rootLinearLayout.setVisibility(View.VISIBLE);
-    }
-
+    //Begin Asynctasks
     private void beginDownloadObservationDetail(){
         downloadObservationDetailTask=new DownloadObservationDetailTask(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -233,6 +226,7 @@ public class ObservationDetailActivity extends AppCompatActivity {
         }
     }
 
+    // Asynctasks
     private class DownloadObservationDetailTask extends AsyncTask<Void,Void,HashMap<String, String>>{
         Context context;
         public DownloadObservationDetailTask(Context context){
@@ -274,6 +268,67 @@ public class ObservationDetailActivity extends AppCompatActivity {
                 showNodeNotFoundView();
         }
     }
+    private class DownloadObservationImageTask extends AsyncTask<String, Void, Bitmap> {
+        ImageView bmImage;
+
+        public DownloadObservationImageTask(ImageView bmImage) {
+            this.bmImage = bmImage;
+        }
+
+        protected Bitmap doInBackground(String... urls) {
+            String urldisplay = urls[0];
+            Bitmap mIcon11 = null;
+            try {
+                InputStream in = new java.net.URL(urldisplay).openStream();
+                mIcon11 = BitmapFactory.decodeStream(in);
+            } catch (Exception e) {
+                Log.e("Error", e.getMessage());
+                e.printStackTrace();
+            }
+            return mIcon11;
+        }
+
+        protected void onPostExecute(Bitmap result) {
+            bmImage.setImageBitmap(result);
+        }
+    }
+    private class DeletePostTask extends AsyncTask<String,Void,Boolean>{
+        Context context;
+        String nid;
+        public DeletePostTask(Context context){
+            this.context=context;
+        }
+        @Override
+        protected Boolean doInBackground(String... params) {
+            if (params.length<=0)
+                return false;
+            nid=params[0];
+            if (drupalAuthSession==null)
+                return false;
+            DrupalServicesNode drupalServicesNode=new DrupalServicesNode(baseUrl,endpoint);
+            drupalServicesNode.setAuth(drupalAuthSession);
+            HashMap<String ,String > map;
+            try {
+                map = drupalServicesNode.delete(Integer.parseInt(nid));
+            }catch (Exception ex){
+                return false;
+            }
+            if (!map.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200))
+                return false;
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean succeed) {
+            NotificationUtil.removeNotification(context, NotificationUtil.NotificationID.DELETE_USER_POST_NOTIFICATION_ID);
+            if(succeed)
+                MyObservationCacheManager.getInstance(context).deleteCache(nid);
+            else
+                NotificationUtil.showNotification(context, NotificationUtil.NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
+        }
+    }
+
     private void loadContentViewWithDetail(String detailJsonStr){
         try {
             //Hide the refresh animation
@@ -340,68 +395,6 @@ public class ObservationDetailActivity extends AppCompatActivity {
         }
     }
 
-    private class DownloadObservationImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView bmImage;
-
-        public DownloadObservationImageTask(ImageView bmImage) {
-            this.bmImage = bmImage;
-        }
-
-        protected Bitmap doInBackground(String... urls) {
-            String urldisplay = urls[0];
-            Bitmap mIcon11 = null;
-            try {
-                InputStream in = new java.net.URL(urldisplay).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                e.printStackTrace();
-            }
-            return mIcon11;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            bmImage.setImageBitmap(result);
-        }
-    }
-
-    private class DeletePostTask extends AsyncTask<String,Void,Boolean>{
-        Context context;
-        String nid;
-        public DeletePostTask(Context context){
-            this.context=context;
-        }
-        @Override
-        protected Boolean doInBackground(String... params) {
-            if (params.length<=0)
-                return false;
-            nid=params[0];
-            if (drupalAuthSession==null)
-                return false;
-            DrupalServicesNode drupalServicesNode=new DrupalServicesNode(baseUrl,endpoint);
-            drupalServicesNode.setAuth(drupalAuthSession);
-            HashMap<String ,String > map;
-            try {
-                map = drupalServicesNode.delete(Integer.parseInt(nid));
-            }catch (Exception ex){
-                return false;
-            }
-            if (!map.get(DrupalServicesFieldKeysConst.STATUS_CODE).equals(HTTPConst.HTTP_OK_200))
-                return false;
-
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean succeed) {
-            NotificationUtil.removeNotification(context, NotificationUtil.NotificationID.DELETE_USER_POST_NOTIFICATION_ID);
-            if(succeed)
-                MyObservationCacheManager.getInstance(context).deleteCache(nid);
-            else
-                NotificationUtil.showNotification(context, NotificationUtil.NotificationID.UPLOAD_FAILED_NOTIFICATION_ID);
-        }
-    }
-
     //Helper functions
     private ObservationEntryObject constructObservationEntryObject(JSONObject jsonObject){
         ObservationEntryObject object=new ObservationEntryObject();
@@ -418,13 +411,11 @@ public class ObservationDetailActivity extends AppCompatActivity {
             object.title = title;
         }catch (Exception ex){}
         try {
-            try{
-                //if success, it means the description is empty
-                JSONArray array=jsonObject.getJSONArray(DESCRIPTION);
-            }catch (Exception ex) {
-                String description = jsonObject.getString(DESCRIPTION);
+            String description = jsonObject.getString(DESCRIPTION);
+            if (description.equals("[]"))
+                object.description="";
+            else
                 object.description = description;
-            }
         }catch (Exception ex){}
         try {
             String imageHtmlStr = jsonObject.getString(IMAGE);
@@ -478,6 +469,31 @@ public class ObservationDetailActivity extends AppCompatActivity {
         Toast.makeText(this, R.string.network_error, Toast.LENGTH_SHORT).show();
         hideLoadingView();
     }
+    private void hideScrollView(){
+        //Hide the grid view
+        ScrollView scrollView=(ScrollView)findViewById(R.id.content_sv_ObservationDetailActivity);
+        scrollView.setVisibility(View.GONE);
+    }
+    private void showLoadingView(){
+        rootLinearLayout.setVisibility(View.GONE);
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
+    }
+    private void hideLoadingView(){
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+        swipeRefreshLayout.setVisibility(View.GONE);
+        rootLinearLayout.setVisibility(View.VISIBLE);
+    }
     private void showConfirmDeletePostDialog(final Context context){
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setMessage(R.string.delete_post_msg_observationDetailActivity)
@@ -516,6 +532,10 @@ public class ObservationDetailActivity extends AppCompatActivity {
         }catch (Exception ex){}
         userIsAuthor = false;
     }
+    private void handleDeleteAction(){
 
-
+        if (observationEntryObject!=null) {
+            showConfirmDeletePostDialog(this);
+        }
+    }
 }
